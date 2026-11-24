@@ -2,7 +2,7 @@
   "expo": {
     "name": "Aiserie Tracks",
     "slug": "aiserie-tracks",
-    "version": "2.1.0",
+    "version": "2.2.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -16,7 +16,7 @@
     },
     "android": {
       "package": "com.aiserie.tracks",
-      "versionCode": 6,
+      "versionCode": 7,
       "adaptiveIcon": {
         "backgroundColor": "#07172B",
         "foregroundImage": "./assets/android-icon-foreground.png",

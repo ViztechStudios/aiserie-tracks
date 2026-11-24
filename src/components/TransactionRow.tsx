@@ -20,9 +20,17 @@ interface Props {
 
 export function TransactionRow({ category, amount, type, date, note, currency, onPress, onLongPress }: Props) {
   const { t } = useTheme();
+  const income = type === 'income';
   return (
     <PressableScale
-      style={[styles.row, { backgroundColor: t.card, borderColor: t.glassBorderSoft, borderWidth: 1 }]}
+      style={[
+        styles.row,
+        {
+          backgroundColor: income ? t.income + '12' : t.card,
+          borderColor: income ? t.income + '3A' : t.glassBorderSoft,
+          borderWidth: 1,
+        },
+      ]}
       onPress={onPress}
       onLongPress={onLongPress}
       scaleTo={0.975}

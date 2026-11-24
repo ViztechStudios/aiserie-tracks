@@ -135,6 +135,8 @@ export const darkColors: ThemeColors = {
 export interface Palette {
   header: readonly [string, string, string];
   headerSoft: readonly [string, string, string];
+  /** Dawn-over-the-bay hero: sky top -> warm gold horizon bottom. */
+  hero: readonly [string, string, string, string];
   fab: readonly [string, string];
   income: readonly [string, string];
   expense: readonly [string, string];
@@ -144,6 +146,7 @@ export interface Palette {
 export const gradientsLight: Palette = {
   header: ['#0C2E44', '#114A70', '#175F8C'],
   headerSoft: ['#10496F', '#175F8C', '#1E709F'],
+  hero: ['#C9E6F2', '#DFEAE4', '#F6DFB9', '#F2C98E'],
   fab: ['#0C2E44', '#0B5C8A'],
   income: ['#1E7A6C', '#3BA693'],
   expense: ['#B94A52', '#D96A70'],
@@ -153,6 +156,7 @@ export const gradientsLight: Palette = {
 export const gradientsDark: Palette = {
   header: ['#040C16', '#0A1F30', '#0F2D44'],
   headerSoft: ['#0A1F30', '#0F2D44', '#173E59'],
+  hero: ['#08131F', '#0B1C2C', '#10293C', '#153349'],
   fab: ['#0A1F30', '#2A7FAD'],
   income: ['#1E7A6C', '#3BA693'],
   expense: ['#B94A52', '#D96A70'],
@@ -278,15 +282,15 @@ const shadowDark = {
  * classic shadow props and ignore boxShadow.
  */
 const webShadowsLight = {
-  card: { boxShadow: '0 3px 10px rgba(28,41,54,0.07), 0 1px 2px rgba(28,41,54,0.05)' },
-  cardHi: { boxShadow: '0 8px 22px rgba(12,46,68,0.13), 0 2px 5px rgba(12,46,68,0.07)' },
-  fab: { boxShadow: '0 5px 14px rgba(10,45,68,0.24)' },
+  card: { boxShadow: '0 2px 8px rgba(28,41,54,0.08)' },
+  cardHi: { boxShadow: '0 6px 18px rgba(12,46,68,0.12)' },
+  fab: { boxShadow: '0 4px 12px rgba(10,45,68,0.26)' },
 } as const;
 
 const webShadowsDark = {
-  card: { boxShadow: '0 3px 10px rgba(0,0,0,0.32), 0 1px 2px rgba(0,0,0,0.18)' },
-  cardHi: { boxShadow: '0 8px 22px rgba(0,0,0,0.44), 0 2px 5px rgba(0,0,0,0.22)' },
-  fab: { boxShadow: '0 5px 14px rgba(0,0,0,0.42)' },
+  card: { boxShadow: '0 2px 8px rgba(0,0,0,0.30)' },
+  cardHi: { boxShadow: '0 6px 18px rgba(0,0,0,0.42)' },
+  fab: { boxShadow: '0 4px 12px rgba(0,0,0,0.40)' },
 } as const;
 
 function withWeb<T extends object>(native: T, web: object): T {

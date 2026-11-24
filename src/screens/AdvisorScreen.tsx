@@ -18,9 +18,10 @@ import { useResponsive } from '../hooks/useResponsive';
 
 export function AdvisorScreen() {
   const finance = useFinance();
-  const { t } = useTheme();
+  const { t, isDark } = useTheme();
   const { contentWidth } = useResponsive();
   const [ym, setYm] = useState(currentMonthKey());
+  const heroInk = isDark ? t.text : '#1A2B3C';
 
   const report = useMemo(
     () => buildAdvisorReport(finance.transactions, ym, finance.settings.currency),
@@ -40,9 +41,9 @@ export function AdvisorScreen() {
         <GradientHeader title="Finance Advisor" subtitle="Personal coaching from your own data">
           <View style={styles.monthRow}>
             <PressableScale onPress={() => setYm(shiftMonth(ym, -1))} style={styles.monthBtn} scaleTo={0.88}>
-              <Ionicons name="chevron-back" size={18} color={t.white} />
+              <Ionicons name="chevron-back" size={18} color={heroInk} />
             </PressableScale>
-            <Text style={styles.monthText}>{monthLabel(ym, true)}</Text>
+            <Text style={[styles.monthText, { color: heroInk }]}>{monthLabel(ym, true)}</Text>
             <PressableScale
               onPress={() => setYm(shiftMonth(ym, 1))}
               style={styles.monthBtn}
@@ -52,7 +53,7 @@ export function AdvisorScreen() {
               <Ionicons
                 name="chevron-forward"
                 size={18}
-                color={ym >= currentMonthKey() ? 'rgba(255,255,255,0.35)' : t.white}
+                color={ym >= currentMonthKey() ? t.faint : heroInk}
               />
             </PressableScale>
           </View>
@@ -133,7 +134,7 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: 'transparent' },
   monthRow: { flexDirection: 'row', alignItems: 'center', marginTop: spacing.lg },
   monthBtn: { padding: 6 },
-  monthText: { color: '#FFFFFF', fontFamily: font.bold, fontSize: 14, marginHorizontal: spacing.sm },
+  monthText: { fontFamily: font.bold, fontSize: 14, marginHorizontal: spacing.sm },
   heroLabel: { fontFamily: font.bold, fontSize: 11, marginBottom: 2, letterSpacing: 1.2 },
   heroValue: { fontFamily: font.heavy, fontSize: 30 },
   heroSub: { fontFamily: font.medium, fontSize: 13, marginTop: 4 },

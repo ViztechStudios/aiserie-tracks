@@ -1,7 +1,8 @@
 import 'react-native-gesture-handler';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { Platform } from 'react-native';
+import { SafeAreaProvider, Metrics } from 'react-native-safe-area-context';
 import { DarkTheme, DefaultTheme, NavigationContainer } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
@@ -23,6 +24,38 @@ import { checkForUpdate } from './src/services/updateCheck';
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
 const BOOT_MIN_MS = 2100; // curtain always plays at least this long
+
+/**
+ * On the web (iOS standalone PWA), react-native-safe-area-context reports
+ * zero insets — so notched iPhones let the header run under the status bar
+ * and the bottom rail under the home indicator. Measure the real CSS env()
+ * values once at boot and hand them to the provider.
+ */
+function webInitialMetrics(): Metrics | undefined {
+  if (Platform.OS !== 'web' || typeof document === 'undefined') return undefined;
+  try {
+    const probe = document.createElement('div');
+    probe.setAttribute('aria-hidden', 'true');
+    probe.style.cssText =
+      'position:fixed;top:0;left:0;width:0;height:0;visibility:hidden;pointer-events:none;' +
+      'padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)';
+    document.body.appendChild(probe);
+    const cs = window.getComputedStyle(probe);
+    const insets = {
+      top: parseInt(cs.paddingTop, 10) || 0,
+      right: parseInt(cs.paddingRight, 10) || 0,
+      bottom: parseInt(cs.paddingBottom, 10) || 0,
+      left: parseInt(cs.paddingLeft, 10) || 0,
+    };
+    document.body.removeChild(probe);
+    return {
+      insets,
+      frame: { x: 0, y: 0, width: window.innerWidth, height: window.innerHeight },
+    };
+  } catch {
+    return undefined;
+  }
+}
 
 function Shell() {
   const finance = useFinance();
@@ -84,9 +117,10 @@ function Shell() {
 }
 
 export default function App() {
+  const initialMetrics = useMemo(webInitialMetrics, []);
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaProvider>
+      <SafeAreaProvider initialMetrics={initialMetrics}>
         <ThemeProvider>
           <FinanceProvider>
             <TasksProvider>

@@ -46,6 +46,7 @@ export function ScanScreen() {
   const ui = useUI();
   const { t, isDark, gradients } = useTheme();
   const { contentWidth } = useResponsive();
+  const heroInk = isDark ? t.text : '#1A2B3C';
   const cameraRef = useRef<CameraView>(null);
   const [permission, requestPermission] = useCameraPermissions();
   const [torch, setTorch] = useState(false);
@@ -159,7 +160,7 @@ export function ScanScreen() {
       <AuroraBackground />
       <GradientHeader title="Scan receipt" subtitle="Point at the receipt, hold steady, tap capture">
         <GlassCard>
-          <Text style={styles.tipText}>
+          <Text style={[styles.tipText, { color: heroInk }]}>
             Works best on flat, well-lit receipts. The total is read on-device and saved straight to your log.
           </Text>
         </GlassCard>
@@ -278,7 +279,7 @@ export function ScanScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: 'transparent' },
-  tipText: { color: '#FFFFFF', fontFamily: font.medium, fontSize: 13, lineHeight: 19 },
+  tipText: { fontFamily: font.medium, fontSize: 13, lineHeight: 19 },
   permissionBox: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.xxl },
   permissionBadge: {
     width: 72,

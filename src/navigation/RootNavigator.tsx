@@ -1,21 +1,39 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { Platform, StyleSheet, Text, View } from 'react-native';
 import { BottomTabBarProps, createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { font, lightColors } from '../theme';
+import { brandOcean, font, gradientsFor, lightColors } from '../theme';
 import { useTheme } from '../store/ThemeContext';
+import { useUI } from '../store/UIContext';
 import { PressableScale } from '../components/PressableScale';
 import { HomeScreen } from '../screens/HomeScreen';
-import { HistoryScreen } from '../screens/HistoryScreen';
-import { ScanScreen } from '../screens/ScanScreen';
-import { AdvisorScreen } from '../screens/AdvisorScreen';
+import { CalendarScreen } from '../screens/CalendarScreen';
 import { TasksScreen } from '../screens/TasksScreen';
-import { SettingsScreen } from '../screens/SettingsScreen';
+
+// Heavy screens load on demand — keeps the first paint light on old devices.
+const ScanScreen = React.lazy(() =>
+  import('../screens/ScanScreen').then((m) => ({ default: m.ScanScreen }))
+);
+const AdvisorScreen = React.lazy(() =>
+  import('../screens/AdvisorScreen').then((m) => ({ default: m.AdvisorScreen }))
+);
+const SettingsScreen = React.lazy(() =>
+  import('../screens/SettingsScreen').then((m) => ({ default: m.SettingsScreen }))
+);
+
+function suspend(Component: React.ComponentType<any>) {
+  return (props: any) => (
+    <Suspense fallback={<View style={StyleSheet.absoluteFill} />}>
+      <Component {...props} />
+    </Suspense>
+  );
+}
 
 export type RootTabParamList = {
   Home: undefined;
-  History: undefined;
+  Calendar: undefined;
   Scan: undefined;
   Advisor: undefined;
   Tasks: undefined;
@@ -23,19 +41,15 @@ export type RootTabParamList = {
 };
 
 const TAB_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
-  Home: 'home',
-  History: 'receipt-outline',
-  Advisor: 'compass',
-  Tasks: 'checkmark-done-outline',
-  Settings: 'settings-outline',
+  Home: 'wallet',
+  Calendar: 'calendar',
+  Tasks: 'flag',
 };
 
 /**
- * One tab slot: a compact icon plate with the label pinned beneath it.
- * The active tab tints its plate with the brand blue and carries a small
- * gold mark — the same accent that threads through the rest of the app.
- * Every dimension here is explicit and centered, so the rail renders
- * identically on Android, iOS and web.
+ * One tab slot: a compact icon plate with the label pinned beneath it. The
+ * active tab tints its plate and carries a small gold mark — the accent
+ * thread of the whole app. Every dimension is explicit and centered.
  */
 function TabSlot({
   routeKey,
@@ -51,31 +65,14 @@ function TabSlot({
   onPress: () => void;
 }) {
   const { t } = useTheme();
-  const filled = icon.replace('-outline', '') as keyof typeof Ionicons.glyphMap;
   return (
     <View style={styles.slot}>
       <PressableScale onPress={onPress} scaleTo={0.9} style={styles.slotPress} haptic={focused ? false : 'light'}>
-        <View
-          style={[
-            styles.plate,
-            focused && { backgroundColor: t.ice100 },
-          ]}
-        >
-          <Ionicons
-            name={focused ? filled : icon}
-            size={20}
-            color={focused ? t.ocean600 : t.faint}
-          />
+        <View style={[styles.plate, focused && { backgroundColor: t.ice100 }]}>
+          <Ionicons name={focused ? icon : (`${icon}-outline` as keyof typeof Ionicons.glyphMap)} size={20} color={focused ? t.ocean600 : t.faint} />
           {focused ? <View style={[styles.plateMark, { backgroundColor: t.sun500 }]} /> : null}
         </View>
-        <Text
-          numberOfLines={1}
-          style={[
-            styles.label,
-            { color: focused ? t.text : t.faint },
-            focused && styles.labelOn,
-          ]}
-        >
+        <Text numberOfLines={1} style={[styles.label, { color: focused ? t.text : t.faint }, focused && styles.labelOn]}>
           {label}
         </Text>
       </PressableScale>
@@ -84,23 +81,39 @@ function TabSlot({
 }
 
 /**
- * The bottom rail: a solid paper surface anchored to the edge, one hairline
- * across the top, and the Scan action living inside the rhythm of the bar
- * as a compact ink disc. No floating hardware, no blur, no glow — the
- * structure does the work.
+ * The bottom rail — three quiet slots (Goals · Calendar · Balance) on a solid
+ * paper surface, with a floating + button at the right that opens the add-
+ * transaction sheet. Anchored insets keep everything clear of the home
+ * indicator on notched iPhones.
  */
 function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const { t, isDark, shadow } = useTheme();
+  const ui = useUI();
   const insets = useSafeAreaInsets();
+  const bottomInset = Math.max(insets.bottom, Platform.OS === 'ios' ? 10 : 6);
+  const gradients = gradientsFor(isDark);
+
   return (
     <View style={styles.railWrap} pointerEvents="box-none">
+      {/* floating + button — opens the add-transaction sheet */}
+      <PressableScale
+        onPress={() => ui.openAdd()}
+        scaleTo={0.88}
+        haptic="medium"
+        style={[styles.fab, { bottom: bottomInset + 66 }]}
+      >
+        <LinearGradient colors={gradients.fab} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.fabInner}>
+          <Ionicons name="add" size={24} color={lightColors.white} />
+        </LinearGradient>
+      </PressableScale>
+
       <View
         style={[
           styles.rail,
           {
             backgroundColor: t.card,
             borderTopColor: t.line,
-            paddingBottom: Math.max(insets.bottom, Platform.OS === 'ios' ? 12 : 6),
+            paddingBottom: bottomInset,
           },
           isDark ? null : shadow.card,
         ]}
@@ -108,33 +121,9 @@ function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
         {state.routes.map((route, index) => {
           const focused = state.index === index;
           const label = descriptors[route.key].options.title ?? route.name;
+          if (!TAB_ICONS[route.name]) return null; // hidden routes: Scan, Advisor, Settings
 
-          if (route.name === 'Scan') {
-            return (
-              <View key={route.key} style={styles.slot}>
-                <PressableScale
-                  style={styles.slotPress}
-                  onPress={() => navigation.navigate(route.name)}
-                  scaleTo={0.9}
-                  haptic="medium"
-                >
-                  <View
-                    style={[
-                      styles.scanDisc,
-                      { backgroundColor: isDark ? t.sun500 : lightColors.ocean900 },
-                    ]}
-                  >
-                    <Ionicons name="camera" size={16} color={isDark ? lightColors.bg : lightColors.white} />
-                  </View>
-                  <Text numberOfLines={1} style={[styles.label, { color: focused ? t.text : t.faint }]}>
-                    {label}
-                  </Text>
-                </PressableScale>
-              </View>
-            );
-          }
-
-          const icon = TAB_ICONS[route.name] ?? 'ellipse-outline';
+          const icon = TAB_ICONS[route.name];
           return (
             <TabSlot
               key={route.key}
@@ -166,13 +155,14 @@ export function RootNavigator() {
         // opaque so a not-yet-hidden previous tab never bleeds through
         sceneStyle: { backgroundColor: t.bg },
       }}
+      initialRouteName="Home"
     >
-      <Tab.Screen name="Home" component={HomeScreen} options={{ title: 'Home' }} />
-      <Tab.Screen name="History" component={HistoryScreen} options={{ title: 'History' }} />
-      <Tab.Screen name="Scan" component={ScanScreen} options={{ title: 'Scan' }} />
-      <Tab.Screen name="Advisor" component={AdvisorScreen} options={{ title: 'Advisor' }} />
-      <Tab.Screen name="Tasks" component={TasksScreen} options={{ title: 'Tasks' }} />
-      <Tab.Screen name="Settings" component={SettingsScreen} options={{ title: 'Settings' }} />
+      <Tab.Screen name="Tasks" component={TasksScreen} options={{ title: 'Goals' }} />
+      <Tab.Screen name="Calendar" component={CalendarScreen} options={{ title: 'Calendar' }} />
+      <Tab.Screen name="Home" component={HomeScreen} options={{ title: 'Balance' }} />
+      <Tab.Screen name="Scan" component={suspend(ScanScreen)} options={{ title: 'Scan' }} />
+      <Tab.Screen name="Advisor" component={suspend(AdvisorScreen)} options={{ title: 'Advisor' }} />
+      <Tab.Screen name="Settings" component={suspend(SettingsScreen)} options={{ title: 'Settings' }} />
     </Tab.Navigator>
   );
 }
@@ -186,6 +176,20 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     backgroundColor: 'transparent',
+  },
+  fab: {
+    position: 'absolute',
+    right: 18,
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+  },
+  fabInner: {
+    flex: 1,
+    borderRadius: 27,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: brandOcean,
   },
   rail: {
     flexDirection: 'row',
@@ -215,14 +219,6 @@ const styles = StyleSheet.create({
     width: 5,
     height: 5,
     borderRadius: 2.5,
-  },
-  scanDisc: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#0C2E44',
   },
   label: {
     fontFamily: font.medium,

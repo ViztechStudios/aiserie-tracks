@@ -25,9 +25,9 @@ export function AuroraBackground({ intensity = 1 }: Props) {
       {/* capiz paper */}
       <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { opacity: lightOpacity, backgroundColor: aurora.base }]}>
         <Animated.Image
-          source={require('../../assets/textures/weave.png')}
+          source={require('../../assets/textures/weave-light.png')}
           resizeMode="cover"
-          style={[StyleSheet.absoluteFill, { opacity: aurora.weaveOpacity, tintColor: aurora.weave }]}
+          style={[StyleSheet.absoluteFill, { opacity: aurora.weaveOpacity }]}
         />
         <LinearGradient
           colors={[aurora.glow, 'rgba(0,0,0,0)']}
@@ -38,9 +38,9 @@ export function AuroraBackground({ intensity = 1 }: Props) {
       {/* midnight ink */}
       <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { opacity: darkOpacity, backgroundColor: aurora.base }]}>
         <Animated.Image
-          source={require('../../assets/textures/weave.png')}
+          source={require('../../assets/textures/weave-dark.png')}
           resizeMode="cover"
-          style={[StyleSheet.absoluteFill, { opacity: aurora.weaveOpacity, tintColor: aurora.weave }]}
+          style={[StyleSheet.absoluteFill, { opacity: aurora.weaveOpacity }]}
         />
       </Animated.View>
       {/* keeps Android overflow clipping happy without extra layers */}

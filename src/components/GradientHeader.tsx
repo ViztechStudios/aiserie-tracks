@@ -1,44 +1,52 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Image } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { font, gradientsDark, gradientsLight, spacing } from '../theme';
 import { useTheme } from '../store/ThemeContext';
 
 interface Props {
-  title: string;
+  title?: string;
   subtitle?: string;
   children?: React.ReactNode;
+  /** Hides the built-in title block (for hero layouts that roll their own). */
+  bare?: boolean;
 }
 
 /**
- * Page header — a deep sea-ink panel. One calm gradient, a whisper of woven
- * paper, and clean type. No ornaments: the header's job is to set the ink
- * tone of the page and hold the hero card. Straight bottom edge — content
- * below stays on the paper grid.
+ * Page header — dawn over the bay. A soft sky-to-gold gradient, a whisper of
+ * woven paper, and a low sun disc. Filipino golden hour, kept quiet: the
+ * color does the work, no ornaments.
  */
-export function GradientHeader({ title, subtitle, children }: Props) {
+export function GradientHeader({ title, subtitle, children, bare }: Props) {
   const insets = useSafeAreaInsets();
   const { isDark } = useTheme();
-  const header = isDark ? gradientsDark.header : gradientsLight.header;
-  const weaveTint = isDark ? '#7CC3DC' : '#E9DFC8';
-  const weaveOpacity = isDark ? 0.07 : 0.09;
+  const hero = isDark ? gradientsDark.hero : gradientsLight.hero;
+  const titleColor = isDark ? '#F2F6FA' : '#1A2B3C';
+  const eyebrowColor = isDark ? '#E9C87E' : '#A3691F';
 
   return (
-    <View style={[styles.wrap, { paddingTop: insets.top + spacing.xl, backgroundColor: header[0] }]}>
-      <LinearGradient colors={header} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1.05 }} style={StyleSheet.absoluteFill} />
+    <View style={[styles.wrap, { paddingTop: insets.top + spacing.lg, backgroundColor: hero[0] }]}>
+      <LinearGradient colors={hero} start={{ x: 0, y: 0 }} end={{ x: 0.25, y: 1 }} style={StyleSheet.absoluteFill} />
       <Image
-        source={require('../../assets/textures/weave.png')}
+        source={
+          isDark
+            ? require('../../assets/textures/weave-dark.png')
+            : require('../../assets/textures/weave-light.png')
+        }
         resizeMode="cover"
         pointerEvents="none"
-        style={[StyleSheet.absoluteFill, { opacity: weaveOpacity, tintColor: weaveTint }]}
+        style={[StyleSheet.absoluteFill, { opacity: isDark ? 0.10 : 0.14 }]}
       />
+      {/* low sun over the water */}
+      <View pointerEvents="none" style={[styles.sun, { backgroundColor: isDark ? 'rgba(233,200,126,0.10)' : 'rgba(255,255,255,0.45)' }]} />
       <View style={styles.content}>
-        {subtitle ? (
-          <Text style={styles.subtitle}>{subtitle.toUpperCase()}</Text>
+        {!bare && subtitle ? (
+          <Text style={[styles.subtitle, { color: eyebrowColor }]}>{subtitle.toUpperCase()}</Text>
         ) : null}
-        <Text style={styles.title}>{title}</Text>
+        {!bare && title ? (
+          <Text style={[styles.title, { color: titleColor }]}>{title}</Text>
+        ) : null}
         {children}
       </View>
     </View>
@@ -55,16 +63,21 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   content: {},
-  /** Small caps eyebrow above the title — one quiet cue, not an ornament. */
+  sun: {
+    position: 'absolute',
+    top: -46,
+    right: -52,
+    width: 190,
+    height: 190,
+    borderRadius: 95,
+  },
   subtitle: {
-    color: 'rgba(233,200,126,0.92)',
     fontFamily: font.bold,
-    fontSize: 11,
-    letterSpacing: 1.6,
+    fontSize: 10.5,
+    letterSpacing: 1.4,
     marginBottom: 4,
   },
   title: {
-    color: '#FFFFFF',
     fontFamily: font.display,
     fontSize: 27,
     letterSpacing: 0.1,

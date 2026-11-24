@@ -273,8 +273,8 @@ export function SettingsScreen() {
               <View style={{ flex: 1 }}>
                 <Text style={[styles.rowTitle, { color: t.text }]}>Aiserie Tracks v{APP_VERSION}</Text>
                 <Text style={[styles.rowSub, { color: t.subtext }]}>
-                  Capiz & Ink: warm paper surfaces, sea-ink headers, animated dark mode, official bank logos, tasks, an
-                  animated boot screen and update nudges from GitHub. Made by Viztech Studios for Aiserie.
+                  Golden Hour: dawn-sky pages, a month calendar with a day-by-day ledger, wallet balances with official
+                  bank logos, tasks, animated dark mode, and update nudges from GitHub. Made by Viztech Studios for Aiserie.
                 </Text>
               </View>
             </View>
