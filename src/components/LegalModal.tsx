@@ -7,7 +7,7 @@ import { PRIVACY_POLICY, TERMS, LegalSection } from '../data/legal';
 import { useTheme } from '../store/ThemeContext';
 import { useUI } from '../store/UIContext';
 import { useResponsive } from '../hooks/useResponsive';
-import { radius, spacing } from '../theme';
+import { font, radius, spacing } from '../theme';
 
 function DocBody({ sections }: { sections: LegalSection[] }) {
   const { t } = useTheme();
@@ -79,11 +79,11 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: radius.lg + 6,
   },
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  headerTitle: { color: '#FFFFFF', fontSize: 20, fontWeight: '800' },
+  headerTitle: { color: '#FFFFFF', fontSize: 20, fontFamily: font.bold },
   headerSub: { color: 'rgba(255,255,255,0.85)', fontSize: 12.5, marginTop: spacing.sm },
   body: { padding: spacing.xl, paddingBottom: 60 },
   section: { marginBottom: spacing.xl },
-  heading: { fontSize: 15.5, fontWeight: '800', marginBottom: 8 },
+  heading: { fontFamily: font.bold, fontSize: 15.5, marginBottom: 8 },
   para: { fontSize: 13.5, lineHeight: 21, marginBottom: 8 },
   footer: { fontSize: 11.5, textAlign: 'center', marginTop: spacing.sm },
 });

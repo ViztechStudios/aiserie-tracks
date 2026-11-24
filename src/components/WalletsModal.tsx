@@ -12,7 +12,7 @@ import { BankDef, CASH_DEF, EWALLETS, BANKS, getBrand } from '../data/banks';
 import { ACCOUNT_TYPE_LABEL, accountBalance, openingForBalance } from '../utils/accounts';
 import { parseWalletMessage } from '../utils/walletDetect';
 import { formatMoney, parseAmount } from '../utils/money';
-import { radius, spacing } from '../theme';
+import { font, radius, spacing } from '../theme';
 import { useResponsive } from '../hooks/useResponsive';
 import { PressableScale } from './PressableScale';
 
@@ -441,12 +441,12 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: radius.lg + 6,
   },
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  headerTitle: { color: '#FFFFFF', fontSize: 20, fontWeight: '800' },
+  headerTitle: { color: '#FFFFFF', fontSize: 20, fontFamily: font.bold },
   headerSub: { color: 'rgba(255,255,255,0.85)', fontSize: 12.5, lineHeight: 18, marginTop: spacing.sm },
   body: { padding: spacing.xl, paddingBottom: 60, gap: spacing.md },
   centerCard: { alignItems: 'center', paddingVertical: spacing.xl },
   emptyEmoji: { fontSize: 40, textAlign: 'center', marginBottom: spacing.sm },
-  emptyTitle: { fontWeight: '800', fontSize: 16, textAlign: 'center' },
+  emptyTitle: { fontFamily: font.bold, fontSize: 16, textAlign: 'center' },
   emptyBody: { fontSize: 13, lineHeight: 19, textAlign: 'center', marginTop: 4, paddingHorizontal: spacing.sm },
   ctaWrap: { alignSelf: 'stretch', marginTop: spacing.lg, borderRadius: radius.md },
   cta: {
@@ -457,7 +457,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: radius.md,
   },
-  ctaText: { fontWeight: '800', fontSize: 15 },
+  ctaText: { fontFamily: font.bold, fontSize: 15 },
   rowCard: {
     borderWidth: 1,
     borderRadius: radius.lg,
@@ -466,12 +466,12 @@ const styles = StyleSheet.create({
   rowMain: { flexDirection: 'row', alignItems: 'center' },
   rowIcon: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', marginRight: spacing.md },
   rowEmoji: { fontSize: 20 },
-  rowName: { fontWeight: '800', fontSize: 15 },
+  rowName: { fontFamily: font.bold, fontSize: 15 },
   rowSub: { fontSize: 12, marginTop: 2 },
-  rowBalance: { fontWeight: '900', fontSize: 16 },
+  rowBalance: { fontFamily: font.heavy, fontSize: 16 },
   groupLabel: {
     fontSize: 11.5,
-    fontWeight: '800',
+    fontFamily: font.bold,
     letterSpacing: 0.8,
     textTransform: 'uppercase',
     marginTop: spacing.sm,
@@ -490,15 +490,15 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   brandCardDashed: { borderStyle: 'dashed' },
-  brandName: { fontSize: 12.5, fontWeight: '700', textAlign: 'center' },
+  brandName: { fontFamily: font.bold, fontSize: 12.5, textAlign: 'center' },
   customIcon: { width: 56, height: 56, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   brandPreview: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.md },
-  brandPreviewName: { fontWeight: '900', fontSize: 17 },
+  brandPreviewName: { fontFamily: font.heavy, fontSize: 17 },
   brandPreviewSub: { fontSize: 12, marginTop: 2 },
-  changeLink: { fontSize: 13, fontWeight: '800' },
+  changeLink: { fontSize: 13, fontFamily: font.bold },
   formCard: { padding: spacing.lg },
-  formTitle: { fontWeight: '800', fontSize: 16, marginBottom: spacing.md },
-  label: { fontSize: 11, fontWeight: '800', letterSpacing: 0.8, marginTop: spacing.md, marginBottom: 6 },
+  formTitle: { fontFamily: font.bold, fontSize: 16, marginBottom: spacing.md },
+  label: { fontFamily: font.bold, fontSize: 10.5, letterSpacing: 1.2, marginTop: spacing.md, marginBottom: 6 },
   input: {
     borderWidth: 1.5,
     borderRadius: radius.md,
@@ -513,15 +513,15 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     borderWidth: 1.5,
   },
-  chipText: { fontSize: 13, fontWeight: '600' },
+  chipText: { fontFamily: font.medium, fontSize: 13 },
   formNote: { fontSize: 11.5, lineHeight: 16, marginTop: 6 },
   formActions: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginTop: spacing.lg },
   cancelBtn: { paddingVertical: 14, paddingHorizontal: 18, borderRadius: radius.md },
-  cancelText: { fontWeight: '800' },
+  cancelText: { fontFamily: font.bold },
   saveBtn: { borderRadius: radius.md, paddingVertical: 14, alignItems: 'center' },
-  saveText: { fontWeight: '800', fontSize: 15 },
+  saveText: { fontFamily: font.bold, fontSize: 15 },
   deleteLink: { alignItems: 'center', paddingVertical: spacing.md },
-  deleteText: { fontWeight: '700', fontSize: 13 },
+  deleteText: { fontFamily: font.bold, fontSize: 13 },
   pasteCard: { marginTop: spacing.md },
   pasteHint: { fontSize: 12.5, lineHeight: 18, marginBottom: spacing.md },
   pasteInput: { minHeight: 76, textAlignVertical: 'top', marginBottom: spacing.md },

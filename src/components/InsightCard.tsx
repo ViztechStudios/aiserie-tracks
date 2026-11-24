@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../store/ThemeContext';
-import { radius, spacing } from '../theme';
+import { font, radius, spacing } from '../theme';
 import { Insight, InsightTone } from '../types';
 
 /** One coaching card from the finance advisor engine. */
@@ -43,6 +43,6 @@ const styles = StyleSheet.create({
   },
   headerRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
   emoji: { fontSize: 18, marginRight: 10 },
-  title: { fontWeight: '800', fontSize: 15, flex: 1 },
-  body: { fontSize: 13, lineHeight: 19 },
+  title: { fontFamily: font.bold, fontSize: 14.5, flex: 1 },
+  body: { fontFamily: font.medium, fontSize: 13, lineHeight: 19 },
 });

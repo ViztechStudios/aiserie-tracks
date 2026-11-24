@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Animated, Easing, Image, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import Constants from 'expo-constants';
 import * as SplashScreen from 'expo-splash-screen';
 import { font } from '../theme';
 
@@ -13,6 +14,7 @@ interface Props {
 }
 
 const INTRO_MIN_MS = 2100;
+const APP_VERSION = Constants.expoConfig?.version ?? '';
 
 /**
  * Official boot experience: native splash hands off to this animated curtain
@@ -65,7 +67,7 @@ export function LoadingScreen({ ready, onDone }: Props) {
       <LinearGradient colors={BOOT_BG} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1.15 }} style={StyleSheet.absoluteFill} />
       {/* the weave, barely there */}
       <Image
-        source={require('../../assets/textures/banig.png')}
+        source={require('../../assets/textures/weave.png')}
         resizeMode="cover"
         pointerEvents="none"
         style={[StyleSheet.absoluteFill, { opacity: 0.05, tintColor: '#E9C46A' }]}
@@ -119,7 +121,7 @@ export function LoadingScreen({ ready, onDone }: Props) {
           <Text style={styles.credit}>MADE BY VIZTECH STUDIOS</Text>
           <View style={styles.creditDot} />
         </View>
-        <Text style={styles.version}>v2.0.2 · Manila Gold</Text>
+        <Text style={styles.version}>v{APP_VERSION}</Text>
       </View>
     </Animated.View>
   );

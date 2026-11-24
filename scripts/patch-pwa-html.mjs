@@ -81,13 +81,20 @@ if (html.includes(MARKER)) {
   console.log('patch-pwa-html: index.html already patched, refreshing manifest link only.');
 } else {
   const startupDevices = [
+    [320, 568, 2],
     [375, 667, 2],
     [375, 812, 3],
     [390, 844, 3],
     [393, 852, 3],
+    [402, 874, 3],
     [414, 896, 2],
     [414, 896, 3],
     [430, 932, 3],
+    [440, 956, 3],
+    [768, 1024, 2],
+    [820, 1180, 2],
+    [834, 1194, 2],
+    [1024, 1366, 2],
   ];
   const startupLinks = startupDevices
     .map(
@@ -102,7 +109,9 @@ if (html.includes(MARKER)) {
     '  <meta name="mobile-web-app-capable" content="yes">',
     '  <meta name="apple-mobile-web-app-capable" content="yes">',
     `  <meta name="apple-mobile-web-app-title" content="${shortName}">`,
-    '  <meta name="apple-mobile-web-app-status-bar-style" content="default">',
+    '  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">',
+    `  <meta name="theme-color" media="(prefers-color-scheme: light)" content="${themeColor}">`,
+    `  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#050E18">`,
     `  <link rel="apple-touch-icon" href="${withBase('/apple-touch-icon.png')}">`,
     startupLinks,
   ].join('\n');

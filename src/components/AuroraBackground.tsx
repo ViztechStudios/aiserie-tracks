@@ -1,5 +1,6 @@
 import React from 'react';
 import { Animated, Image, Platform, StyleSheet, View, ViewStyle } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../store/ThemeContext';
 
 const ABS_FILL: ViewStyle = { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 };
@@ -10,9 +11,9 @@ interface Props {
 }
 
 /**
- * Fixed backdrop behind every screen: one calm base color per theme and a
- * faint hand-woven banig texture so the surface feels crafted, not painted.
- * No blobs, no glow — the warmth comes from the palette, not from effects.
+ * Fixed backdrop behind every screen: capiz-paper in light, midnight ink in
+ * dark, both with a barely-there woven texture and a faint warm light at the
+ * top edge. Material, not decoration.
  */
 export function AuroraBackground({ intensity = 1 }: Props) {
   const { progress, aurora } = useTheme();
@@ -21,20 +22,25 @@ export function AuroraBackground({ intensity = 1 }: Props) {
   const style: ViewStyle = { ...ABS_FILL, overflow: 'hidden' };
   return (
     <View pointerEvents="none" style={style}>
-      {/* capiz cream base */}
+      {/* capiz paper */}
       <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { opacity: lightOpacity, backgroundColor: aurora.base }]}>
         <Animated.Image
-          source={require('../../assets/textures/banig.png')}
+          source={require('../../assets/textures/weave.png')}
           resizeMode="cover"
-          style={[StyleSheet.absoluteFill, { opacity: 0.10, tintColor: '#B29B72' }]}
+          style={[StyleSheet.absoluteFill, { opacity: aurora.weaveOpacity, tintColor: aurora.weave }]}
+        />
+        <LinearGradient
+          colors={[aurora.glow, 'rgba(0,0,0,0)']}
+          locations={[0, 1]}
+          style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 220 } as ViewStyle}
         />
       </Animated.View>
-      {/* midnight Manila base */}
+      {/* midnight ink */}
       <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { opacity: darkOpacity, backgroundColor: aurora.base }]}>
         <Animated.Image
-          source={require('../../assets/textures/banig.png')}
+          source={require('../../assets/textures/weave.png')}
           resizeMode="cover"
-          style={[StyleSheet.absoluteFill, { opacity: 0.16, tintColor: '#31506B' }]}
+          style={[StyleSheet.absoluteFill, { opacity: aurora.weaveOpacity, tintColor: aurora.weave }]}
         />
       </Animated.View>
       {/* keeps Android overflow clipping happy without extra layers */}

@@ -3,7 +3,7 @@
  * - Static assets: cache-first (hashed filenames make this safe).
  * Bump CACHE_VERSION when the shell changes.
  */
-const CACHE_VERSION = 'aiserie-v2.0.2';
+const CACHE_VERSION = 'aiserie-v2.1.0';
 const SHELL = ['./', './index.html'];
 
 self.addEventListener('install', (event) => {

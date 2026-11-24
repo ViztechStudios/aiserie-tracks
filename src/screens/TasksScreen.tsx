@@ -4,12 +4,13 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { GradientHeader } from '../components/GradientHeader';
 import { GlassCard } from '../components/GlassCard';
+import { AuroraBackground } from '../components/AuroraBackground';
 import { Entrance } from '../components/Entrance';
 import { EmptyState } from '../components/EmptyState';
 import { PressableScale } from '../components/PressableScale';
 import { useTasks } from '../store/TasksContext';
 import { useTheme } from '../store/ThemeContext';
-import { radius, spacing } from '../theme';
+import { brandOcean, font, radius, spacing } from '../theme';
 import { Task } from '../types';
 import { useResponsive } from '../hooks/useResponsive';
 
@@ -143,6 +144,7 @@ export function TasksScreen() {
 
   return (
     <View style={styles.root}>
+      <AuroraBackground />
       <ScrollView
         contentContainerStyle={[
           { paddingBottom: 150 },
@@ -157,12 +159,12 @@ export function TasksScreen() {
           subtitle={total === 0 ? 'Little money chores, big peace of mind' : `${store.openCount} open · ${store.doneCount} done`}
         >
           <Entrance delay={60}>
-            <GlassCard hi tint="#FFFDF8">
+            <GlassCard hi tint={t.card}>
               <View style={styles.progressHead}>
-                <Text style={styles.progressLabel}>Progress</Text>
-                <Text style={styles.progressValue}>{Math.round(ratio * 100)}%</Text>
+                <Text style={[styles.progressLabel, { color: t.sun500 }]}>Progress</Text>
+                <Text style={[styles.progressValue, { color: t.text }]}>{Math.round(ratio * 100)}%</Text>
               </View>
-              <View style={styles.track}>
+              <View style={[styles.track, { backgroundColor: t.ice100 }]}>
                 <Animated.View
                   style={[
                     styles.trackFill,
@@ -172,11 +174,11 @@ export function TasksScreen() {
                   ]}
                 />
               </View>
-              <Text style={styles.progressHint}>
+              <Text style={[styles.progressHint, { color: t.subtext }]}>
                 {total === 0
                   ? 'Add your first task below — paying a bill, saving a small amount, anything.'
                   : ratio === 1
-                    ? 'All done. Enjoy the clear head 🌊'
+                    ? 'All done — enjoy the clear head.'
                     : `${store.doneCount} of ${total} complete — keep the streak going.`}
               </Text>
             </GlassCard>
@@ -210,7 +212,7 @@ export function TasksScreen() {
                 disabled={draft.trim().length === 0}
                 haptic="medium"
                 scaleTo={0.88}
-                style={[styles.addBtn, { backgroundColor: draft.trim().length === 0 ? t.faint : t.ocean600 }, draft.trim().length === 0 && { opacity: 0.5 }]}
+                style={[styles.addBtn, { backgroundColor: draft.trim().length === 0 ? t.faint : brandOcean }, draft.trim().length === 0 && { opacity: 0.5 }]}
               >
                 <Ionicons name="add" size={22} color={t.white} />
               </PressableScale>
@@ -228,7 +230,7 @@ export function TasksScreen() {
                       style={[
                         styles.chip,
                         { backgroundColor: t.card, borderColor: t.glassBorderSoft },
-                        on && { backgroundColor: t.ocean600, borderColor: t.ocean600 },
+                        on && { backgroundColor: brandOcean, borderColor: brandOcean },
                       ]}
                     >
                       <Text style={[styles.chipText, { color: on ? t.white : t.subtext }]}>{c.label}</Text>
@@ -248,14 +250,14 @@ export function TasksScreen() {
 
           {isEmpty ? (
             <EmptyState
-              emoji="🗒️"
+              icon="list"
               title="Nothing to do yet"
               body="Money chores live here: pay a bill, move savings, cancel a subscription, check a receipt. Tap the star to pin the important ones."
             />
           ) : (
             <>
               {showOpen && open.length === 0 && showDone ? (
-                <EmptyState emoji="🎉" title="Everything is done" body="Enjoy it — or add something new above." />
+                <EmptyState icon="checkmark-done" title="Everything is done" body="Enjoy it — or add something new above." />
               ) : null}
               {showOpen && open.length > 0 ? (
                 <View>
@@ -291,7 +293,7 @@ export function TasksScreen() {
                 </View>
               ) : null}
               {filter === 'done' && done.length === 0 ? (
-                <EmptyState emoji="🌱" title="Nothing completed yet" body="Small wins land here as you check things off." />
+                <EmptyState icon="leaf" title="Nothing completed yet" body="Small wins land here as you check things off." />
               ) : null}
             </>
           )}
@@ -302,14 +304,13 @@ export function TasksScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1 },
+  root: { flex: 1, backgroundColor: 'transparent' },
   progressHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  progressLabel: { color: '#A0762B', fontSize: 13, fontWeight: '700', letterSpacing: 0.2 },
-  progressValue: { color: '#1D2D3E', fontSize: 16, fontWeight: '900' },
+  progressLabel: { fontFamily: font.bold, fontSize: 11, letterSpacing: 1.2 },
+  progressValue: { fontFamily: font.heavy, fontSize: 16 },
   track: {
-    height: 9,
+    height: 8,
     borderRadius: radius.pill,
-    backgroundColor: 'rgba(30,44,60,0.12)',
     marginTop: spacing.md,
     overflow: 'hidden',
   },
@@ -318,7 +319,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     backgroundColor: '#177E71',
   },
-  progressHint: { color: '#5C6C7B', fontSize: 12, lineHeight: 17, marginTop: spacing.md },
+  progressHint: { fontFamily: font.medium, fontSize: 12, lineHeight: 17, marginTop: spacing.md },
   body: { paddingHorizontal: spacing.xl, paddingTop: spacing.lg },
   composer: {
     flexDirection: 'row',
@@ -327,7 +328,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
   },
   starToggle: { padding: 8 },
-  composerInput: { flex: 1, fontSize: 15, fontWeight: '600', paddingVertical: 8, paddingHorizontal: 4 },
+  composerInput: { flex: 1, fontFamily: font.medium, fontSize: 15, paddingVertical: 8, paddingHorizontal: 4 },
   addBtn: {
     width: 40,
     height: 40,
@@ -342,14 +343,13 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     borderWidth: 1,
   },
-  chipText: { fontSize: 12.5, fontWeight: '800' },
+  chipText: { fontFamily: font.bold, fontSize: 12.5 },
   clearChip: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: radius.pill },
-  clearChipText: { fontSize: 12, fontWeight: '800' },
+  clearChipText: { fontFamily: font.bold, fontSize: 12 },
   groupLabel: {
-    fontSize: 11.5,
-    fontWeight: '800',
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
+    fontFamily: font.bold,
+    fontSize: 10.5,
+    letterSpacing: 1.2,
     marginTop: spacing.md,
     marginBottom: spacing.sm,
     paddingHorizontal: 2,
@@ -370,7 +370,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   rowMid: { flex: 1, marginHorizontal: spacing.md },
-  rowTitle: { fontWeight: '700', fontSize: 15, lineHeight: 20 },
+  rowTitle: { fontFamily: font.bold, fontSize: 15, lineHeight: 20 },
   rowTitleDone: { textDecorationLine: 'line-through' },
   iconBtn: { padding: 6 },
 });

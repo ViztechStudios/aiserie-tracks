@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../store/ThemeContext';
-import { radius, spacing } from '../theme';
+import { font, radius, spacing } from '../theme';
 import { Category } from '../types';
 import { formatMoney } from '../utils/money';
 import { dayLabel } from '../utils/stats';
@@ -19,15 +19,15 @@ interface Props {
 }
 
 export function TransactionRow({ category, amount, type, date, note, currency, onPress, onLongPress }: Props) {
-  const { t, shadow } = useTheme();
+  const { t } = useTheme();
   return (
     <PressableScale
-      style={[styles.row, { backgroundColor: t.card, borderColor: t.glassBorderSoft, borderWidth: 1 }, shadow.card]}
+      style={[styles.row, { backgroundColor: t.card, borderColor: t.glassBorderSoft, borderWidth: 1 }]}
       onPress={onPress}
       onLongPress={onLongPress}
       scaleTo={0.975}
     >
-      <View style={[styles.icon, { backgroundColor: category.color + '22' }]}>
+      <View style={[styles.icon, { backgroundColor: category.color + '1E' }]}>
         <Text style={styles.emoji}>{category.emoji}</Text>
       </View>
       <View style={styles.mid}>
@@ -55,16 +55,16 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm + 2,
   },
   icon: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: spacing.md,
   },
-  emoji: { fontSize: 20 },
+  emoji: { fontSize: 19 },
   mid: { flex: 1, marginRight: spacing.sm },
-  label: { fontWeight: '700', fontSize: 15 },
-  sub: { fontSize: 12, marginTop: 2 },
-  amount: { fontWeight: '800', fontSize: 15 },
+  label: { fontFamily: font.bold, fontSize: 14.5 },
+  sub: { fontFamily: font.medium, fontSize: 12, marginTop: 2 },
+  amount: { fontFamily: font.bold, fontSize: 14.5 },
 });

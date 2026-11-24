@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../store/ThemeContext';
-import { radius, spacing } from '../theme';
+import { font, radius, spacing } from '../theme';
 import { MonthBar } from '../types';
 import { formatCompact } from '../utils/money';
 
@@ -63,7 +63,7 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
   },
   headingRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.md },
-  heading: { fontWeight: '800', fontSize: 16 },
+  heading: { fontFamily: font.bold, fontSize: 16 },
   legendRow: { flexDirection: 'row', alignItems: 'center' },
   legendText: { fontSize: 11, marginLeft: 5 },
   dot: { width: 8, height: 8, borderRadius: 4 },

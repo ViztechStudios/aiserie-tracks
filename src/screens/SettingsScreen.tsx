@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Alert, Linking, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import Constants from 'expo-constants';
 import { Animated, Easing } from 'react-native';
 import { GradientHeader } from '../components/GradientHeader';
 import { AuroraBackground } from '../components/AuroraBackground';
@@ -10,12 +11,12 @@ import { useFinance } from '../store/FinanceContext';
 import { useUI } from '../store/UIContext';
 import { useTheme, ThemeMode } from '../store/ThemeContext';
 import { CURRENCIES } from '../data/currencies';
-import { radius, spacing } from '../theme';
+import { font, radius, spacing } from '../theme';
 import { formatMoney } from '../utils/money';
 import { useResponsive } from '../hooks/useResponsive';
 import { checkForUpdate, RELEASES_URL } from '../services/updateCheck';
 
-const APP_VERSION = '2.0.0';
+const APP_VERSION = Constants.expoConfig?.version ?? '2.1.0';
 
 const MODE_OPTIONS: { key: ThemeMode; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
   { key: 'system', label: 'System', icon: 'phone-portrait-outline' },
@@ -23,11 +24,21 @@ const MODE_OPTIONS: { key: ThemeMode; label: string; icon: keyof typeof Ionicons
   { key: 'dark', label: 'Dark', icon: 'moon' },
 ];
 
+/** Small tinted icon badge used in place of decorative emoji in list rows. */
+function RowIcon({ name, tint }: { name: keyof typeof Ionicons.glyphMap; tint: string }) {
+  const { t } = useTheme();
+  return (
+    <View style={[styles.rowIcon, { backgroundColor: t.ice50 }]}>
+      <Ionicons name={name} size={17} color={tint} />
+    </View>
+  );
+}
+
 /** Segmented light/dark/system control with a springy selection pill. */
 function AppearanceSwitch() {
   const { mode, setMode, isDark, t } = useTheme();
   return (
-    <View style={[styles.segShell, { borderColor: t.glassBorderSoft, backgroundColor: isDark ? 'rgba(125,211,252,0.08)' : 'rgba(125,211,252,0.14)' }]}>
+    <View style={[styles.segShell, { borderColor: t.glassBorderSoft, backgroundColor: t.ice50 }]}>
       {MODE_OPTIONS.map((opt) => {
         const active = mode === opt.key;
         return <SegButton key={opt.key} opt={opt} active={active} onPick={() => setMode(opt.key)} />;
@@ -37,7 +48,7 @@ function AppearanceSwitch() {
 }
 
 function SegButton({ opt, active, onPick }: { opt: { key: ThemeMode; label: string; icon: keyof typeof Ionicons.glyphMap }; active: boolean; onPick: () => void }) {
-  const { t, isDark } = useTheme();
+  const { t } = useTheme();
   const fill = React.useRef(new Animated.Value(active ? 1 : 0)).current;
 
   React.useEffect(() => {
@@ -112,14 +123,14 @@ export function SettingsScreen() {
             <Text style={[styles.section, { color: t.subtext }]}>Appearance</Text>
             <AppearanceSwitch />
             <Text style={[styles.hint, { color: t.faint }]}>
-              {isDark ? 'Midnight Manila is on — deep navy with golden-hour accents.' : 'Capiz morning is on — warm paper and deep sea.'}
+              {isDark ? 'Midnight ink is on — deep navy with warm gold accents.' : 'Capiz paper is on — warm cream with sea-ink text.'}
             </Text>
           </Entrance>
 
           <Entrance delay={40}>
             <Text style={[styles.section, { color: t.subtext }]}>Profile</Text>
             <View style={[styles.row, { backgroundColor: t.card, borderColor: t.glassBorderSoft }]}>
-              <Text style={styles.rowEmoji}>💙</Text>
+              <RowIcon name="person-outline" tint={t.ocean600} />
               <View style={{ flex: 1 }}>
                 <Text style={[styles.rowTitle, { color: t.text }]}>Your name</Text>
                 <TextInput
@@ -141,7 +152,7 @@ export function SettingsScreen() {
           <Entrance delay={80}>
             <Text style={[styles.section, { color: t.subtext }]}>Wallets & currency</Text>
             <PressableScale onPress={() => ui.openWallets()} style={[styles.row, { backgroundColor: t.card, borderColor: t.glassBorderSoft }]} haptic="light">
-              <Text style={styles.rowEmoji}>👛</Text>
+              <RowIcon name="wallet-outline" tint={t.ocean600} />
               <View style={{ flex: 1 }}>
                 <Text style={[styles.rowTitle, { color: t.text }]}>Wallets & balances</Text>
                 <Text style={[styles.rowSub, { color: t.subtext }]}>
@@ -153,7 +164,9 @@ export function SettingsScreen() {
               <Ionicons name="chevron-forward" size={16} color={t.faint} />
             </PressableScale>
             <PressableScale onPress={() => setPickerOpen(true)} style={[styles.row, { backgroundColor: t.card, borderColor: t.glassBorderSoft }]} haptic="light">
-              <Text style={styles.rowEmoji}>{current.flag}</Text>
+              <View style={[styles.rowIcon, { backgroundColor: t.ice50 }]}>
+                <Text style={styles.rowFlag}>{current.flag}</Text>
+              </View>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.rowTitle, { color: t.text }]}>{current.label}</Text>
                 <Text style={[styles.rowSub, { color: t.subtext }]}>{formatMoney(1250, finance.settings.currency)} · used across every screen</Text>
@@ -165,7 +178,7 @@ export function SettingsScreen() {
           <Entrance delay={120}>
             <Text style={[styles.section, { color: t.subtext }]}>Updates</Text>
             <PressableScale onPress={runUpdateCheck} style={[styles.row, { backgroundColor: t.card, borderColor: t.glassBorderSoft }]} haptic="light">
-              <Text style={styles.rowEmoji}>{checking ? '⏳' : '🚀'}</Text>
+              <RowIcon name="download-outline" tint={t.ocean600} />
               <View style={{ flex: 1 }}>
                 <Text style={[styles.rowTitle, { color: t.text }]}>{checking ? 'Checking…' : 'Check for updates'}</Text>
                 <Text style={[styles.rowSub, { color: t.subtext }]}>
@@ -181,11 +194,11 @@ export function SettingsScreen() {
               style={[styles.row, { backgroundColor: t.card, borderColor: t.glassBorderSoft }]}
               haptic="light"
             >
-              <Text style={styles.rowEmoji}>🤖</Text>
+              <RowIcon name="logo-android" tint={t.ocean600} />
               <View style={{ flex: 1 }}>
                 <Text style={[styles.rowTitle, { color: t.text }]}>Get the Android app (APK)</Text>
                 <Text style={[styles.rowSub, { color: t.subtext }]}>
-                  Latest signed build lives on GitHub Releases — allow “install from this source” when prompted.
+                  Latest signed build lives on GitHub Releases — allow "install from this source" when prompted.
                 </Text>
               </View>
               <Ionicons name="open-outline" size={16} color={t.faint} />
@@ -195,7 +208,7 @@ export function SettingsScreen() {
           <Entrance delay={160}>
             <Text style={[styles.section, { color: t.subtext }]}>Your data</Text>
             <View style={[styles.row, { backgroundColor: t.card, borderColor: t.glassBorderSoft }]}>
-              <Text style={styles.rowEmoji}>🔒</Text>
+              <RowIcon name="lock-closed-outline" tint={t.subtext} />
               <View style={{ flex: 1 }}>
                 <Text style={[styles.rowTitle, { color: t.text }]}>Private by design</Text>
                 <Text style={[styles.rowSub, { color: t.subtext }]}>
@@ -205,7 +218,9 @@ export function SettingsScreen() {
               </View>
             </View>
             <PressableScale onPress={askClear} style={[styles.row, { backgroundColor: t.card, borderColor: t.glassBorderSoft }]} haptic="medium">
-              <Text style={styles.rowEmoji}>🗑️</Text>
+              <View style={[styles.rowIcon, { backgroundColor: 'rgba(185,74,82,0.10)' }]}>
+                <Ionicons name="trash-outline" size={17} color={t.risk} />
+              </View>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.rowTitle, { color: t.risk }]}>Erase all data</Text>
                 <Text style={[styles.rowSub, { color: t.subtext }]}>Wipe every transaction, wallet and task from this device.</Text>
@@ -216,7 +231,7 @@ export function SettingsScreen() {
           <Entrance delay={200}>
             <Text style={[styles.section, { color: t.subtext }]}>Legal</Text>
             <PressableScale onPress={() => ui.openLegal('privacy')} style={[styles.row, { backgroundColor: t.card, borderColor: t.glassBorderSoft }]} haptic="light">
-              <Text style={styles.rowEmoji}>🛡️</Text>
+              <RowIcon name="shield-checkmark-outline" tint={t.ocean600} />
               <View style={{ flex: 1 }}>
                 <Text style={[styles.rowTitle, { color: t.text }]}>Privacy Policy</Text>
                 <Text style={[styles.rowSub, { color: t.subtext }]}>What the app stores (only on-device) and what it never does.</Text>
@@ -224,10 +239,10 @@ export function SettingsScreen() {
               <Ionicons name="chevron-forward" size={16} color={t.faint} />
             </PressableScale>
             <PressableScale onPress={() => ui.openLegal('terms')} style={[styles.row, { backgroundColor: t.card, borderColor: t.glassBorderSoft }]} haptic="light">
-              <Text style={styles.rowEmoji}>📄</Text>
+              <RowIcon name="document-text-outline" tint={t.subtext} />
               <View style={{ flex: 1 }}>
                 <Text style={[styles.rowTitle, { color: t.text }]}>Terms & Conditions</Text>
-                <Text style={[styles.rowSub, { color: t.subtext }]}>Personal-use licence, “not financial advice”, and the honest fine print.</Text>
+                <Text style={[styles.rowSub, { color: t.subtext }]}>Personal-use licence, "not financial advice", and the honest fine print.</Text>
               </View>
               <Ionicons name="chevron-forward" size={16} color={t.faint} />
             </PressableScale>
@@ -237,12 +252,12 @@ export function SettingsScreen() {
             <Entrance delay={240}>
               <Text style={[styles.section, { color: t.subtext }]}>Install on iPhone</Text>
               <PressableScale onPress={() => setIosHelp((v) => !v)} style={[styles.row, { backgroundColor: t.card, borderColor: t.glassBorderSoft }]}>
-                <Text style={styles.rowEmoji}>📲</Text>
+                <RowIcon name="logo-apple" tint={t.text} />
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.rowTitle, { color: t.text }]}>Install on iPhone (Home Screen)</Text>
                   <Text style={[styles.rowSub, { color: t.subtext }]}>
                     {iosHelp
-                      ? '1. Open this site in Safari.  2. Tap the Share button (□↑).  3. Scroll and tap “Add to Home Screen”.  4. Tap Add — Aiserie launches full-screen with its own icon and splash.'
+                      ? '1. Open this site in Safari.  2. Tap the Share button.  3. Scroll and tap "Add to Home Screen".  4. Tap Add — Aiserie launches full-screen with its own icon and splash.'
                       : 'Add Aiserie to your Home Screen from Safari — full-screen, with icon and splash. Tap to show the steps.'}
                   </Text>
                 </View>
@@ -254,12 +269,12 @@ export function SettingsScreen() {
           <Entrance delay={280}>
             <Text style={[styles.section, { color: t.subtext }]}>About</Text>
             <View style={[styles.row, { backgroundColor: t.card, borderColor: t.glassBorderSoft }]}>
-              <Text style={styles.rowEmoji}>🌊</Text>
+              <RowIcon name="water" tint={t.ocean600} />
               <View style={{ flex: 1 }}>
                 <Text style={[styles.rowTitle, { color: t.text }]}>Aiserie Tracks v{APP_VERSION}</Text>
                 <Text style={[styles.rowSub, { color: t.subtext }]}>
-                  Manila Gold: warm capiz-paper surfaces, animated dark mode, official bank logos, things-to-do, an
-                  animated boot screen and update nudges from GitHub. Made with 💙 by Viztech Studios for Aiserie.
+                  Capiz & Ink: warm paper surfaces, sea-ink headers, animated dark mode, official bank logos, tasks, an
+                  animated boot screen and update nudges from GitHub. Made by Viztech Studios for Aiserie.
                 </Text>
               </View>
             </View>
@@ -307,10 +322,9 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: 'transparent' },
   body: { paddingHorizontal: spacing.xl, paddingTop: spacing.lg },
   section: {
-    fontSize: 12,
-    fontWeight: '800',
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
+    fontFamily: font.bold,
+    fontSize: 10.5,
+    letterSpacing: 1.2,
     marginTop: spacing.lg,
     marginBottom: spacing.md,
   },
@@ -319,9 +333,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     padding: 4,
     gap: 4,
-    backgroundColor: 'rgba(125,211,252,0.10)',
     borderWidth: 1,
-    borderColor: 'rgba(125,211,252,0.18)',
   },
   segSlot: { flex: 1 },
   segBtn: {
@@ -340,10 +352,10 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     borderRadius: radius.md - 4,
-    backgroundColor: '#0A5C8C',
+    backgroundColor: '#0B5C8A',
     borderWidth: 0,
   },
-  segLabel: { fontWeight: '800', fontSize: 13.5 },
+  segLabel: { fontFamily: font.bold, fontSize: 13.5 },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -352,11 +364,19 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
     borderWidth: 1,
   },
-  rowEmoji: { fontSize: 22, marginRight: spacing.md },
-  rowTitle: { fontWeight: '800', fontSize: 15 },
-  rowSub: { fontSize: 12.5, lineHeight: 18, marginTop: 2 },
-  nameInput: { fontWeight: '800', fontSize: 17, paddingVertical: 6, paddingHorizontal: 0 },
-  hint: { fontSize: 11.5, marginTop: -spacing.md, marginBottom: spacing.md },
+  rowIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.md,
+  },
+  rowFlag: { fontSize: 16 },
+  rowTitle: { fontFamily: font.bold, fontSize: 15 },
+  rowSub: { fontFamily: font.medium, fontSize: 12.5, lineHeight: 18, marginTop: 2 },
+  nameInput: { fontFamily: font.bold, fontSize: 16, paddingVertical: 6, paddingHorizontal: 0 },
+  hint: { fontFamily: font.medium, fontSize: 11.5, marginTop: -spacing.md, marginBottom: spacing.md },
   pickerBackdrop: { flex: 1 },
   pickerSheet: {
     borderTopLeftRadius: radius.lg + 8,
@@ -365,7 +385,7 @@ const styles = StyleSheet.create({
     paddingTop: spacing.xl,
     maxHeight: '80%',
   },
-  pickerTitle: { fontSize: 20, fontWeight: '800', marginBottom: spacing.md },
+  pickerTitle: { fontFamily: font.bold, fontSize: 19, marginBottom: spacing.md },
   currencyRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -373,8 +393,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   currencyFlag: { fontSize: 24, marginRight: spacing.md },
-  currencyLabel: { fontWeight: '700', fontSize: 15 },
-  currencyCode: { fontSize: 12, marginTop: 1 },
+  currencyLabel: { fontFamily: font.bold, fontSize: 15 },
+  currencyCode: { fontFamily: font.medium, fontSize: 12, marginTop: 1 },
   pickerCancel: { alignItems: 'center', paddingVertical: spacing.lg },
-  pickerCancelText: { fontWeight: '700' },
+  pickerCancelText: { fontFamily: font.bold },
 });

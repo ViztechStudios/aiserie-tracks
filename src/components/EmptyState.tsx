@@ -1,20 +1,30 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../store/ThemeContext';
-import { spacing } from '../theme';
+import { font, radius, spacing } from '../theme';
 
 /**
- * Empty moment: the icon rests inside a woven-paper badge instead of
- * floating loose — the page still feels composed when there's nothing in it.
+ * Empty moment: a quiet icon badge, a clear title and one helpful line.
+ * The page still feels composed when there's nothing in it.
  */
-export function EmptyState({ emoji, title, body }: { emoji: string; title: string; body: string }) {
+export function EmptyState({
+  icon,
+  title,
+  body,
+}: {
+  /** Ionicons name for the badge glyph. */
+  icon: keyof typeof Ionicons.glyphMap;
+  title: string;
+  body: string;
+}) {
   const { t } = useTheme();
   return (
     <View style={styles.wrap}>
       <View style={[styles.badge, { backgroundColor: t.ice50, borderColor: t.line }]}>
-        <Text style={styles.emoji}>{emoji}</Text>
+        <Ionicons name={icon} size={26} color={t.subtext} />
       </View>
-      <Text style={[styles.title, { color: t.text, fontFamily: undefined }]}>{title}</Text>
+      <Text style={[styles.title, { color: t.text }]}>{title}</Text>
       <Text style={[styles.body, { color: t.subtext }]}>{body}</Text>
     </View>
   );
@@ -23,15 +33,14 @@ export function EmptyState({ emoji, title, body }: { emoji: string; title: strin
 const styles = StyleSheet.create({
   wrap: { alignItems: 'center', paddingVertical: spacing.xxl, paddingHorizontal: spacing.xl },
   badge: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+    width: 64,
+    height: 64,
+    borderRadius: radius.pill,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.md,
   },
-  emoji: { fontSize: 30 },
-  title: { fontWeight: '800', fontSize: 17, marginBottom: 6, textAlign: 'center' },
-  body: { fontSize: 13, textAlign: 'center', lineHeight: 19 },
+  title: { fontFamily: font.bold, fontSize: 16, marginBottom: 6, textAlign: 'center' },
+  body: { fontFamily: font.medium, fontSize: 13, lineHeight: 19, textAlign: 'center' },
 });

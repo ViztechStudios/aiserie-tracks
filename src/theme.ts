@@ -1,13 +1,21 @@
 /**
- * Aiserie Tracks v2.0.2 — "Manila Gold" design system, light + dark.
+ * Aiserie Tracks v2.1.0 — "Capiz & Ink" design system.
  *
- * Design language: Filipino coastal, human-crafted. Warm capiz-cream paper
- * surfaces, deep sea-ink navy, golden-hour accents, a woven banig texture,
- * and a capiz-shell iridescent edge reserved for hero cards. One serif
- * (Lora) carries the headings so the app reads editorial, not generated.
+ * One idea carries the whole app: a hand-kept ledger on capiz-paper, bound
+ * in sea ink, ruled in gold. Everything else is restraint:
  *
- * Light: capiz cream paper / deep sea ink.
- * Dark: midnight Manila navy / warm gold.
+ *  - Paper surfaces are white and quiet; depth comes from hairlines and
+ *    small, directional shadows — never from glow or sheen.
+ *  - Sea ink (#0C2E44) is the only "brand surface": page headers and the
+ *    primary action. One gold accent (#C08A32) marks focus, craft edges
+ *    and the active tab. Nothing else competes for attention.
+ *  - Type has a fixed voice: Lora (serif) for page titles only, Manrope
+ *    everywhere else — Medium for body, Bold for labels and amounts,
+ *    ExtraBold reserved for the single hero number on a screen.
+ *  - The woven-paper texture is present but almost subliminal, so surfaces
+ *    read as material rather than decoration.
+ *
+ * Light: capiz paper / sea ink. Dark: midnight ink / warm gold.
  * ThemeContext drives a 0->1 progress value so every surface cross-fades.
  */
 import { Animated, Platform } from 'react-native';
@@ -20,9 +28,11 @@ export interface ThemeColors {
   ocean500: string;
   aqua400: string;
   aqua300: string;
-  /** Golden-hour accent — tab indicator, warm highlights. */
+  /** Golden-hour accent — active tab mark, craft edges, warm highlights. */
   sun500: string;
   sun300: string;
+  /** Soft gold wash for tonal (secondary) buttons. */
+  goldWash: string;
   ice50: string;
   ice100: string;
 
@@ -53,62 +63,71 @@ export interface ThemeColors {
 
 export const lightColors: ThemeColors = {
   ocean900: '#0C2E44',
-  ocean800: '#0D3B5C',
-  ocean600: '#0A5C8C',
-  ocean500: '#147BB0',
-  aqua400: '#2FA3C7',
-  aqua300: '#7CC3DC',
-  sun500: '#C98A2C',
-  sun300: '#E9C46A',
-  ice50: '#EEF5F9',
-  ice100: '#DCEBF4',
+  ocean800: '#10496F',
+  ocean600: '#0B5C8A',
+  ocean500: '#2A7FAD',
+  aqua400: '#4AA3C4',
+  aqua300: '#8FC6DB',
+  sun500: '#C08A32',
+  sun300: '#E5C87E',
+  goldWash: '#F6ECD7',
+  ice50: '#EFF5F8',
+  ice100: '#E1EDF4',
 
-  bg: '#F6F1E6',
-  card: '#FFFDF8',
-  cardSolid: '#FFFDF8',
-  glassBorder: 'rgba(30,44,60,0.14)',
-  glassBorderSoft: 'rgba(30,44,60,0.09)',
-  line: 'rgba(30,44,60,0.10)',
-  text: '#1D2D3E',
-  subtext: '#5C6C7B',
-  faint: '#96A2AD',
+  bg: '#F7F3EA',
+  card: '#FFFFFF',
+  cardSolid: '#FFFFFF',
+  glassBorder: 'rgba(26,43,60,0.14)',
+  glassBorderSoft: 'rgba(26,43,60,0.08)',
+  line: 'rgba(26,43,60,0.10)',
+  text: '#1A2B3C',
+  subtext: '#5D6E7D',
+  faint: '#93A3B1',
 
-  expense: '#C24D53',
-  income: '#177E71',
-  warn: '#C98A2C',
-  risk: '#C24D53',
-  good: '#177E71',
+  expense: '#B94A52',
+  income: '#1E7A6C',
+  warn: '#C08A32',
+  risk: '#B94A52',
+  good: '#1E7A6C',
 
   white: '#FFFFFF',
 };
 
+/**
+ * Solid brand-blue for filled buttons with white content — constant across
+ * themes. The themed t.ocean600 flips light in dark mode for text/icons;
+ * backgrounds need this fixed ink so white labels stay readable.
+ */
+export const brandOcean = '#0B5C8A';
+
 export const darkColors: ThemeColors = {
-  ocean900: '#050D16',
-  ocean800: '#0A1F30',
-  ocean600: '#4E9ECB',
-  ocean500: '#7BC0E3',
-  aqua400: '#3C93B8',
+  ocean900: '#050E18',
+  ocean800: '#0A2135',
+  ocean600: '#6FB5DB',
+  ocean500: '#8FC6DB',
+  aqua400: '#3E90B5',
   aqua300: '#79B9D2',
-  sun500: '#E0A44E',
+  sun500: '#E0A94E',
   sun300: '#EFCB83',
+  goldWash: 'rgba(224,169,78,0.12)',
   ice50: 'rgba(233,239,244,0.06)',
   ice100: 'rgba(233,239,244,0.10)',
 
-  bg: '#0A1520',
-  card: '#122231',
-  cardSolid: '#122231',
+  bg: '#0B1520',
+  card: '#13222F',
+  cardSolid: '#13222F',
   glassBorder: 'rgba(151,183,214,0.16)',
   glassBorderSoft: 'rgba(151,183,214,0.10)',
   line: 'rgba(151,183,214,0.10)',
-  text: '#E9EFF4',
-  subtext: '#9EB0BF',
-  faint: '#64788B',
+  text: '#E7EDF3',
+  subtext: '#9BB0BF',
+  faint: '#65798B',
 
-  expense: '#E2838A',
-  income: '#45B3A4',
-  warn: '#E0A44E',
-  risk: '#E2838A',
-  good: '#45B3A4',
+  expense: '#E2878D',
+  income: '#4CB4A3',
+  warn: '#E0A94E',
+  risk: '#E2878D',
+  good: '#4CB4A3',
 
   white: '#FFFFFF',
 };
@@ -116,51 +135,45 @@ export const darkColors: ThemeColors = {
 export interface Palette {
   header: readonly [string, string, string];
   headerSoft: readonly [string, string, string];
-  fab: readonly [string, string, string];
+  fab: readonly [string, string];
   income: readonly [string, string];
   expense: readonly [string, string];
   sheen: readonly [string, string];
 }
 
 export const gradientsLight: Palette = {
-  header: ['#0C2E44', '#12486C', '#155B8A'],
-  headerSoft: ['#0D3B5C', '#155B8A', '#1C6FA3'],
-  fab: ['#0C2E44', '#0F5C86', '#147BB0'],
-  income: ['#11675C', '#2AA797'],
-  expense: ['#A83F45', '#D96A70'],
-  sheen: ['rgba(255,255,255,0.10)', 'rgba(255,255,255,0.01)'],
+  header: ['#0C2E44', '#114A70', '#175F8C'],
+  headerSoft: ['#10496F', '#175F8C', '#1E709F'],
+  fab: ['#0C2E44', '#0B5C8A'],
+  income: ['#1E7A6C', '#3BA693'],
+  expense: ['#B94A52', '#D96A70'],
+  sheen: ['rgba(255,255,255,0.08)', 'rgba(255,255,255,0.01)'],
 };
 
 export const gradientsDark: Palette = {
-  header: ['#040B14', '#0A1F30', '#123049'],
-  headerSoft: ['#0A1F30', '#123049', '#1B4560'],
-  fab: ['#0A1F30', '#1B5D86', '#2B7CA8'],
-  income: ['#11675C', '#2AA797'],
-  expense: ['#A83F45', '#D96A70'],
-  sheen: ['rgba(255,255,255,0.06)', 'rgba(255,255,255,0.01)'],
+  header: ['#040C16', '#0A1F30', '#0F2D44'],
+  headerSoft: ['#0A1F30', '#0F2D44', '#173E59'],
+  fab: ['#0A1F30', '#2A7FAD'],
+  income: ['#1E7A6C', '#3BA693'],
+  expense: ['#B94A52', '#D96A70'],
+  sheen: ['rgba(255,255,255,0.05)', 'rgba(255,255,255,0.01)'],
 };
 
-/** Backdrop spec used by <AuroraBackground /> — a calm paper + weave, no blobs. */
+/** Backdrop spec used by <AuroraBackground /> — quiet paper + fine weave. */
 export const auroraLight = {
-  sky: '#7CC3DC',
-  aqua: '#A5D5E4',
-  lagoon: '#8FCBB8',
-  /** Warm dusk accent — the Manila-Bay golden hour. */
-  glow: '#E9C46A',
-  base: '#F6F1E6',
-  /** Tint applied to the banig weave texture. */
+  base: '#F7F3EA',
+  /** Tint applied to the woven-paper texture. */
   weave: '#B29B72',
-  weaveOpacity: 0.10,
+  weaveOpacity: 0.07,
+  /** Warm top light — the Manila-Bay golden hour, kept faint. */
+  glow: 'rgba(229,200,126,0.20)',
 } as const;
 
 export const auroraDark = {
-  sky: '#12486C',
-  aqua: '#0F5468',
-  lagoon: '#0F6E68',
-  glow: '#C98A2C',
-  base: '#0A1520',
+  base: '#0B1520',
   weave: '#31506B',
-  weaveOpacity: 0.12,
+  weaveOpacity: 0.10,
+  glow: 'rgba(224,169,78,0.06)',
 } as const;
 
 export function gradientsFor(isDark: boolean): Palette {
@@ -171,22 +184,28 @@ export function auroraFor(isDark: boolean) {
   return isDark ? auroraDark : auroraLight;
 }
 
-/** Type ramp — Lora carries headings; Manrope carries UI & numbers. */
+/**
+ * Type ramp — Lora carries page titles; Manrope carries everything else.
+ * These tokens are the single source of truth: no bare fontWeight without
+ * a matching family, or the OS font sneaks in and the voice falls apart.
+ */
 export const font = {
-  /** Headings & page titles — warm editorial serif. */
+  /** Page titles — warm editorial serif, used sparingly. */
   display: 'Lora_600SemiBold',
-  /** Bold serif for wordmarks. */
+  /** Boot-screen wordmark. */
   displayBold: 'Lora_700Bold',
-  /** Emphasised labels & buttons */
+  /** Hero numbers only (one per screen). */
+  heavy: 'Manrope_800ExtraBold',
+  /** Buttons, row titles, amounts, section labels. */
   bold: 'Manrope_700Bold',
-  /** Quiet emphasis */
+  /** Body copy, captions, quiet labels. */
   medium: 'Manrope_500Medium',
 } as const;
 
 export const radius = {
-  sm: 10,
-  md: 14,
-  lg: 20,
+  sm: 8,
+  md: 12,
+  lg: 16,
   pill: 999,
 };
 
@@ -195,8 +214,8 @@ export const spacing = {
   sm: 8,
   md: 12,
   lg: 16,
-  xl: 24,
-  xxl: 32,
+  xl: 20,
+  xxl: 28,
 };
 
 /**
@@ -225,32 +244,32 @@ const shadowLight = {
   /** Resting paper card: close, directional, quiet. */
   card: {
     shadowColor: '#1C2936',
-    shadowOpacity: 0.09,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 5 },
-    elevation: 4,
+    shadowOpacity: 0.07,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 2,
   },
   /** Hero cards (balance, safe-to-spend). */
   cardHi: {
     shadowColor: '#0C2E44',
-    shadowOpacity: 0.14,
-    shadowRadius: 22,
-    shadowOffset: { width: 0, height: 9 },
-    elevation: 7,
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 5,
   },
   fab: {
     shadowColor: '#0A2D44',
-    shadowOpacity: 0.28,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 8,
+    shadowOpacity: 0.24,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 6,
   },
 } as const;
 
 const shadowDark = {
-  card: { ...shadowLight.card, shadowColor: '#000000', shadowOpacity: 0.34, elevation: 6 },
-  cardHi: { ...shadowLight.cardHi, shadowColor: '#000000', shadowOpacity: 0.46, elevation: 9 },
-  fab: { ...shadowLight.fab, shadowColor: '#000000', shadowOpacity: 0.5, elevation: 10 },
+  card: { ...shadowLight.card, shadowColor: '#000000', shadowOpacity: 0.30, elevation: 4 },
+  cardHi: { ...shadowLight.cardHi, shadowColor: '#000000', shadowOpacity: 0.42, elevation: 7 },
+  fab: { ...shadowLight.fab, shadowColor: '#000000', shadowOpacity: 0.45, elevation: 8 },
 } as const;
 
 /**
@@ -259,15 +278,15 @@ const shadowDark = {
  * classic shadow props and ignore boxShadow.
  */
 const webShadowsLight = {
-  card: { boxShadow: '0 4px 14px rgba(28,41,54,0.09), 0 1px 3px rgba(28,41,54,0.06)' },
-  cardHi: { boxShadow: '0 10px 28px rgba(12,46,68,0.15), 0 2px 6px rgba(12,46,68,0.08)' },
-  fab: { boxShadow: '0 6px 16px rgba(10,45,68,0.28)' },
+  card: { boxShadow: '0 3px 10px rgba(28,41,54,0.07), 0 1px 2px rgba(28,41,54,0.05)' },
+  cardHi: { boxShadow: '0 8px 22px rgba(12,46,68,0.13), 0 2px 5px rgba(12,46,68,0.07)' },
+  fab: { boxShadow: '0 5px 14px rgba(10,45,68,0.24)' },
 } as const;
 
 const webShadowsDark = {
-  card: { boxShadow: '0 4px 14px rgba(0,0,0,0.36), 0 1px 3px rgba(0,0,0,0.20)' },
-  cardHi: { boxShadow: '0 10px 28px rgba(0,0,0,0.48), 0 2px 6px rgba(0,0,0,0.24)' },
-  fab: { boxShadow: '0 6px 16px rgba(0,0,0,0.45)' },
+  card: { boxShadow: '0 3px 10px rgba(0,0,0,0.32), 0 1px 2px rgba(0,0,0,0.18)' },
+  cardHi: { boxShadow: '0 8px 22px rgba(0,0,0,0.44), 0 2px 5px rgba(0,0,0,0.22)' },
+  fab: { boxShadow: '0 5px 14px rgba(0,0,0,0.42)' },
 } as const;
 
 function withWeb<T extends object>(native: T, web: object): T {

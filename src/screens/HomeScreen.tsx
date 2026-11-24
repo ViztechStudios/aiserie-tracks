@@ -16,7 +16,7 @@ import { useTasks } from '../store/TasksContext';
 import { useUI } from '../store/UIContext';
 import { useTheme } from '../store/ThemeContext';
 import { getCategory } from '../data/categories';
-import { radius, shadow, spacing } from '../theme';
+import { brandOcean, font, radius, shadow, spacing } from '../theme';
 import { currentMonthKey, monthKey, monthLabel, shiftMonth, totalsForMonth } from '../utils/stats';
 import { formatMoney } from '../utils/money';
 import { useResponsive } from '../hooks/useResponsive';
@@ -42,85 +42,90 @@ export function HomeScreen() {
   const daysSoFar = ym === currentMonthKey() ? new Date().getDate() : 1;
   const dailyAvg = totals.expense / Math.max(daysSoFar, 1);
 
+  const atCurrentMonth = ym >= currentMonthKey();
+
   return (
     <View style={styles.root}>
       <AuroraBackground />
       <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
         <GradientHeader title={`Hi, ${finance.settings.userName}`} subtitle="Your money, at a glance">
-          {/* month switcher */}
-          <Entrance delay={0}>
-            <View style={styles.monthRow}>
-              <PressableScale onPress={() => setYm(shiftMonth(ym, -1))} style={styles.monthBtn} scaleTo={0.88}>
-                <Ionicons name="chevron-back" size={18} color={t.white} />
-              </PressableScale>
-              <Text style={styles.monthText}>{monthLabel(ym, true)}</Text>
-              <PressableScale
-                onPress={() => setYm(shiftMonth(ym, 1))}
-                style={styles.monthBtn}
-                scaleTo={0.88}
-                disabled={ym >= currentMonthKey()}
-              >
-                <Ionicons
-                  name="chevron-forward"
-                  size={18}
-                  color={ym >= currentMonthKey() ? 'rgba(255,255,255,0.35)' : t.white}
-                />
-              </PressableScale>
-            </View>
-          </Entrance>
-
-          {/* balance card — warm paper laid over the dusk header */}
+          {/* balance card — white paper set into the ink panel */}
           <Entrance delay={60}>
-            <GlassCard hi tint="#FFFDF8">
-              <Text style={styles.glassLabel}>Net this month</Text>
+            <GlassCard hi tint={t.card} style={styles.balanceCard}>
+              <View style={styles.cardTopRow}>
+                <Text style={[styles.cardLabel, { color: t.sun500 }]}>NET THIS MONTH</Text>
+                <View style={styles.monthRow}>
+                  <PressableScale onPress={() => setYm(shiftMonth(ym, -1))} style={styles.monthBtn} scaleTo={0.88}>
+                    <Ionicons name="chevron-back" size={15} color={t.subtext} />
+                  </PressableScale>
+                  <Text style={[styles.monthText, { color: t.text }]}>{monthLabel(ym, true)}</Text>
+                  <PressableScale
+                    onPress={() => setYm(shiftMonth(ym, 1))}
+                    style={styles.monthBtn}
+                    scaleTo={0.88}
+                    disabled={atCurrentMonth}
+                  >
+                    <Ionicons name="chevron-forward" size={15} color={atCurrentMonth ? t.faint : t.subtext} />
+                  </PressableScale>
+                </View>
+              </View>
               <AnimatedNumber
                 value={totals.net}
                 format={(n) => formatMoney(n, finance.settings.currency)}
-                style={[styles.net, { color: totals.net >= 0 ? '#177E71' : '#C24D53' }]}
+                style={[styles.net, { color: totals.net >= 0 ? t.text : t.expense }]}
               />
-              <View style={styles.splitRow}>
+              <View style={[styles.splitRow, { borderTopColor: t.line }]}>
                 <View style={styles.split}>
                   <View style={styles.dotRow}>
-                    <View style={[styles.dot, { backgroundColor: '#177E71' }]} />
-                    <Text style={styles.splitLabel}>Income</Text>
+                    <View style={[styles.dot, { backgroundColor: t.income }]} />
+                    <Text style={[styles.splitLabel, { color: t.subtext }]}>Income</Text>
                   </View>
-                  <Text style={styles.splitValue}>{formatMoney(totals.income, finance.settings.currency)}</Text>
+                  <Text style={[styles.splitValue, { color: t.text }]}>
+                    {formatMoney(totals.income, finance.settings.currency)}
+                  </Text>
                 </View>
-                <View style={styles.divider} />
+                <View style={[styles.divider, { backgroundColor: t.line }]} />
                 <View style={styles.split}>
                   <View style={styles.dotRow}>
-                    <View style={[styles.dot, { backgroundColor: '#C24D53' }]} />
-                    <Text style={styles.splitLabel}>Spent</Text>
+                    <View style={[styles.dot, { backgroundColor: t.expense }]} />
+                    <Text style={[styles.splitLabel, { color: t.subtext }]}>Spent</Text>
                   </View>
-                  <Text style={styles.splitValue}>{formatMoney(totals.expense, finance.settings.currency)}</Text>
+                  <Text style={[styles.splitValue, { color: t.text }]}>
+                    {formatMoney(totals.expense, finance.settings.currency)}
+                  </Text>
                 </View>
               </View>
             </GlassCard>
           </Entrance>
-
-          {/* wallets strip */}
-          <Entrance delay={120}>
-            <AccountsStrip />
-          </Entrance>
         </GradientHeader>
 
-        {/* quick stats + actions */}
+        {/* wallets + stats + actions */}
         <View style={[styles.body, contentWidth ? { alignSelf: 'center', width: '100%', maxWidth: contentWidth } : null]}>
+          <Entrance delay={140}>
+            <AccountsStrip />
+          </Entrance>
+
           <Entrance delay={180}>
-            <View style={styles.statsRow}>
-              <View style={[styles.statCard, { backgroundColor: t.card, borderWidth: 1, borderColor: t.glassBorderSoft }, shadow.card]}>
-                <Text style={[styles.statLabel, { color: t.subtext }]}>Daily average</Text>
-                <Text style={[styles.statValue, { color: t.text }]}>{formatMoney(dailyAvg, finance.settings.currency)}</Text>
+            <View style={[styles.statCard, { backgroundColor: t.card, borderColor: t.glassBorderSoft }, shadow.card]}>
+              <View style={styles.statCell}>
+                <Text style={[styles.statLabel, { color: t.subtext }]}>DAILY AVERAGE</Text>
+                <Text style={[styles.statValue, { color: t.text }]}>
+                  {formatMoney(dailyAvg, finance.settings.currency)}
+                </Text>
               </View>
-              <View style={styles.actionWrap}>
-                <GlassCard style={styles.statCard} onPress={() => navigation.navigate('Advisor' as never)}>
-                  <Text style={[styles.statLabel, { color: t.subtext }]}>Advisor</Text>
-                  <View style={styles.statAction}>
-                    <Ionicons name="bulb-outline" size={16} color={t.ocean600} />
-                    <Text style={[styles.statValue, { color: t.ocean600, fontSize: 14 }]}>Get tips</Text>
-                  </View>
-                </GlassCard>
-              </View>
+              <View style={[styles.statDivider, { backgroundColor: t.line }]} />
+              <PressableScale
+                style={styles.statCell}
+                onPress={() => navigation.navigate('Advisor' as never)}
+                scaleTo={0.97}
+              >
+                <Text style={[styles.statLabel, { color: t.subtext }]}>ADVISOR</Text>
+                <View style={styles.statAction}>
+                  <Ionicons name="bulb-outline" size={15} color={t.ocean600} />
+                  <Text style={[styles.statValue, { color: t.ocean600, fontSize: 15 }]}>Get tips</Text>
+                  <Ionicons name="chevron-forward" size={13} color={t.faint} />
+                </View>
+              </PressableScale>
             </View>
           </Entrance>
 
@@ -128,9 +133,9 @@ export function HomeScreen() {
             <View style={styles.actionRow}>
               <View style={styles.actionWrap}>
                 <PressableScale style={styles.actionBtn} onPress={() => ui.openAdd()} haptic="light">
-                  <View style={[styles.actionAdd, shadow.card]}>
-                    <Ionicons name="add-circle" size={22} color={t.white} />
-                    <Text style={styles.addText}>Add</Text>
+                  <View style={[styles.actionAdd, { backgroundColor: brandOcean }]}>
+                    <Ionicons name="add" size={19} color={t.white} />
+                    <Text style={[styles.actionText, { color: t.white }]}>Add</Text>
                   </View>
                 </PressableScale>
               </View>
@@ -140,33 +145,30 @@ export function HomeScreen() {
                   onPress={() => navigation.navigate('Scan' as never)}
                   haptic="light"
                 >
-                  <View style={[styles.actionScan, shadow.card]}>
-                    <Ionicons name="scan-outline" size={22} color="#1D2D3E" />
-                    <Text style={[styles.addText, { color: '#1D2D3E' }]}>Scan receipt</Text>
+                  <View style={[styles.actionScan, { backgroundColor: t.goldWash }]}>
+                    <Ionicons name="scan-outline" size={18} color={t.text} />
+                    <Text style={[styles.actionText, { color: t.text }]}>Scan receipt</Text>
                   </View>
                 </PressableScale>
               </View>
             </View>
           </Entrance>
 
-          {/* next task widget */}
+          {/* next task */}
           {nextTask ? (
             <Entrance delay={280}>
-              <GlassCard
-                style={styles.nextTask}
-                onPress={() => navigation.navigate('Tasks' as never)}
-              >
-                <View style={[styles.nextTaskIcon, nextTask.important && styles.nextTaskIconHi]}>
-                  <Ionicons name={nextTask.important ? 'star' : 'list'} size={15} color={t.white} />
+              <GlassCard style={styles.nextTask} onPress={() => navigation.navigate('Tasks' as never)}>
+                <View style={[styles.nextTaskIcon, { backgroundColor: nextTask.important ? t.sun500 : brandOcean }]}>
+                  <Ionicons name={nextTask.important ? 'star' : 'list'} size={14} color={t.white} />
                 </View>
                 <View style={styles.nextTaskMid}>
-                  <Text style={[styles.nextTaskLabel, { color: t.subtext }]}>Next up</Text>
+                  <Text style={[styles.nextTaskLabel, { color: t.subtext }]}>NEXT UP</Text>
                   <Text style={[styles.nextTaskTitle, { color: t.text }]} numberOfLines={1}>
                     {nextTask.title}
                   </Text>
                 </View>
                 <Text style={[styles.nextTaskCount, { color: t.ocean600 }]}>{tasks.openCount} open</Text>
-                <Ionicons name="chevron-forward" size={15} color={t.faint} />
+                <Ionicons name="chevron-forward" size={14} color={t.faint} />
               </GlassCard>
             </Entrance>
           ) : null}
@@ -174,7 +176,7 @@ export function HomeScreen() {
           {/* recent */}
           <Entrance delay={300}>
             <View style={styles.recentHead}>
-              <Text style={[styles.recentTitle, { color: t.text }]}>Recent transactions</Text>
+              <Text style={[styles.recentTitle, { color: t.text }]}>Recent</Text>
               {recent.length > 0 && (
                 <PressableScale onPress={() => navigation.navigate('History' as never)}>
                   <Text style={[styles.seeAll, { color: t.ocean600 }]}>See all</Text>
@@ -185,9 +187,9 @@ export function HomeScreen() {
 
           {recent.length === 0 ? (
             <EmptyState
-              emoji="🌊"
+              icon="water"
               title="No transactions yet"
-              body="Tap Add to log your first expense, or Scan to capture a grocery receipt — your advisor wakes up with the first entry."
+              body="Tap Add to log your first expense, or scan a receipt to get started. Your advisor turns on with the first entry."
             />
           ) : (
             recent.map((tx, i) => {
@@ -216,29 +218,44 @@ export function HomeScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: 'transparent' },
-  monthRow: { flexDirection: 'row', alignItems: 'center', marginTop: spacing.lg },
-  monthBtn: { padding: 6 },
-  monthText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700', marginHorizontal: spacing.sm },
-  glassLabel: { color: '#A0762B', fontSize: 12.5, marginBottom: 2, fontWeight: '700', letterSpacing: 0.2 },
-  net: { fontSize: 32, fontWeight: '900', fontFamily: undefined },
-  splitRow: { flexDirection: 'row', marginTop: spacing.md },
-  split: { flex: 1 },
-  divider: { width: 1, backgroundColor: 'rgba(30,44,60,0.14)', marginHorizontal: spacing.md },
-  dotRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 2 },
-  dot: { width: 8, height: 8, borderRadius: 4, marginRight: 6 },
-  splitLabel: { color: '#5C6C7B', fontSize: 12 },
-  splitValue: { color: '#1D2D3E', fontSize: 16, fontWeight: '800' },
-  body: { paddingHorizontal: spacing.xl, paddingTop: spacing.lg },
-  statsRow: { flexDirection: 'row', gap: spacing.md },
-  statsWrap: { flex: 1 },
-  statCard: {
-    flex: 1,
-    borderRadius: radius.md,
-    padding: spacing.lg,
+  balanceCard: { marginTop: spacing.lg },
+  cardTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 4,
   },
-  statLabel: { fontSize: 12, marginBottom: 4 },
-  statValue: { fontSize: 18, fontWeight: '800' },
-  statAction: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  cardLabel: { fontFamily: font.bold, fontSize: 11, letterSpacing: 1.2 },
+  monthRow: { flexDirection: 'row', alignItems: 'center' },
+  monthBtn: { padding: 4 },
+  monthText: { fontFamily: font.bold, fontSize: 12.5, marginHorizontal: 2 },
+  net: { fontFamily: font.heavy, fontSize: 32, letterSpacing: 0.2 },
+  splitRow: {
+    flexDirection: 'row',
+    marginTop: spacing.md,
+    paddingTop: spacing.md,
+    borderTopWidth: 1,
+  },
+  split: { flex: 1 },
+  divider: { width: 1, alignSelf: 'stretch', marginHorizontal: spacing.md },
+  dotRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 2 },
+  dot: { width: 7, height: 7, borderRadius: 4, marginRight: 6 },
+  splitLabel: { fontFamily: font.medium, fontSize: 12 },
+  splitValue: { fontFamily: font.bold, fontSize: 15 },
+  body: { paddingHorizontal: spacing.xl, paddingTop: spacing.lg, paddingBottom: 130 },
+  statCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    paddingVertical: spacing.md + 2,
+    paddingHorizontal: spacing.lg,
+  },
+  statCell: { flex: 1, alignItems: 'flex-start' },
+  statLabel: { fontFamily: font.bold, fontSize: 10, letterSpacing: 1.2, marginBottom: 4 },
+  statValue: { fontFamily: font.bold, fontSize: 17 },
+  statAction: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  statDivider: { width: 1, alignSelf: 'stretch', marginHorizontal: spacing.lg },
   actionRow: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.md },
   actionWrap: { flex: 1 },
   actionBtn: { flex: 1, borderRadius: radius.md },
@@ -247,20 +264,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 13,
-    gap: 8,
-    backgroundColor: '#0A5C8C',
+    paddingVertical: 12,
+    gap: 7,
   },
   actionScan: {
     borderRadius: radius.md,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 13,
-    gap: 8,
-    backgroundColor: '#E9C46A',
+    paddingVertical: 12,
+    gap: 7,
   },
-  addText: { color: '#FFFFFF', fontWeight: '800', fontSize: 14 },
+  actionText: { fontFamily: font.bold, fontSize: 14, letterSpacing: 0.1 },
   nextTask: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -270,19 +285,23 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
   },
   nextTaskIcon: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: '#0A5C8C',
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  nextTaskIconHi: { backgroundColor: '#C98A2C' },
   nextTaskMid: { flex: 1, marginHorizontal: spacing.md },
-  nextTaskLabel: { fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.6 },
-  nextTaskTitle: { fontSize: 14.5, fontWeight: '800', marginTop: 1 },
-  nextTaskCount: { fontSize: 12, fontWeight: '800', marginRight: 4 },
-  recentHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: spacing.xl, marginBottom: spacing.md },
-  recentTitle: { fontSize: 17, fontWeight: '800' },
-  seeAll: { fontWeight: '700', fontSize: 13 },
+  nextTaskLabel: { fontFamily: font.bold, fontSize: 9.5, letterSpacing: 1.2 },
+  nextTaskTitle: { fontFamily: font.bold, fontSize: 14, marginTop: 2 },
+  nextTaskCount: { fontFamily: font.bold, fontSize: 12, marginRight: 4 },
+  recentHead: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: spacing.xl,
+    marginBottom: spacing.md,
+  },
+  recentTitle: { fontFamily: font.display, fontSize: 19, color: '#1A2B3C' },
+  seeAll: { fontFamily: font.bold, fontSize: 13 },
 });

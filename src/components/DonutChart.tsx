@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { useTheme } from '../store/ThemeContext';
-import { radius, spacing } from '../theme';
+import { font, radius, spacing } from '../theme';
 import { CategoryTotal } from '../types';
 import { formatCompact } from '../utils/money';
 
@@ -82,14 +82,14 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     padding: spacing.lg,
   },
-  heading: { fontWeight: '800', fontSize: 16, marginBottom: spacing.md },
+  heading: { fontFamily: font.bold, fontSize: 16, marginBottom: spacing.md },
   chartRow: { flexDirection: 'row', alignItems: 'center' },
   center: { alignItems: 'center' },
   totalLabel: { fontSize: 12 },
-  totalValue: { fontSize: 18, fontWeight: '800' },
+  totalValue: { fontSize: 18, fontFamily: font.bold },
   legend: { flex: 1, marginLeft: spacing.lg, gap: 8 },
   legendRow: { flexDirection: 'row', alignItems: 'center' },
   dot: { width: 10, height: 10, borderRadius: 5, marginRight: 8 },
   legendName: { flex: 1, fontSize: 13 },
-  legendAmt: { fontSize: 13, fontWeight: '700' },
+  legendAmt: { fontSize: 13, fontFamily: font.bold },
 });

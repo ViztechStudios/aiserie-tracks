@@ -11,7 +11,7 @@ import { Entrance } from '../components/Entrance';
 import { PressableScale } from '../components/PressableScale';
 import { useFinance } from '../store/FinanceContext';
 import { useTheme } from '../store/ThemeContext';
-import { radius, spacing } from '../theme';
+import { font, radius, spacing } from '../theme';
 import { buildAdvisorReport, currentMonthKey, monthLabel, shiftMonth } from '../utils/stats';
 import { formatMoney } from '../utils/money';
 import { useResponsive } from '../hooks/useResponsive';
@@ -57,28 +57,28 @@ export function AdvisorScreen() {
             </PressableScale>
           </View>
 
-          {/* hero: safe to spend — paper over dusk */}
-          <GlassCard hi tint="#FFFDF8">
+          {/* hero: safe to spend — paper set into the ink panel */}
+          <GlassCard hi tint={t.card}>
             {ym === currentMonthKey() && report.safeToSpendPerDay !== null ? (
               <>
-                <Text style={styles.heroLabel}>Safe to spend per day</Text>
-                <Text style={styles.heroValue}>{formatMoney(report.safeToSpendPerDay, finance.settings.currency)}</Text>
-                <Text style={styles.heroSub}>
+                <Text style={[styles.heroLabel, { color: t.sun500 }]}>Safe to spend per day</Text>
+                <Text style={[styles.heroValue, { color: t.text }]}>{formatMoney(report.safeToSpendPerDay, finance.settings.currency)}</Text>
+                <Text style={[styles.heroSub, { color: t.subtext }]}>
                   over the last {report.daysRemaining} day{report.daysRemaining === 1 ? '' : 's'} of {monthLabel(ym, true)}
                 </Text>
-                <View style={styles.heroDivider} />
-                <Text style={styles.heroSub2}>
+                <View style={[styles.heroDivider, { backgroundColor: t.line }]} />
+                <Text style={[styles.heroSub2, { color: t.text }]}>
                   At today's pace of {formatMoney(report.dailyAvgExpense, finance.settings.currency)}/day, you will finish
                   around {formatMoney(report.projectedExpense, finance.settings.currency)} for the month.
                 </Text>
               </>
             ) : (
               <>
-                <Text style={styles.heroLabel}>{monthLabel(ym, true)} summary</Text>
-                <Text style={styles.heroValue}>
+                <Text style={[styles.heroLabel, { color: t.sun500 }]}>{monthLabel(ym, true)} summary</Text>
+                <Text style={[styles.heroValue, { color: t.text }]}>
                   {formatMoney(report.net, finance.settings.currency)}
                 </Text>
-                <Text style={styles.heroSub}>
+                <Text style={[styles.heroSub, { color: t.subtext }]}>
                   {formatMoney(report.income, finance.settings.currency)} in · {formatMoney(report.expense, finance.settings.currency)} out
                 </Text>
               </>
@@ -133,11 +133,11 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: 'transparent' },
   monthRow: { flexDirection: 'row', alignItems: 'center', marginTop: spacing.lg },
   monthBtn: { padding: 6 },
-  monthText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700', marginHorizontal: spacing.sm },
-  heroLabel: { color: '#A0762B', fontSize: 12.5, marginBottom: 2, fontWeight: '700', letterSpacing: 0.2 },
-  heroValue: { color: '#1D2D3E', fontSize: 30, fontWeight: '900' },
-  heroSub: { color: '#5C6C7B', fontSize: 13, marginTop: 4 },
-  heroSub2: { color: '#3C4C5C', fontSize: 12.5, lineHeight: 18 },
+  monthText: { color: '#FFFFFF', fontFamily: font.bold, fontSize: 14, marginHorizontal: spacing.sm },
+  heroLabel: { fontFamily: font.bold, fontSize: 11, marginBottom: 2, letterSpacing: 1.2 },
+  heroValue: { fontFamily: font.heavy, fontSize: 30 },
+  heroSub: { fontFamily: font.medium, fontSize: 13, marginTop: 4 },
+  heroSub2: { fontFamily: font.medium, fontSize: 12.5, lineHeight: 18 },
   heroDivider: { height: 1, backgroundColor: 'rgba(30,44,60,0.14)', marginVertical: spacing.md },
   body: { paddingHorizontal: spacing.xl, paddingTop: spacing.lg },
   rateCard: {
@@ -148,7 +148,7 @@ const styles = StyleSheet.create({
   },
   rateRow: { flexDirection: 'row' },
   rateItem: { flex: 1, alignItems: 'center' },
-  rateNum: { fontSize: 18, fontWeight: '900' },
-  rateLabel: { fontSize: 11, marginTop: 3 },
-  sectionTitle: { fontSize: 17, fontWeight: '800', marginVertical: spacing.lg },
+  rateNum: { fontFamily: font.heavy, fontSize: 17 },
+  rateLabel: { fontFamily: font.medium, fontSize: 11, marginTop: 3 },
+  sectionTitle: { fontFamily: font.display, fontSize: 19, color: '#1A2B3C', marginVertical: spacing.lg },
 });

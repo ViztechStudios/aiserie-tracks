@@ -1,6 +1,5 @@
 import React from 'react';
 import { Animated, StyleProp, StyleSheet, TextStyle, View, ViewStyle } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { darkColors, glass, lightColors, mix, radius } from '../theme';
 import { useTheme } from '../store/ThemeContext';
 import { PressableScale } from './PressableScale';
@@ -11,7 +10,7 @@ interface Props {
   /** Adds gentle press feedback and calls onPress. */
   onPress?: () => void;
   onLongPress?: () => void;
-  /** Hero treatment: stronger shadow + capiz-shell edge. */
+  /** Hero treatment: stronger shadow + a single gold rule along the top. */
   hi?: boolean;
   /** Overrides the paper fill (e.g. tinted surfaces). */
   tint?: string;
@@ -20,23 +19,22 @@ interface Props {
 }
 
 /**
- * The one paper surface used across the app: a solid warm fill, a hairline
- * border and a small directional shadow. Paper, not glass — the depth is in
- * the typography and the capiz-shell iridescent edge that hero cards carry
- * along their top, like light through a windowpane.
+ * The one paper surface used across the app: a solid warm-white fill, a
+ * hairline border and a small directional shadow. Hero cards carry a single
+ * gold rule along their top edge — one quiet, crafted signature instead of
+ * a rainbow of effects.
  */
 export function GlassCard({ children, style, onPress, onLongPress, hi, tint }: Props) {
   const { progress, isDark, shadow } = useTheme();
   const surface: Animated.WithAnimatedValue<StyleProp<ViewStyle>> = [
     styles.base,
     glass.surface,
-    hi && styles.hi,
     {
       backgroundColor: tint ?? mix(progress, lightColors.card, darkColors.card),
       borderColor: mix(
         progress,
-        hi ? lightColors.glassBorder : lightColors.glassBorderSoft,
-        hi ? darkColors.glassBorder : darkColors.glassBorderSoft
+        lightColors.glassBorderSoft,
+        darkColors.glassBorderSoft
       ),
     },
     hi ? shadow.cardHi : shadow.card,
@@ -44,22 +42,7 @@ export function GlassCard({ children, style, onPress, onLongPress, hi, tint }: P
   ];
   const body = (
     <>
-      {hi ? (
-        <View pointerEvents="none" style={styles.capizWrap}>
-          <LinearGradient
-            colors={[
-              'rgba(124,195,220,0.85)',
-              'rgba(168,214,224,0.70)',
-              'rgba(233,196,106,0.85)',
-              'rgba(224,164,78,0.70)',
-              'rgba(168,214,224,0.65)',
-            ]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.capiz}
-          />
-        </View>
-      ) : null}
+      {hi ? <View pointerEvents="none" style={[styles.goldRule, { backgroundColor: isDark ? darkColors.sun500 : lightColors.sun500 }]} /> : null}
       {children}
     </>
   );
@@ -79,13 +62,12 @@ const styles = StyleSheet.create({
     padding: 18,
     overflow: 'hidden',
   },
-  hi: {},
-  capizWrap: {
+  goldRule: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     height: 2,
+    opacity: 0.85,
   },
-  capiz: { flex: 1, opacity: 0.6 },
 });

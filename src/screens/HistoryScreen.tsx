@@ -9,9 +9,9 @@ import { useFinance } from '../store/FinanceContext';
 import { useUI } from '../store/UIContext';
 import { useTheme } from '../store/ThemeContext';
 import { categoriesFor, getCategory } from '../data/categories';
-import { radius, spacing } from '../theme';
+import { brandOcean, font, radius, spacing } from '../theme';
 import { Transaction, TxType } from '../types';
-import { groupByDay } from '../utils/stats';
+import { groupByDay, dayLabel } from '../utils/stats';
 import { formatMoney } from '../utils/money';
 import { useResponsive } from '../hooks/useResponsive';
 
@@ -111,7 +111,7 @@ export function HistoryScreen() {
       </View>
 
       {filtered.length === 0 ? (
-        <EmptyState emoji="🔎" title="Nothing found" body="Try a different search term, or clear the filters above." />
+        <EmptyState icon="search" title="Nothing found" body="Try a different search term, or clear the filters above." />
       ) : (
       <ScrollView
         contentContainerStyle={[
@@ -123,7 +123,7 @@ export function HistoryScreen() {
           {groups.map((g) => (
             <View key={g.date}>
               <View style={styles.dayHead}>
-                <Text style={[styles.dayText, { color: t.subtext }]}>{g.date}</Text>
+                <Text style={[styles.dayText, { color: t.subtext }]}>{dayLabel(g.date)}</Text>
                 <Text style={[styles.dayTotal, { color: t.subtext }]}>
                   {g.income > 0 && <Text style={{ color: t.income }}>+{formatMoney(g.income, finance.settings.currency)}  </Text>}
                   {g.expense > 0 && <Text style={{ color: t.expense }}>−{formatMoney(g.expense, finance.settings.currency)}</Text>}
@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     marginTop: spacing.lg,
   },
-  searchInput: { flex: 1, color: '#FFFFFF', fontSize: 14, paddingVertical: 0 },
+  searchInput: { flex: 1, color: '#FFFFFF', fontFamily: font.medium, fontSize: 14, paddingVertical: 0 },
   chipRow: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
   chip: {
     paddingHorizontal: 14,
@@ -182,7 +182,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.3)',
   },
   chipOn: { backgroundColor: '#FFFFFF', borderColor: '#FFFFFF' },
-  chipText: { color: 'rgba(255,255,255,0.92)', fontSize: 13, fontWeight: '700' },
+  chipText: { color: 'rgba(255,255,255,0.92)', fontFamily: font.bold, fontSize: 13 },
   chipTextOn: { color: '#0A5C8C' },
   catStrip: {
     borderBottomWidth: 1,
@@ -194,8 +194,8 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     borderWidth: 1.5,
   },
-  catChipOn: { backgroundColor: '#0A5C8C', borderColor: '#0A5C8C' },
-  catChipText: { fontSize: 12, fontWeight: '600' },
+  catChipOn: { backgroundColor: brandOcean, borderColor: brandOcean },
+  catChipText: { fontFamily: font.medium, fontSize: 12 },
   catChipTextOn: { color: '#FFFFFF' },
   list: { paddingHorizontal: spacing.xl, paddingBottom: 120 },
   dayHead: {
@@ -206,7 +206,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
     paddingHorizontal: 2,
   },
-  dayText: { fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },
-  dayTotal: { fontSize: 12, fontWeight: '700' },
-  hint: { fontSize: 12, textAlign: 'center', marginTop: spacing.lg },
+  dayText: { fontFamily: font.bold, fontSize: 11, letterSpacing: 0.8, textTransform: 'uppercase' },
+  dayTotal: { fontFamily: font.bold, fontSize: 12 },
+  hint: { fontFamily: font.medium, fontSize: 12, textAlign: 'center', marginTop: spacing.lg },
 });

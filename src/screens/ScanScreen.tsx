@@ -21,7 +21,7 @@ import { useFinance } from '../store/FinanceContext';
 import { useUI } from '../store/UIContext';
 import { useTheme } from '../store/ThemeContext';
 import { categoriesFor } from '../data/categories';
-import { radius, spacing } from '../theme';
+import { brandOcean, font, radius, spacing } from '../theme';
 import { parseReceiptText, receiptSummary } from '../utils/receipt';
 import { todayISO } from '../utils/stats';
 import { formatMoney, parseAmount } from '../utils/money';
@@ -71,7 +71,7 @@ export function ScanScreen() {
       note: note.trim() || 'Scanned receipt',
       source: 'scan',
     });
-    Alert.alert('Saved 🎉', `${formatMoney(amount, finance.settings.currency)} logged under your chosen category.`);
+    Alert.alert('Saved', `${formatMoney(amount, finance.settings.currency)} logged under your chosen category.`);
     setStage('camera');
     setPhotoUri(null);
     setAmountRaw('');
@@ -136,12 +136,14 @@ export function ScanScreen() {
         <AuroraBackground />
         <GradientHeader title="Scan receipt" subtitle="Point your camera at a grocery receipt" />
         <View style={styles.permissionBox}>
-          <Text style={styles.permissionEmoji}>📷</Text>
+          <View style={[styles.permissionBadge, { backgroundColor: t.ice50, borderColor: t.line }]}>
+            <Ionicons name="camera-outline" size={26} color={t.subtext} />
+          </View>
           <Text style={[styles.permissionTitle, { color: t.text }]}>Camera access needed</Text>
           <Text style={[styles.permissionBody, { color: t.subtext }]}>
             Aiserie uses the camera only to read receipts on your device. Nothing is uploaded anywhere.
           </Text>
-          <TouchableOpacity onPress={requestPermission} style={[styles.permissionBtn, { backgroundColor: t.ocean600 }]}>
+          <TouchableOpacity onPress={requestPermission} style={[styles.permissionBtn, { backgroundColor: brandOcean }]}>
             <Text style={[styles.permissionBtnText, { color: t.white }]}>Allow camera</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={startManual}>
@@ -158,7 +160,7 @@ export function ScanScreen() {
       <GradientHeader title="Scan receipt" subtitle="Point at the receipt, hold steady, tap capture">
         <GlassCard>
           <Text style={styles.tipText}>
-            💡 Works best on flat, well-lit receipts. The total is read on-device and saved straight to your log.
+            Works best on flat, well-lit receipts. The total is read on-device and saved straight to your log.
           </Text>
         </GlassCard>
       </GradientHeader>
@@ -276,14 +278,22 @@ export function ScanScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: 'transparent' },
-  tipText: { color: '#FFFFFF', fontSize: 13, lineHeight: 19 },
+  tipText: { color: '#FFFFFF', fontFamily: font.medium, fontSize: 13, lineHeight: 19 },
   permissionBox: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.xxl },
-  permissionEmoji: { fontSize: 46, marginBottom: spacing.md },
-  permissionTitle: { fontSize: 19, fontWeight: '800', marginBottom: 6 },
-  permissionBody: { fontSize: 13, textAlign: 'center', lineHeight: 19, marginBottom: spacing.lg },
+  permissionBadge: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.md,
+  },
+  permissionTitle: { fontFamily: font.display, fontSize: 20, marginBottom: 6 },
+  permissionBody: { fontFamily: font.medium, fontSize: 13, textAlign: 'center', lineHeight: 19, marginBottom: spacing.lg },
   permissionBtn: { borderRadius: radius.md, paddingHorizontal: 26, paddingVertical: 13 },
-  permissionBtnText: { fontWeight: '800' },
-  permissionManual: { marginTop: spacing.md, fontWeight: '600', fontSize: 13 },
+  permissionBtnText: { fontFamily: font.bold },
+  permissionManual: { marginTop: spacing.md, fontFamily: font.bold, fontSize: 13 },
   cameraWrap: { flex: 1, overflow: 'hidden', borderBottomLeftRadius: radius.lg, borderBottomRightRadius: radius.lg },
   camera: { flex: 1 },
   cameraControls: {
@@ -326,6 +336,7 @@ const styles = StyleSheet.create({
     bottom: 10,
     alignSelf: 'center',
     color: 'rgba(255,255,255,0.85)',
+    fontFamily: font.medium,
     fontSize: 12,
   },
   review: { padding: spacing.xl, paddingBottom: 140 },
@@ -335,8 +346,8 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     padding: spacing.lg,
   },
-  ocrInfo: { fontSize: 13, lineHeight: 19, marginBottom: spacing.md },
-  label: { fontSize: 11, fontWeight: '800', letterSpacing: 0.8, marginBottom: 6, marginTop: spacing.md },
+  ocrInfo: { fontFamily: font.medium, fontSize: 13, lineHeight: 19, marginBottom: spacing.md },
+  label: { fontFamily: font.bold, fontSize: 10.5, letterSpacing: 1.2, marginBottom: 6, marginTop: spacing.md },
   amountRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -344,9 +355,9 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     paddingHorizontal: spacing.md,
   },
-  peso: { fontSize: 24, fontWeight: '800', marginRight: 8 },
-  amountInput: { flex: 1, fontSize: 26, fontWeight: '800', paddingVertical: 8 },
-  formatted: { fontSize: 12, marginTop: 4 },
+  peso: { fontFamily: font.heavy, fontSize: 22, marginRight: 8 },
+  amountInput: { flex: 1, fontFamily: font.heavy, fontSize: 26, paddingVertical: 8 },
+  formatted: { fontFamily: font.medium, fontSize: 12, marginTop: 4 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: {
     paddingHorizontal: 12,
@@ -354,7 +365,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     borderWidth: 1.5,
   },
-  chipText: { fontSize: 13, fontWeight: '600' },
+  chipText: { fontFamily: font.medium, fontSize: 13 },
   noteInput: {
     borderWidth: 1.5,
     borderRadius: radius.md,
@@ -363,7 +374,7 @@ const styles = StyleSheet.create({
   },
   reviewActions: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginTop: spacing.lg },
   retakeBtn: { paddingVertical: 14, paddingHorizontal: 18, borderRadius: radius.md },
-  retakeText: { fontWeight: '800' },
+  retakeText: { fontFamily: font.bold },
   saveBtn: { borderRadius: radius.md, paddingVertical: 15, alignItems: 'center' },
-  saveText: { fontWeight: '800', fontSize: 16 },
+  saveText: { fontFamily: font.bold, fontSize: 15 },
 });

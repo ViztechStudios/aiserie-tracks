@@ -7,14 +7,14 @@ import { useTheme } from '../store/ThemeContext';
 import { getBrand } from '../data/banks';
 import { accountBalance } from '../utils/accounts';
 import { formatMoney } from '../utils/money';
-import { radius, spacing } from '../theme';
+import { font, radius, shadow, spacing } from '../theme';
 import { PressableScale } from './PressableScale';
 
-/** Horizontal strip of wallet balance cards shown under the Home balance card. */
+/** Horizontal strip of wallet balance cards shown on Home. */
 export function AccountsStrip() {
   const finance = useFinance();
   const ui = useUI();
-  const { t, isDark } = useTheme();
+  const { t, shadow } = useTheme();
 
   return (
     <View style={styles.wrap}>
@@ -23,7 +23,11 @@ export function AccountsStrip() {
           const balance = accountBalance(account, finance.transactions);
           const brand = getBrand(account.logoId);
           return (
-            <PressableScale key={account.id} onPress={() => ui.openWallets(account.id)} style={styles.card}>
+            <PressableScale
+              key={account.id}
+              onPress={() => ui.openWallets(account.id)}
+              style={[styles.card, { backgroundColor: t.card, borderColor: t.glassBorderSoft }, shadow.card]}
+            >
               <View style={[styles.accent, { backgroundColor: account.color }]} />
               <View style={styles.topRow}>
                 {brand ? (
@@ -31,19 +35,22 @@ export function AccountsStrip() {
                 ) : (
                   <Text style={styles.emoji}>{account.emoji}</Text>
                 )}
-                <Text style={styles.name} numberOfLines={1}>
+                <Text style={[styles.name, { color: t.text }]} numberOfLines={1}>
                   {account.name}
                 </Text>
               </View>
-              <Text style={[styles.balance, { color: balance >= 0 ? t.white : '#FFD9DD' }]} numberOfLines={1}>
+              <Text style={[styles.balance, { color: balance >= 0 ? t.text : t.expense }]} numberOfLines={1}>
                 {formatMoney(balance, finance.settings.currency)}
               </Text>
             </PressableScale>
           );
         })}
-        <PressableScale onPress={() => ui.openWallets()} style={[styles.card, styles.addCard]}>
-          <Ionicons name="add" size={20} color="#E9C46A" />
-          <Text style={styles.addText}>Add wallet</Text>
+        <PressableScale
+          onPress={() => ui.openWallets()}
+          style={[styles.card, styles.addCard, { backgroundColor: t.card, borderColor: t.glassBorderSoft }, shadow.card]}
+        >
+          <Ionicons name="add" size={18} color={t.sun500} />
+          <Text style={[styles.addText, { color: t.subtext }]}>Add wallet</Text>
         </PressableScale>
       </ScrollView>
     </View>
@@ -51,12 +58,10 @@ export function AccountsStrip() {
 }
 
 const styles = StyleSheet.create({
-  wrap: { marginTop: spacing.md, marginHorizontal: -spacing.xl },
+  wrap: { marginHorizontal: -spacing.xl },
   content: { paddingHorizontal: spacing.xl, gap: spacing.md },
   card: {
     width: 148,
-    backgroundColor: 'rgba(6,20,34,0.34)',
-    borderColor: 'rgba(255,255,255,0.18)',
     borderWidth: 1,
     borderRadius: radius.md,
     padding: spacing.md,
@@ -66,14 +71,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    backgroundColor: 'rgba(233,196,106,0.10)',
-    borderColor: 'rgba(233,196,106,0.45)',
   },
   topRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  tile: { width: 24, height: 24, borderRadius: 6 },
-  emoji: { fontSize: 15 },
-  name: { color: 'rgba(255,255,255,0.92)', fontSize: 12, fontWeight: '700', flexShrink: 1 },
-  balance: { color: '#FFFFFF', fontSize: 15, fontWeight: '900', marginTop: 6 },
+  tile: { width: 22, height: 22, borderRadius: 5 },
+  emoji: { fontSize: 14 },
+  name: { fontFamily: font.bold, fontSize: 12, flexShrink: 1 },
+  balance: { fontFamily: font.heavy, fontSize: 15, marginTop: 8, letterSpacing: 0.1 },
   accent: { position: 'absolute', top: 0, left: 0, right: 0, height: 3 },
-  addText: { color: '#E9C46A', fontSize: 12, fontWeight: '700' },
+  addText: { fontFamily: font.bold, fontSize: 12 },
 });

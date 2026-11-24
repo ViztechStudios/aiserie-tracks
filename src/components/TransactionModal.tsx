@@ -21,7 +21,7 @@ import { useTheme } from '../store/ThemeContext';
 import { categoriesFor, getCategory } from '../data/categories';
 import { getBrand } from '../data/banks';
 import { Transaction, TxType } from '../types';
-import { radius, spacing } from '../theme';
+import { font, radius, spacing } from '../theme';
 import { formatMoney, parseAmount } from '../utils/money';
 import { todayISO } from '../utils/stats';
 import { useResponsive } from '../hooks/useResponsive';
@@ -265,7 +265,6 @@ export function TransactionModal() {
                   boxSizing: 'border-box',
                   padding: '12px 14px',
                   fontSize: 15,
-                  fontWeight: 600,
                   fontFamily: 'inherit',
                   color: t.text,
                   backgroundColor: t.ice50,
@@ -346,10 +345,10 @@ const styles = StyleSheet.create({
     maxHeight: '92%',
   },
   grabber: { alignSelf: 'center', width: 44, height: 5, borderRadius: 3, marginBottom: spacing.md },
-  title: { fontSize: 20, fontWeight: '800', marginBottom: spacing.lg },
+  title: { fontFamily: font.display, fontSize: 20, marginBottom: spacing.lg },
   toggle: { flexDirection: 'row', borderRadius: radius.md, padding: 4, marginBottom: spacing.lg },
   toggleBtn: { flex: 1, paddingVertical: 10, borderRadius: radius.md - 4, alignItems: 'center' },
-  toggleText: { fontWeight: '700', fontSize: 14 },
+  toggleText: { fontFamily: font.bold, fontSize: 14 },
   amountBox: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -359,10 +358,10 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     marginBottom: spacing.lg,
   },
-  currencyChip: { fontSize: 24, fontWeight: '800', marginRight: 10 },
-  amountInput: { flex: 1, fontSize: 26, fontWeight: '800', paddingVertical: 4 },
+  currencyChip: { fontFamily: font.heavy, fontSize: 24, marginRight: 10 },
+  amountInput: { flex: 1, fontFamily: font.heavy, fontSize: 26, paddingVertical: 4 },
   amountHint: { fontSize: 12 },
-  section: { fontSize: 12, fontWeight: '700', marginTop: spacing.md, marginBottom: spacing.sm, textTransform: 'uppercase', letterSpacing: 0.6 },
+  section: { fontFamily: font.bold, fontSize: 10.5, letterSpacing: 1.2, marginTop: spacing.md, marginBottom: spacing.sm, textTransform: 'uppercase' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: {
     paddingHorizontal: 12,
@@ -373,14 +372,14 @@ const styles = StyleSheet.create({
   chipRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   chipLogo: { width: 18, height: 18, borderRadius: 5 },
   chipEmoji: { fontSize: 13 },
-  chipText: { fontSize: 13, fontWeight: '600' },
+  chipText: { fontFamily: font.medium, fontSize: 13 },
   dateBtn: {
     borderWidth: 1.5,
     borderRadius: radius.md,
     paddingVertical: 12,
     paddingHorizontal: spacing.md,
   },
-  dateText: { fontSize: 15, fontWeight: '600' },
+  dateText: { fontFamily: font.bold, fontSize: 14.5 },
   noteInput: {
     borderWidth: 1.5,
     borderRadius: radius.md,
@@ -391,11 +390,11 @@ const styles = StyleSheet.create({
   },
   actions: { flexDirection: 'row', alignItems: 'center', marginTop: spacing.lg, gap: spacing.md },
   deleteBtn: { paddingVertical: 14, paddingHorizontal: 18, borderRadius: radius.md },
-  deleteText: { fontWeight: '800' },
+  deleteText: { fontFamily: font.bold },
   saveBtn: { borderRadius: radius.md, paddingVertical: 15, alignItems: 'center' },
-  saveText: { fontWeight: '800', fontSize: 16 },
+  saveText: { fontFamily: font.bold, fontSize: 16 },
   pickerBackdrop: { flex: 1, justifyContent: 'flex-end' },
   pickerSheet: { paddingBottom: spacing.lg },
   pickerDone: { alignSelf: 'center', marginTop: -spacing.sm, paddingHorizontal: 24, paddingVertical: 10 },
-  pickerDoneText: { fontWeight: '800', fontSize: 16 },
+  pickerDoneText: { fontFamily: font.bold, fontSize: 16 },
 });
