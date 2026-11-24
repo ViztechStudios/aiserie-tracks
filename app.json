@@ -1,0 +1,44 @@
+{
+  "expo": {
+    "name": "Aiserie Tracks",
+    "slug": "aiserie-tracks",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#F2F9FE",
+    "ios": {
+      "bundleIdentifier": "com.aiserie.tracks",
+      "supportsTablet": false,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Aiserie Tracks uses the camera to scan grocery receipts. Photos are processed on your device only."
+      }
+    },
+    "android": {
+      "package": "com.aiserie.tracks",
+      "adaptiveIcon": {
+        "backgroundColor": "#0EA5E9",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "permissions": ["android.permission.CAMERA"]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "@react-native-community/datetimepicker",
+      ["expo-splash-screen", {
+        "image": "./assets/splash-icon.png",
+        "imageWidth": 220,
+        "resizeMode": "contain",
+        "backgroundColor": "#E0F2FE"
+      }],
+      ["expo-camera", {
+        "cameraPermission": "Allow Aiserie Tracks to use the camera to scan your grocery receipts."
+      }]
+    ]
+  }
+}

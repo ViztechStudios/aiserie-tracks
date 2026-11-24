@@ -1,0 +1,58 @@
+name: EAS Build
+
+# Builds Aiserie Tracks with Expo EAS straight from GitHub.
+#
+# ONE-TIME SETUP (see README for details):
+#   1. eas login (create a free account at https://expo.dev)
+#   2. npx eas init            (links this repo to your Expo project)
+#   3. Add a repository secret named EXPO_TOKEN with your Expo access token
+#      (expo.dev -> Account Settings -> Access Tokens)
+# Then every push to main (or a manual run below) builds the app in the cloud.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: 'Platform to build'
+        required: true
+        default: 'android'
+        type: choice
+        options:
+          - android
+          - ios
+          - all
+      profile:
+        description: 'Build profile (preview = installable APK, production = store build)'
+        required: true
+        default: 'preview'
+        type: choice
+        options:
+          - preview
+          - production
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Setup Expo and EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build with EAS
+        run: eas build --platform ${{ github.event.inputs.platform || 'android' }} --profile ${{ github.event.inputs.profile || 'preview' }} --non-interactive
