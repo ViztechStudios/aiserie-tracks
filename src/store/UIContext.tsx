@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
 import { Transaction } from '../types';
+import { UpdateInfo } from '../services/updateCheck';
 
 export type LegalDoc = 'privacy' | 'terms';
 
@@ -22,10 +23,12 @@ interface UIContextValue extends ModalState {
   walletsVisible: boolean;
   editAccountId?: string;
   legalDoc: LegalDoc | null;
+  updateInfo: UpdateInfo | null;
   openAdd: (preset?: ModalPreset) => void;
   openEdit: (tx: Transaction) => void;
   openWallets: (editAccountId?: string) => void;
   openLegal: (doc: LegalDoc) => void;
+  showUpdate: (info: UpdateInfo) => void;
   close: () => void;
 }
 
@@ -36,6 +39,7 @@ export function UIProvider({ children }: { children: React.ReactNode }) {
   const [walletsVisible, setWalletsVisible] = useState(false);
   const [editAccountId, setEditAccountId] = useState<string | undefined>(undefined);
   const [legalDoc, setLegalDoc] = useState<LegalDoc | null>(null);
+  const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
 
   const openAdd = useCallback((preset?: ModalPreset) => {
     setState({ visible: true, editing: undefined, preset });
@@ -54,6 +58,14 @@ export function UIProvider({ children }: { children: React.ReactNode }) {
     setLegalDoc(doc);
   }, []);
 
+  const showUpdate = useCallback((info: UpdateInfo) => {
+    setUpdateInfo(info);
+  }, []);
+
+  const closeUpdate = useCallback(() => {
+    setUpdateInfo(null);
+  }, []);
+
   const close = useCallback(() => {
     setState({ visible: false, editing: undefined, preset: undefined });
   }, []);
@@ -64,22 +76,25 @@ export function UIProvider({ children }: { children: React.ReactNode }) {
       walletsVisible,
       editAccountId,
       legalDoc,
+      updateInfo,
       openAdd,
       openEdit,
       openWallets,
       openLegal,
+      showUpdate,
       close,
       closeWallets: () => setWalletsVisible(false),
       closeLegal: () => setLegalDoc(null),
+      closeUpdate,
     }),
-    [state, walletsVisible, editAccountId, legalDoc, openAdd, openEdit, openWallets, openLegal, close]
+    [state, walletsVisible, editAccountId, legalDoc, updateInfo, openAdd, openEdit, openWallets, openLegal, showUpdate, close, closeUpdate]
   );
 
   return <UIContext.Provider value={value}>{children}</UIContext.Provider>;
 }
 
-export function useUI(): UIContextValue & { closeWallets: () => void; closeLegal: () => void } {
+export function useUI(): UIContextValue & { closeWallets: () => void; closeLegal: () => void; closeUpdate: () => void } {
   const ctx = useContext(UIContext);
   if (!ctx) throw new Error('useUI must be used inside UIProvider');
-  return ctx as UIContextValue & { closeWallets: () => void; closeLegal: () => void };
+  return ctx as UIContextValue & { closeWallets: () => void; closeLegal: () => void; closeUpdate: () => void };
 }

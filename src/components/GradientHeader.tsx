@@ -1,8 +1,9 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Animated, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, gradients, radius, spacing } from '../theme';
+import { gradientsDark, gradientsLight, lightColors, radius, spacing } from '../theme';
+import { useTheme } from '../store/ThemeContext';
 import { ViewStyle } from 'react-native';
 
 const ABS_FILL: ViewStyle = { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 };
@@ -13,16 +14,26 @@ interface Props {
   children?: React.ReactNode;
 }
 
-/** Deep-ocean page header with a light sheen, depth blobs and rounded bottom edge. */
+/** Deep-ocean (or midnight) page header with a light sheen, depth blobs and rounded bottom edge. */
 export function GradientHeader({ title, subtitle, children }: Props) {
   const insets = useSafeAreaInsets();
+  const { progress, gradients } = useTheme();
+  const lightOpacity = progress.interpolate({ inputRange: [0, 1], outputRange: [1, 0] });
+  const darkOpacity = progress.interpolate({ inputRange: [0, 1], outputRange: [0, 1] });
+  const fallback = progress.interpolate({
+    inputRange: [0, 1],
+    outputRange: [gradientsLight.header[1], gradientsDark.header[1]],
+  });
   return (
-    <LinearGradient
-      colors={gradients.header}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1.25, y: 1.1 }}
-      style={[styles.wrap, { paddingTop: insets.top + spacing.md }]}
-    >
+    <Animated.View style={[styles.wrap, { paddingTop: insets.top + spacing.md, backgroundColor: fallback }]}>
+      {/* light scheme ocean */}
+      <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { opacity: lightOpacity }]}>
+        <LinearGradient colors={gradientsLight.header} start={{ x: 0, y: 0 }} end={{ x: 1.25, y: 1.1 }} style={StyleSheet.absoluteFill} />
+      </Animated.View>
+      {/* dark scheme midnight */}
+      <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { opacity: darkOpacity }]}>
+        <LinearGradient colors={gradientsDark.header} start={{ x: 0, y: 0 }} end={{ x: 1.25, y: 1.1 }} style={StyleSheet.absoluteFill} />
+      </Animated.View>
       {/* decorative depth blobs */}
       <View pointerEvents="none" style={StyleSheet.absoluteFill}>
         <View style={styles.blobA} />
@@ -41,7 +52,7 @@ export function GradientHeader({ title, subtitle, children }: Props) {
         {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
         {children}
       </View>
-    </LinearGradient>
+    </Animated.View>
   );
 }
 
@@ -50,7 +61,6 @@ export { GlassCard } from './GlassCard';
 
 const styles = StyleSheet.create({
   wrap: {
-    backgroundColor: colors.ocean600,
     paddingHorizontal: spacing.xl,
     paddingBottom: spacing.xl + 6,
     borderBottomLeftRadius: radius.lg + 8,
@@ -78,7 +88,7 @@ const styles = StyleSheet.create({
   sheen: { ...ABS_FILL },
   content: { zIndex: 1 },
   title: {
-    color: colors.white,
+    color: lightColors.white,
     fontSize: 27,
     fontWeight: '800',
     letterSpacing: 0.2,

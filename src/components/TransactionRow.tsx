@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { colors, glass, radius, shadow, spacing } from '../theme';
+import { useTheme } from '../store/ThemeContext';
+import { radius, spacing } from '../theme';
 import { Category } from '../types';
 import { formatMoney } from '../utils/money';
 import { dayLabel } from '../utils/stats';
@@ -18,9 +19,10 @@ interface Props {
 }
 
 export function TransactionRow({ category, amount, type, date, note, currency, onPress, onLongPress }: Props) {
+  const { t, shadow } = useTheme();
   return (
     <PressableScale
-      style={[styles.row, glass.surface, shadow.card]}
+      style={[styles.row, { backgroundColor: t.card, borderColor: t.glassBorderSoft, borderWidth: 1 }, shadow.card]}
       onPress={onPress}
       onLongPress={onLongPress}
       scaleTo={0.975}
@@ -29,14 +31,14 @@ export function TransactionRow({ category, amount, type, date, note, currency, o
         <Text style={styles.emoji}>{category.emoji}</Text>
       </View>
       <View style={styles.mid}>
-        <Text style={styles.label} numberOfLines={1}>
+        <Text style={[styles.label, { color: t.text }]} numberOfLines={1}>
           {note ? note : category.label}
         </Text>
-        <Text style={styles.sub} numberOfLines={1}>
+        <Text style={[styles.sub, { color: t.subtext }]} numberOfLines={1}>
           {category.label} · {dayLabel(date)}
         </Text>
       </View>
-      <Text style={[styles.amount, { color: type === 'income' ? colors.income : colors.expense }]}>
+      <Text style={[styles.amount, { color: type === 'income' ? t.income : t.expense }]}>
         {type === 'income' ? '+' : '−'}
         {formatMoney(amount, currency)}
       </Text>
@@ -62,7 +64,7 @@ const styles = StyleSheet.create({
   },
   emoji: { fontSize: 20 },
   mid: { flex: 1, marginRight: spacing.sm },
-  label: { color: colors.text, fontWeight: '700', fontSize: 15 },
-  sub: { color: colors.subtext, fontSize: 12, marginTop: 2 },
+  label: { fontWeight: '700', fontSize: 15 },
+  sub: { fontSize: 12, marginTop: 2 },
   amount: { fontWeight: '800', fontSize: 15 },
 });

@@ -10,9 +10,9 @@ export function makeId(): string {
 export function buildSampleAccounts(): Account[] {
   const base = Date.now();
   return [
-    { id: makeId(), name: 'GCash', type: 'ewallet', emoji: '📱', color: '#0EA5E9', openingBalance: 2350, updatedAt: base },
-    { id: makeId(), name: 'Maya', type: 'ewallet', emoji: '💳', color: '#16B8A0', openingBalance: 890, updatedAt: base },
-    { id: makeId(), name: 'Cash wallet', type: 'cash', emoji: '💵', color: '#F5A524', openingBalance: 600, updatedAt: base },
+    { id: makeId(), name: 'GCash', type: 'ewallet', emoji: '📱', color: '#007DFE', logoId: 'gcash', openingBalance: 2350, updatedAt: base },
+    { id: makeId(), name: 'Maya', type: 'ewallet', emoji: '💳', color: '#21C064', logoId: 'maya', openingBalance: 890, updatedAt: base },
+    { id: makeId(), name: 'Cash wallet', type: 'cash', emoji: '💵', color: '#F5A524', logoId: 'cash', openingBalance: 600, updatedAt: base },
   ];
 }
 

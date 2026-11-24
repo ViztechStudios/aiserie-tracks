@@ -5,7 +5,7 @@ import * as Haptics from 'expo-haptics';
 interface Props {
   onPress?: () => void;
   onLongPress?: () => void;
-  style?: StyleProp<ViewStyle>;
+  style?: Animated.WithAnimatedValue<StyleProp<ViewStyle>>;
   children: React.ReactNode;
   /** How much to shrink while pressed. Keep it subtle. */
   scaleTo?: number;

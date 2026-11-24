@@ -18,6 +18,8 @@ export interface Account {
   type: AccountType;
   emoji: string;
   color: string;
+  /** Optional brand tile (GCash, BPI, ...) from the built-in catalog. */
+  logoId?: string;
   /** Balance the user declared when creating/reconciling the wallet. */
   openingBalance: number;
   updatedAt: number;

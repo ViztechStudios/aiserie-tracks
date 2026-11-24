@@ -4,30 +4,33 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { AuroraBackground } from './AuroraBackground';
 import { PRIVACY_POLICY, TERMS, LegalSection } from '../data/legal';
-import { colors, gradients, radius, spacing } from '../theme';
+import { useTheme } from '../store/ThemeContext';
 import { useUI } from '../store/UIContext';
 import { useResponsive } from '../hooks/useResponsive';
+import { radius, spacing } from '../theme';
 
 function DocBody({ sections }: { sections: LegalSection[] }) {
+  const { t } = useTheme();
   return (
     <>
       {sections.map((s) => (
         <View key={s.heading} style={styles.section}>
-          <Text style={styles.heading}>{s.heading}</Text>
+          <Text style={[styles.heading, { color: t.text }]}>{s.heading}</Text>
           {s.paragraphs.map((p, i) => (
-            <Text key={i} style={styles.para}>
+            <Text key={i} style={[styles.para, { color: t.subtext }]}>
               {p}
             </Text>
           ))}
         </View>
       ))}
-      <Text style={styles.footer}>Last updated: November 2026 · Aiserie Tracks v1.3.0</Text>
+      <Text style={[styles.footer, { color: t.faint }]}>Last updated: November 2026 · Aiserie Tracks v2.0.0</Text>
     </>
   );
 }
 
 export function LegalModal() {
   const ui = useUI();
+  const { t, isDark } = useTheme();
   const { sheetWidth } = useResponsive();
   const isPrivacy = ui.legalDoc === 'privacy';
   const visible = ui.legalDoc !== null;
@@ -36,10 +39,15 @@ export function LegalModal() {
     <Modal visible={visible} animationType="slide" onRequestClose={ui.closeLegal}>
       <View style={styles.screen}>
         <AuroraBackground />
-        <LinearGradient colors={gradients.header} start={{ x: 0, y: 0 }} end={{ x: 1.2, y: 1 }} style={styles.header}>
+        <LinearGradient
+          colors={isDark ? ['#030B18', '#0A2440', '#114A6E'] : ['#072F52', '#0B4F8A', '#0EA5E9']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1.2, y: 1 }}
+          style={styles.header}
+        >
           <View style={styles.headerRow}>
             <Pressable onPress={ui.closeLegal} hitSlop={12}>
-              <Ionicons name="chevron-back" size={22} color={colors.white} />
+              <Ionicons name="chevron-back" size={22} color={t.white} />
             </Pressable>
             <Text style={styles.headerTitle}>{isPrivacy ? 'Privacy Policy' : 'Terms & Conditions'}</Text>
             <View style={{ width: 22 }} />
@@ -71,11 +79,11 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: radius.lg + 6,
   },
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  headerTitle: { color: colors.white, fontSize: 20, fontWeight: '800' },
+  headerTitle: { color: '#FFFFFF', fontSize: 20, fontWeight: '800' },
   headerSub: { color: 'rgba(255,255,255,0.85)', fontSize: 12.5, marginTop: spacing.sm },
   body: { padding: spacing.xl, paddingBottom: 60 },
   section: { marginBottom: spacing.xl },
-  heading: { color: colors.text, fontSize: 15.5, fontWeight: '800', marginBottom: 8 },
-  para: { color: colors.subtext, fontSize: 13.5, lineHeight: 21, marginBottom: 8 },
-  footer: { color: colors.faint, fontSize: 11.5, textAlign: 'center', marginTop: spacing.sm },
+  heading: { fontSize: 15.5, fontWeight: '800', marginBottom: 8 },
+  para: { fontSize: 13.5, lineHeight: 21, marginBottom: 8 },
+  footer: { fontSize: 11.5, textAlign: 'center', marginTop: spacing.sm },
 });

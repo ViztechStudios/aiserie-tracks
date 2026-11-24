@@ -1,32 +1,40 @@
 import React, { useState } from 'react';
-import { Alert, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Image, ImageSourcePropType, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { AuroraBackground } from './AuroraBackground';
+import { GlassCard } from './GlassCard';
 import { useFinance } from '../store/FinanceContext';
 import { useUI } from '../store/UIContext';
+import { useTheme } from '../store/ThemeContext';
 import { Account, AccountType } from '../types';
-import { ACCOUNT_COLORS, ACCOUNT_EMOJIS, ACCOUNT_TYPE_LABEL, accountBalance, openingForBalance } from '../utils/accounts';
+import { BankDef, CASH_DEF, EWALLETS, BANKS, getBrand } from '../data/banks';
+import { ACCOUNT_TYPE_LABEL, accountBalance, openingForBalance } from '../utils/accounts';
 import { parseWalletMessage } from '../utils/walletDetect';
 import { formatMoney, parseAmount } from '../utils/money';
-import { colors, gradients, radius, shadow, spacing } from '../theme';
+import { radius, spacing } from '../theme';
 import { useResponsive } from '../hooks/useResponsive';
-import { todayISO } from '../utils/stats';
 import { PressableScale } from './PressableScale';
 
-const TYPE_OPTIONS: AccountType[] = ['ewallet', 'bank', 'cash'];
+type Step = 'list' | 'brand' | 'form';
+
+/** Brand tile: white rounded logo, consistent on glass in both themes. */
+function BrandTile({ logo, size = 56, style }: { logo: ImageSourcePropType; size?: number; style?: object }) {
+  return <Image source={logo} style={[{ width: size, height: size, borderRadius: size * 0.22 }, style]} resizeMode="contain" />;
+}
 
 export function WalletsModal() {
   const finance = useFinance();
   const ui = useUI();
+  const { t, isDark, shadow } = useTheme();
   const { sheetWidth } = useResponsive();
 
+  const [step, setStep] = useState<Step>('list');
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [creating, setCreating] = useState(false);
+  const [brand, setBrand] = useState<BankDef | null>(null);
   const [name, setName] = useState('');
   const [type, setType] = useState<AccountType>('ewallet');
-  const [emoji, setEmoji] = useState(ACCOUNT_EMOJIS[0]);
-  const [color, setColor] = useState(ACCOUNT_COLORS[0]);
+  const [logoId, setLogoId] = useState<string | undefined>(undefined);
   const [balanceRaw, setBalanceRaw] = useState('');
   const [pasteText, setPasteText] = useState('');
   const [pasteResult, setPasteResult] = useState<string>('');
@@ -35,37 +43,47 @@ export function WalletsModal() {
 
   const resetForm = () => {
     setEditingId(null);
-    setCreating(false);
+    setBrand(null);
+    setStep('list');
     setName('');
     setType('ewallet');
-    setEmoji(ACCOUNT_EMOJIS[0]);
-    setColor(ACCOUNT_COLORS[0]);
+    setLogoId(undefined);
     setBalanceRaw('');
   };
 
   const startEdit = (account: Account) => {
-    setCreating(false);
     setEditingId(account.id);
+    setBrand(getBrand(account.logoId) ?? null);
     setName(account.name);
     setType(account.type);
-    setEmoji(account.emoji);
-    setColor(account.color);
+    setLogoId(account.logoId);
     setBalanceRaw(String(accountBalance(account, finance.transactions)));
+    setStep('form');
   };
 
-  const startCreate = () => {
+  const pickBrand = (b: BankDef) => {
     setEditingId(null);
-    setCreating(true);
+    setBrand(b);
+    setName(b.name);
+    setType(b.type);
+    setLogoId(b.id);
+    setBalanceRaw('');
+    setStep('form');
+  };
+
+  const startCustom = () => {
+    setEditingId(null);
+    setBrand(null);
     setName('');
     setType('ewallet');
-    setEmoji(ACCOUNT_EMOJIS[0]);
-    setColor(ACCOUNT_COLORS[0]);
+    setLogoId(undefined);
     setBalanceRaw('');
+    setStep('form');
   };
 
   const saveAccount = () => {
     const amount = parseAmount(balanceRaw) ?? 0;
-    const finalName = name.trim() || ACCOUNT_TYPE_LABEL[type];
+    const finalName = name.trim() || brand?.name || ACCOUNT_TYPE_LABEL[type];
     if (editing) {
       // if the user corrected the current balance, reconcile the opening value
       const current = accountBalance(editing, finance.transactions);
@@ -73,9 +91,16 @@ export function WalletsModal() {
         Math.abs(current - amount) > 0.005
           ? openingForBalance(editing, finance.transactions, amount)
           : editing.openingBalance;
-      finance.updateAccount({ ...editing, name: finalName, type, emoji, color, openingBalance: opening });
+      finance.updateAccount({ ...editing, name: finalName, type, emoji: editing.emoji, color: brand?.color ?? editing.color, logoId, openingBalance: opening });
     } else {
-      finance.addAccount({ name: finalName, type, emoji, color, openingBalance: amount });
+      finance.addAccount({
+        name: finalName,
+        type,
+        emoji: brand ? '🏦' : '👛',
+        color: brand?.color ?? '#0EA5E9',
+        logoId,
+        openingBalance: amount,
+      });
     }
     resetForm();
   };
@@ -104,53 +129,104 @@ export function WalletsModal() {
     });
   };
 
+  const formTitle = editing ? `Edit ${editing.name}` : brand ? `Add ${brand.name}` : 'New wallet';
+
   return (
     <Modal visible={ui.walletsVisible} animationType="slide" onRequestClose={ui.closeWallets}>
       <View style={styles.screen}>
         <AuroraBackground />
         {/* header */}
-        <LinearGradient colors={gradients.header} start={{ x: 0, y: 0 }} end={{ x: 1.2, y: 1 }} style={styles.header}>
+        <LinearGradient
+          colors={isDark ? ['#030B18', '#0A2440', '#114A6E'] : ['#072F52', '#0B4F8A', '#0EA5E9']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1.2, y: 1 }}
+          style={styles.header}
+        >
           <View style={styles.headerRow}>
-            <Pressable onPress={ui.closeWallets} hitSlop={12}>
-              <Ionicons name="chevron-back" size={22} color={colors.white} />
+            <Pressable
+              onPress={() => {
+                if (step === 'form') {
+                  setStep(editing ? 'list' : 'brand');
+                  if (editing) setEditingId(null);
+                } else if (step === 'brand') {
+                  setStep('list');
+                } else {
+                  ui.closeWallets();
+                }
+              }}
+              hitSlop={12}
+            >
+              <Ionicons name={step === 'list' ? 'chevron-back' : 'arrow-back'} size={22} color={t.white} />
             </Pressable>
-            <Text style={styles.headerTitle}>Wallets & balances</Text>
-            <Pressable onPress={startCreate} hitSlop={12}>
-              <Ionicons name="add" size={26} color={colors.white} />
-            </Pressable>
+            <Text style={styles.headerTitle}>
+              {step === 'list' ? 'Wallets & balances' : step === 'brand' ? 'Choose a wallet' : formTitle}
+            </Text>
+            {step === 'list' ? (
+              <Pressable onPress={startCustom} hitSlop={12}>
+                <Ionicons name="add" size={26} color={t.white} />
+              </Pressable>
+            ) : (
+              <View style={{ width: 26 }} />
+            )}
           </View>
           <Text style={styles.headerSub}>
-            Read-only view of your money — no connections, no logins. You set the balance; Aiserie keeps the math.
+            {step === 'list'
+              ? 'One tap to add GCash, Maya, your bank or cash. No logins — you set the balance.'
+              : step === 'brand'
+                ? 'Pick your bank or e-wallet — the logo, name and color fill in automatically.'
+                : 'Enter the current balance. Transactions will keep it up to date.'}
           </Text>
         </LinearGradient>
 
-        <ScrollView contentContainerStyle={[styles.body, sheetWidth ? { alignSelf: 'center', width: '100%', maxWidth: sheetWidth + 60 } : null]}>
-          {finance.accounts.length === 0 && !creating && !editing && (
-            <View style={[styles.card, shadow.card]}>
+        <ScrollView
+          contentContainerStyle={[
+            styles.body,
+            sheetWidth ? { alignSelf: 'center', width: '100%', maxWidth: sheetWidth + 60 } : null,
+          ]}
+        >
+          {/* ---------- STEP: list ---------- */}
+          {step === 'list' && finance.accounts.length === 0 && (
+            <GlassCard style={styles.centerCard}>
               <Text style={styles.emptyEmoji}>👛</Text>
-              <Text style={styles.emptyTitle}>No wallets yet</Text>
-              <Text style={styles.emptyBody}>
-                Add GCash, Maya, a bank or even cash-on-hand. Balances are manual — update them in one tap whenever you like.
+              <Text style={[styles.emptyTitle, { color: t.text }]}>No wallets yet</Text>
+              <Text style={[styles.emptyBody, { color: t.subtext }]}>
+                Add GCash, Maya, Maribank, BPI, BDO, Metrobank, AUB and more with their official logos — or keep it simple
+                with cash on hand.
               </Text>
-            </View>
+              <PressableScale onPress={() => setStep('brand')} haptic="light" style={styles.ctaWrap}>
+                <LinearGradient
+                  colors={isDark ? ['#0C4A6E', '#0EA5E9', '#7DD3FC'] : ['#072F52', '#0EA5E9', '#67E8F9']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.cta}
+                >
+                  <Ionicons name="wallet-outline" size={18} color={t.white} />
+                  <Text style={[styles.ctaText, { color: t.white }]}>Add your first wallet</Text>
+                </LinearGradient>
+              </PressableScale>
+            </GlassCard>
           )}
 
-          {/* account list */}
-          {finance.accounts.map((account) => {
+          {step === 'list' && finance.accounts.map((account) => {
+            const b = getBrand(account.logoId);
             const balance = accountBalance(account, finance.transactions);
             return (
-              <PressableScale key={account.id} onPress={() => startEdit(account)} style={[styles.card, shadow.card]}>
+              <PressableScale key={account.id} onPress={() => startEdit(account)} style={[styles.rowCard, { backgroundColor: t.card, borderColor: t.glassBorderSoft }, shadow.card]}>
                 <View style={styles.rowMain}>
-                  <View style={[styles.rowIcon, { backgroundColor: account.color + '22' }]}>
-                    <Text style={styles.rowEmoji}>{account.emoji}</Text>
-                  </View>
+                  {b ? (
+                    <BrandTile logo={b.logo} size={46} />
+                  ) : (
+                    <View style={[styles.rowIcon, { backgroundColor: account.color + '22' }]}>
+                      <Text style={styles.rowEmoji}>{account.emoji}</Text>
+                    </View>
+                  )}
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.rowName}>{account.name}</Text>
-                    <Text style={styles.rowSub}>
+                    <Text style={[styles.rowName, { color: t.text }]}>{account.name}</Text>
+                    <Text style={[styles.rowSub, { color: t.subtext }]}>
                       {ACCOUNT_TYPE_LABEL[account.type]} · updated {new Date(account.updatedAt).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' })}
                     </Text>
                   </View>
-                  <Text style={[styles.rowBalance, { color: balance >= 0 ? colors.text : colors.expense }]}>
+                  <Text style={[styles.rowBalance, { color: balance >= 0 ? t.text : t.expense }]}>
                     {formatMoney(balance, finance.settings.currency)}
                   </Text>
                 </View>
@@ -158,121 +234,196 @@ export function WalletsModal() {
             );
           })}
 
-          {/* create / edit form */}
-          {(creating || editing) && (
-            <View style={[styles.card, shadow.card, styles.formCard]}>
-              <Text style={styles.formTitle}>{editing ? `Edit ${editing.name}` : 'New wallet'}</Text>
+          {step === 'list' && finance.accounts.length > 0 && (
+            <PressableScale onPress={() => setStep('brand')} haptic="light" style={styles.ctaWrap}>
+              <LinearGradient
+                colors={isDark ? ['#0C4A6E', '#0EA5E9', '#7DD3FC'] : ['#072F52', '#0EA5E9', '#67E8F9']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.cta}
+              >
+                <Ionicons name="add" size={18} color={t.white} />
+                <Text style={[styles.ctaText, { color: t.white }]}>Add wallet or bank</Text>
+              </LinearGradient>
+            </PressableScale>
+          )}
 
-              <Text style={styles.label}>NAME</Text>
-              <TextInput
-                style={styles.input}
-                value={name}
-                onChangeText={setName}
-                placeholder={type === 'ewallet' ? 'e.g. GCash' : type === 'bank' ? 'e.g. BPI' : 'e.g. Cash on hand'}
-                placeholderTextColor={colors.faint}
-              />
-
-              <Text style={styles.label}>TYPE</Text>
-              <View style={styles.chips}>
-                {TYPE_OPTIONS.map((t) => (
-                  <Pressable
-                    key={t}
-                    onPress={() => setType(t)}
-                    style={[styles.chip, type === t && { backgroundColor: colors.ocean600, borderColor: colors.ocean600 }]}
-                  >
-                    <Text style={[styles.chipText, type === t && { color: colors.white }]}>{ACCOUNT_TYPE_LABEL[t]}</Text>
-                  </Pressable>
+          {/* ---------- STEP: brand picker ---------- */}
+          {step === 'brand' && (
+            <>
+              <Text style={[styles.groupLabel, { color: t.subtext }]}>E-WALLETS</Text>
+              <View style={styles.brandGrid}>
+                {EWALLETS.map((b) => (
+                  <View key={b.id} style={styles.brandCell}>
+                    <PressableScale onPress={() => pickBrand(b)} haptic="light" scaleTo={0.92} style={styles.brandCellInner}>
+                      <View style={[styles.brandCard, { backgroundColor: t.card, borderColor: t.glassBorderSoft }, shadow.card]}>
+                        <BrandTile logo={b.logo} size={56} />
+                        <Text style={[styles.brandName, { color: t.text }]} numberOfLines={1}>{b.name}</Text>
+                      </View>
+                    </PressableScale>
+                  </View>
                 ))}
               </View>
 
-              <Text style={styles.label}>ICON</Text>
-              <View style={styles.chips}>
-                {ACCOUNT_EMOJIS.map((e) => (
-                  <Pressable
-                    key={e}
-                    onPress={() => setEmoji(e)}
-                    style={[styles.chip, styles.emojiChip, emoji === e && { borderColor: colors.ocean600, backgroundColor: colors.ice100 }]}
-                  >
-                    <Text style={styles.emojiText}>{e}</Text>
-                  </Pressable>
+              <Text style={[styles.groupLabel, { color: t.subtext }]}>BANKS</Text>
+              <View style={styles.brandGrid}>
+                {BANKS.map((b) => (
+                  <View key={b.id} style={styles.brandCell}>
+                    <PressableScale onPress={() => pickBrand(b)} haptic="light" scaleTo={0.92} style={styles.brandCellInner}>
+                      <View style={[styles.brandCard, { backgroundColor: t.card, borderColor: t.glassBorderSoft }, shadow.card]}>
+                        <BrandTile logo={b.logo} size={56} />
+                        <Text style={[styles.brandName, { color: t.text }]} numberOfLines={1}>{b.name}</Text>
+                      </View>
+                    </PressableScale>
+                  </View>
                 ))}
               </View>
 
-              <Text style={styles.label}>COLOR</Text>
-              <View style={styles.chips}>
-                {ACCOUNT_COLORS.map((c) => (
-                  <Pressable
-                    key={c}
-                    onPress={() => setColor(c)}
-                    style={[styles.colorDot, { backgroundColor: c }, color === c && styles.colorDotOn]}
+              <Text style={[styles.groupLabel, { color: t.subtext }]}>EVERYTHING ELSE</Text>
+              <View style={styles.brandGrid}>
+                <View style={styles.brandCell}>
+                  <PressableScale onPress={() => pickBrand(CASH_DEF)} haptic="light" scaleTo={0.92} style={styles.brandCellInner}>
+                    <View style={[styles.brandCard, { backgroundColor: t.card, borderColor: t.glassBorderSoft }, shadow.card]}>
+                      <BrandTile logo={CASH_DEF.logo} size={56} />
+                      <Text style={[styles.brandName, { color: t.text }]}>Cash</Text>
+                    </View>
+                  </PressableScale>
+                </View>
+                <View style={styles.brandCell}>
+                  <PressableScale onPress={startCustom} haptic="light" scaleTo={0.92} style={styles.brandCellInner}>
+                    <View style={[styles.brandCard, styles.brandCardDashed, { backgroundColor: t.card, borderColor: t.glassBorderSoft }]}>
+                      <View style={[styles.customIcon, { backgroundColor: t.ice100 }]}>
+                        <Ionicons name="create-outline" size={22} color={t.ocean600} />
+                      </View>
+                      <Text style={[styles.brandName, { color: t.text }]}>Custom</Text>
+                    </View>
+                  </PressableScale>
+                </View>
+              </View>
+            </>
+          )}
+
+          {/* ---------- STEP: form ---------- */}
+          {step === 'form' && (
+            <GlassCard style={styles.formCard}>
+              {brand ? (
+                <View style={styles.brandPreview}>
+                  <BrandTile logo={brand.logo} size={52} />
+                  <View style={{ flex: 1, marginLeft: spacing.md }}>
+                    <Text style={[styles.brandPreviewName, { color: t.text }]}>{brand.name}</Text>
+                    <Text style={[styles.brandPreviewSub, { color: t.subtext }]}>{ACCOUNT_TYPE_LABEL[brand.type]} · official logo applied</Text>
+                  </View>
+                  <Pressable onPress={startCustom} hitSlop={8}>
+                    <Text style={[styles.changeLink, { color: t.ocean600 }]}>Change</Text>
+                  </Pressable>
+                </View>
+              ) : (
+                <>
+                  <Text style={[styles.label, { color: t.subtext }]}>NAME</Text>
+                  <TextInput
+                    style={[styles.input, { backgroundColor: t.ice50, borderColor: t.line, color: t.text }]}
+                    value={name}
+                    onChangeText={setName}
+                    placeholder={type === 'ewallet' ? 'e.g. GCash' : type === 'bank' ? 'e.g. BPI' : 'e.g. Cash on hand'}
+                    placeholderTextColor={t.faint}
                   />
-                ))}
-              </View>
+                </>
+              )}
 
-              <Text style={styles.label}>{editing ? 'SET CURRENT BALANCE' : 'CURRENT BALANCE'}</Text>
+              {!brand && (
+                <>
+                  <Text style={[styles.label, { color: t.subtext }]}>TYPE</Text>
+                  <View style={styles.chips}>
+                    {(['ewallet', 'bank', 'cash'] as AccountType[]).map((tp) => (
+                      <Pressable
+                        key={tp}
+                        onPress={() => setType(tp)}
+                        style={[styles.chip, { backgroundColor: t.ice50, borderColor: t.line }, type === tp && { backgroundColor: t.ocean600, borderColor: t.ocean600 }]}
+                      >
+                        <Text style={[styles.chipText, { color: t.text }, type === tp && { color: t.white }]}>{ACCOUNT_TYPE_LABEL[tp]}</Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                </>
+              )}
+
+              <Text style={[styles.label, { color: t.subtext }]}>{editing ? 'SET CURRENT BALANCE' : 'CURRENT BALANCE'}</Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, { backgroundColor: t.ice50, borderColor: t.line, color: t.text }]}
                 value={balanceRaw}
                 onChangeText={setBalanceRaw}
                 keyboardType="numeric"
                 placeholder="0.00"
-                placeholderTextColor={colors.faint}
+                placeholderTextColor={t.faint}
               />
-              {editing && (
-                <Text style={styles.formNote}>
-                  Linked transactions adjust this balance automatically. Change the number above to reconcile with your real wallet.
-                </Text>
-              )}
+              <Text style={[styles.formNote, { color: t.faint }]}>
+                {editing
+                  ? 'Linked transactions adjust this balance automatically. Change the number above to reconcile with your real wallet.'
+                  : 'Just an estimate — you can fix it any time. Linked transactions keep it updated.'}
+              </Text>
 
               <View style={styles.formActions}>
-                <Pressable onPress={resetForm} style={styles.cancelBtn}>
-                  <Text style={styles.cancelText}>Cancel</Text>
+                <Pressable
+                  onPress={() => {
+                    setStep(editing ? 'list' : 'brand');
+                    if (editing) setEditingId(null);
+                  }}
+                  style={[styles.cancelBtn, { backgroundColor: t.ice100 }]}
+                >
+                  <Text style={[styles.cancelText, { color: t.ocean800 }]}>Back</Text>
                 </Pressable>
                 <Pressable style={{ flex: 1 }} onPress={saveAccount}>
-                  <LinearGradient colors={gradients.fab} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.saveBtn}>
-                    <Text style={styles.saveText}>{editing ? 'Save wallet' : 'Add wallet'}</Text>
+                  <LinearGradient
+                    colors={isDark ? ['#0C4A6E', '#0EA5E9', '#7DD3FC'] : ['#072F52', '#0EA5E9', '#67E8F9']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.saveBtn}
+                  >
+                    <Text style={[styles.saveText, { color: t.white }]}>{editing ? 'Save wallet' : `Add ${brand?.name ?? 'wallet'}`}</Text>
                   </LinearGradient>
                 </Pressable>
               </View>
               {editing && (
                 <Pressable onPress={() => confirmDelete(editing)} style={styles.deleteLink}>
-                  <Text style={styles.deleteText}>Remove this wallet</Text>
+                  <Text style={[styles.deleteText, { color: t.risk }]}>Remove this wallet</Text>
                 </Pressable>
               )}
-            </View>
+            </GlassCard>
           )}
 
-          {/* paste detection */}
-          <View style={[styles.card, shadow.card, styles.pasteCard]}>
-            <Text style={styles.formTitle}>🔎 Detect a purchase from text</Text>
-            <Text style={styles.pasteHint}>
-              Paste a GCash / Maya / bank SMS or notification here — Aiserie reads the amount on-device and pre-fills a
-              transaction for you. (iOS doesn't allow reading other apps' notifications, so paste takes 2 seconds.)
-            </Text>
-            <TextInput
-              style={[styles.input, styles.pasteInput]}
-              value={pasteText}
-              onChangeText={setPasteText}
-              multiline
-              placeholder={'e.g. You paid ₱1,250.00 to PUREGOLD using GCash'}
-              placeholderTextColor={colors.faint}
-            />
-            {pasteResult ? <Text style={styles.pasteError}>{pasteResult}</Text> : null}
-            <Pressable onPress={detectFromText} disabled={!pasteText.trim()}>
-              <LinearGradient
-                colors={gradients.fab}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={[styles.saveBtn, !pasteText.trim() && { opacity: 0.5 }]}
-              >
-                <Text style={styles.saveText}>Turn into transaction</Text>
-              </LinearGradient>
-            </Pressable>
-          </View>
+          {/* paste detection stays on the list step */}
+          {step === 'list' && (
+            <GlassCard style={styles.pasteCard}>
+              <Text style={[styles.formTitle, { color: t.text }]}>🔎 Detect a purchase from text</Text>
+              <Text style={[styles.pasteHint, { color: t.subtext }]}>
+                Paste a GCash / Maya / bank SMS or notification here — Aiserie reads the amount on-device and pre-fills a
+                transaction for you.
+              </Text>
+              <TextInput
+                style={[styles.input, styles.pasteInput, { backgroundColor: t.ice50, borderColor: t.line, color: t.text }]}
+                value={pasteText}
+                onChangeText={setPasteText}
+                multiline
+                placeholder={'e.g. You paid ₱1,250.00 to PUREGOLD using GCash'}
+                placeholderTextColor={t.faint}
+              />
+              {pasteResult ? <Text style={[styles.pasteError, { color: t.risk }]}>{pasteResult}</Text> : null}
+              <Pressable onPress={detectFromText} disabled={!pasteText.trim()}>
+                <LinearGradient
+                  colors={isDark ? ['#0C4A6E', '#0EA5E9', '#7DD3FC'] : ['#072F52', '#0EA5E9', '#67E8F9']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={[styles.saveBtn, !pasteText.trim() && { opacity: 0.5 }]}
+                >
+                  <Text style={[styles.saveText, { color: t.white }]}>Turn into transaction</Text>
+                </LinearGradient>
+              </Pressable>
+            </GlassCard>
+          )}
 
-          <Text style={styles.footnote}>
-            💡 Balances here are informational only. Aiserie never connects to GCash, Maya or any bank — money moves only
-            in the real apps, and you record it here (or paste the notification and let Aiserie fill it in).
+          <Text style={[styles.footnote, { color: t.faint }]}>
+            💡 Balances are informational only. Aiserie never connects to GCash, Maya or any bank — money moves only in the
+            real apps, and you record it here (or paste the notification and let Aiserie fill it in).
           </Text>
         </ScrollView>
       </View>
@@ -290,36 +441,69 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: radius.lg + 6,
   },
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  headerTitle: { color: colors.white, fontSize: 20, fontWeight: '800' },
+  headerTitle: { color: '#FFFFFF', fontSize: 20, fontWeight: '800' },
   headerSub: { color: 'rgba(255,255,255,0.85)', fontSize: 12.5, lineHeight: 18, marginTop: spacing.sm },
   body: { padding: spacing.xl, paddingBottom: 60, gap: spacing.md },
-  card: {
-    backgroundColor: colors.card,
+  centerCard: { alignItems: 'center', paddingVertical: spacing.xl },
+  emptyEmoji: { fontSize: 40, textAlign: 'center', marginBottom: spacing.sm },
+  emptyTitle: { fontWeight: '800', fontSize: 16, textAlign: 'center' },
+  emptyBody: { fontSize: 13, lineHeight: 19, textAlign: 'center', marginTop: 4, paddingHorizontal: spacing.sm },
+  ctaWrap: { alignSelf: 'stretch', marginTop: spacing.lg, borderRadius: radius.md },
+  cta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 14,
+    borderRadius: radius.md,
+  },
+  ctaText: { fontWeight: '800', fontSize: 15 },
+  rowCard: {
     borderWidth: 1,
-    borderColor: colors.glassBorderSoft,
     borderRadius: radius.lg,
     padding: spacing.lg,
   },
   rowMain: { flexDirection: 'row', alignItems: 'center' },
   rowIcon: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', marginRight: spacing.md },
   rowEmoji: { fontSize: 20 },
-  rowName: { color: colors.text, fontWeight: '800', fontSize: 15 },
-  rowSub: { color: colors.subtext, fontSize: 12, marginTop: 2 },
+  rowName: { fontWeight: '800', fontSize: 15 },
+  rowSub: { fontSize: 12, marginTop: 2 },
   rowBalance: { fontWeight: '900', fontSize: 16 },
-  emptyEmoji: { fontSize: 40, textAlign: 'center', marginBottom: spacing.sm },
-  emptyTitle: { color: colors.text, fontWeight: '800', fontSize: 16, textAlign: 'center' },
-  emptyBody: { color: colors.subtext, fontSize: 13, lineHeight: 19, textAlign: 'center', marginTop: 4 },
-  formCard: { borderWidth: 1.5, borderColor: colors.ice100 },
-  formTitle: { color: colors.text, fontWeight: '800', fontSize: 16, marginBottom: spacing.md },
-  label: { color: colors.subtext, fontSize: 11, fontWeight: '800', letterSpacing: 0.8, marginTop: spacing.md, marginBottom: 6 },
+  groupLabel: {
+    fontSize: 11.5,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+    marginTop: spacing.sm,
+    marginBottom: -spacing.sm + 2,
+    paddingHorizontal: 2,
+  },
+  brandGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md, marginTop: spacing.md },
+  brandCell: { width: '30.5%', flexGrow: 1 },
+  brandCellInner: { alignSelf: 'stretch' },
+  brandCard: {
+    borderWidth: 1,
+    borderRadius: radius.md,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.sm,
+    alignItems: 'center',
+    gap: 8,
+  },
+  brandCardDashed: { borderStyle: 'dashed' },
+  brandName: { fontSize: 12.5, fontWeight: '700', textAlign: 'center' },
+  customIcon: { width: 56, height: 56, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  brandPreview: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.md },
+  brandPreviewName: { fontWeight: '900', fontSize: 17 },
+  brandPreviewSub: { fontSize: 12, marginTop: 2 },
+  changeLink: { fontSize: 13, fontWeight: '800' },
+  formCard: { padding: spacing.lg },
+  formTitle: { fontWeight: '800', fontSize: 16, marginBottom: spacing.md },
+  label: { fontSize: 11, fontWeight: '800', letterSpacing: 0.8, marginTop: spacing.md, marginBottom: 6 },
   input: {
-    backgroundColor: colors.ice50,
     borderWidth: 1.5,
-    borderColor: colors.line,
     borderRadius: radius.md,
     paddingVertical: 10,
     paddingHorizontal: spacing.md,
-    color: colors.text,
     fontSize: 15,
   },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
@@ -327,26 +511,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: radius.pill,
-    backgroundColor: colors.ice50,
     borderWidth: 1.5,
-    borderColor: colors.line,
   },
-  chipText: { color: colors.text, fontSize: 13, fontWeight: '600' },
-  emojiChip: { paddingHorizontal: 14, paddingVertical: 6 },
-  emojiText: { fontSize: 18 },
-  colorDot: { width: 30, height: 30, borderRadius: 15, marginHorizontal: 3 },
-  colorDotOn: { borderWidth: 3, borderColor: colors.ocean800 },
-  formNote: { color: colors.faint, fontSize: 11.5, lineHeight: 16, marginTop: 6 },
+  chipText: { fontSize: 13, fontWeight: '600' },
+  formNote: { fontSize: 11.5, lineHeight: 16, marginTop: 6 },
   formActions: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginTop: spacing.lg },
-  cancelBtn: { paddingVertical: 14, paddingHorizontal: 18, borderRadius: radius.md, backgroundColor: colors.ice100 },
-  cancelText: { color: colors.ocean800, fontWeight: '800' },
-  saveBtn: { borderRadius: radius.md, paddingVertical: 14, alignItems: 'center', ...shadow.fab },
-  saveText: { color: colors.white, fontWeight: '800', fontSize: 15 },
+  cancelBtn: { paddingVertical: 14, paddingHorizontal: 18, borderRadius: radius.md },
+  cancelText: { fontWeight: '800' },
+  saveBtn: { borderRadius: radius.md, paddingVertical: 14, alignItems: 'center' },
+  saveText: { fontWeight: '800', fontSize: 15 },
   deleteLink: { alignItems: 'center', paddingVertical: spacing.md },
-  deleteText: { color: colors.risk, fontWeight: '700', fontSize: 13 },
-  pasteCard: { borderWidth: 1.5, borderColor: colors.ice100, marginTop: spacing.md },
-  pasteHint: { color: colors.subtext, fontSize: 12.5, lineHeight: 18, marginBottom: spacing.md },
+  deleteText: { fontWeight: '700', fontSize: 13 },
+  pasteCard: { marginTop: spacing.md },
+  pasteHint: { fontSize: 12.5, lineHeight: 18, marginBottom: spacing.md },
   pasteInput: { minHeight: 76, textAlignVertical: 'top', marginBottom: spacing.md },
-  pasteError: { color: colors.risk, fontSize: 12, marginBottom: spacing.md },
-  footnote: { color: colors.faint, fontSize: 11.5, lineHeight: 17, textAlign: 'center', marginTop: spacing.md, paddingHorizontal: spacing.sm },
+  pasteError: { fontSize: 12, marginBottom: spacing.md },
+  footnote: { fontSize: 11.5, lineHeight: 17, textAlign: 'center', marginTop: spacing.md, paddingHorizontal: spacing.sm },
 });

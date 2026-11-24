@@ -1,9 +1,10 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
-import { colors, radius, shadow, spacing } from '../theme';
+import { useTheme } from '../store/ThemeContext';
+import { radius, spacing } from '../theme';
 import { CategoryTotal } from '../types';
-import { formatCompact, formatMoney } from '../utils/money';
+import { formatCompact } from '../utils/money';
 
 interface Props {
   data: CategoryTotal[];
@@ -17,6 +18,7 @@ const C = 2 * Math.PI * R;
 
 /** Category-share donut built with react-native-svg. */
 export function DonutChart({ data, currency }: Props) {
+  const { t, shadow } = useTheme();
   const total = data.reduce((s, d) => s + d.amount, 0);
   let offset = 0;
   const segments = data.slice(0, 6).map((d) => {
@@ -27,12 +29,12 @@ export function DonutChart({ data, currency }: Props) {
   });
 
   return (
-    <View style={[styles.card, shadow.card]}>
-      <Text style={styles.heading}>Where the money went</Text>
+    <View style={[styles.card, { backgroundColor: t.card, borderColor: t.glassBorderSoft, borderWidth: 1 }, shadow.card]}>
+      <Text style={[styles.heading, { color: t.text }]}>Where the money went</Text>
       <View style={styles.chartRow}>
         <View style={{ width: SIZE, height: SIZE, alignItems: 'center', justifyContent: 'center' }}>
           <Svg width={SIZE} height={SIZE} style={StyleSheet.absoluteFill}>
-            <Circle cx={SIZE / 2} cy={SIZE / 2} r={R} stroke={colors.ice100} strokeWidth={STROKE} fill="none" />
+            <Circle cx={SIZE / 2} cy={SIZE / 2} r={R} stroke={t.ice100} strokeWidth={STROKE} fill="none" />
             {segments.map((s, i) => (
               <Circle
                 key={s.category.id + i}
@@ -52,23 +54,23 @@ export function DonutChart({ data, currency }: Props) {
             ))}
           </Svg>
           <View style={styles.center}>
-            <Text style={styles.totalLabel}>Total</Text>
-            <Text style={styles.totalValue}>{formatCompact(total, currency)}</Text>
+            <Text style={[styles.totalLabel, { color: t.subtext }]}>Total</Text>
+            <Text style={[styles.totalValue, { color: t.text }]}>{formatCompact(total, currency)}</Text>
           </View>
         </View>
         <View style={styles.legend}>
           {segments.map((s, i) => (
             <View key={s.category.id + i} style={styles.legendRow}>
               <View style={[styles.dot, { backgroundColor: s.category.color }]} />
-              <Text style={styles.legendName} numberOfLines={1}>
+              <Text style={[styles.legendName, { color: t.text }]} numberOfLines={1}>
                 {s.category.emoji} {s.category.label}
               </Text>
-              <Text style={styles.legendAmt}>
+              <Text style={[styles.legendAmt, { color: t.subtext }]}>
                 {total > 0 ? `${Math.round((s.amount / total) * 100)}%` : '0%'}
               </Text>
             </View>
           ))}
-          {segments.length === 0 && <Text style={styles.legendAmt}>No spending yet</Text>}
+          {segments.length === 0 && <Text style={[styles.legendAmt, { color: t.subtext }]}>No spending yet</Text>}
         </View>
       </View>
     </View>
@@ -77,18 +79,17 @@ export function DonutChart({ data, currency }: Props) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.card,
     borderRadius: radius.lg,
     padding: spacing.lg,
   },
-  heading: { color: colors.text, fontWeight: '800', fontSize: 16, marginBottom: spacing.md },
+  heading: { fontWeight: '800', fontSize: 16, marginBottom: spacing.md },
   chartRow: { flexDirection: 'row', alignItems: 'center' },
   center: { alignItems: 'center' },
-  totalLabel: { color: colors.subtext, fontSize: 12 },
-  totalValue: { color: colors.text, fontSize: 18, fontWeight: '800' },
+  totalLabel: { fontSize: 12 },
+  totalValue: { fontSize: 18, fontWeight: '800' },
   legend: { flex: 1, marginLeft: spacing.lg, gap: 8 },
   legendRow: { flexDirection: 'row', alignItems: 'center' },
   dot: { width: 10, height: 10, borderRadius: 5, marginRight: 8 },
-  legendName: { flex: 1, color: colors.text, fontSize: 13 },
-  legendAmt: { color: colors.subtext, fontSize: 13, fontWeight: '700' },
+  legendName: { flex: 1, fontSize: 13 },
+  legendAmt: { fontSize: 13, fontWeight: '700' },
 });

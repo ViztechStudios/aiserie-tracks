@@ -1,7 +1,7 @@
 import React from 'react';
-import { Platform, StyleSheet, View, ViewStyle } from 'react-native';
+import { Animated, Platform, StyleSheet, View, ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { aurora } from '../theme';
+import { useTheme } from '../store/ThemeContext';
 
 const ABS_FILL: ViewStyle = { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 };
 
@@ -48,19 +48,31 @@ function Blob({
 }
 
 /**
- * Fixed decorative colour wash that sits behind every screen. Gives the
- * frosted-glass cards something luminous to diffuse — the core of the
- * premium glass look. Purely static views, no runtime cost.
+ * Fixed decorative colour wash that sits behind every screen. Light and dark
+ * washes are stacked and cross-faded by the theme progress value, so switching
+ * themes melts from daylight ocean into midnight navy instead of snapping.
  */
 export function AuroraBackground({ intensity = 1 }: Props) {
+  const { progress, aurora } = useTheme();
+  const lightOpacity = progress.interpolate({ inputRange: [0, 1], outputRange: [1, 0] });
+  const darkOpacity = progress.interpolate({ inputRange: [0, 1], outputRange: [0, 1] });
   const style: ViewStyle = { ...ABS_FILL, overflow: 'hidden' };
   return (
     <View pointerEvents="none" style={style}>
-      <View style={styles.base} />
-      <Blob color={aurora.sky} size={340} top={-90} right={-110} opacity={0.34 * intensity} />
-      <Blob color={aurora.aqua} size={280} top={90} left={-130} opacity={0.28 * intensity} />
-      <Blob color={aurora.lagoon} size={300} bottom={-40} right={-80} opacity={0.22 * intensity} />
-      <Blob color={aurora.sky} size={220} bottom={140} left={-90} opacity={0.16 * intensity} />
+      {/* light wash */}
+      <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { opacity: lightOpacity, backgroundColor: aurora.base }]}>
+        <Blob color="#7DD3FC" size={340} top={-90} right={-110} opacity={0.34 * intensity} />
+        <Blob color="#A5F3FC" size={280} top={90} left={-130} opacity={0.28 * intensity} />
+        <Blob color="#6EE7D8" size={300} bottom={-40} right={-80} opacity={0.22 * intensity} />
+        <Blob color="#7DD3FC" size={220} bottom={140} left={-90} opacity={0.16 * intensity} />
+      </Animated.View>
+      {/* midnight wash */}
+      <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { opacity: darkOpacity, backgroundColor: aurora.base }]}>
+        <Blob color={aurora.sky} size={360} top={-90} right={-110} opacity={0.55 * intensity} />
+        <Blob color={aurora.aqua} size={300} top={90} left={-130} opacity={0.42 * intensity} />
+        <Blob color={aurora.lagoon} size={320} bottom={-40} right={-80} opacity={0.34 * intensity} />
+        <Blob color={aurora.sky} size={240} bottom={140} left={-90} opacity={0.26 * intensity} />
+      </Animated.View>
       {/* keeps Android overflow clipping happy without extra layers */}
       {Platform.OS === 'android' ? <View style={styles.spacer} /> : null}
     </View>
@@ -68,6 +80,5 @@ export function AuroraBackground({ intensity = 1 }: Props) {
 }
 
 const styles = StyleSheet.create({
-  base: { ...ABS_FILL, backgroundColor: '#EFF7FD' },
   spacer: { width: 1, height: 1 },
 });

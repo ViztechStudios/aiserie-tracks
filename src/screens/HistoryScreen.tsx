@@ -7,8 +7,9 @@ import { TransactionRow } from '../components/TransactionRow';
 import { EmptyState } from '../components/EmptyState';
 import { useFinance } from '../store/FinanceContext';
 import { useUI } from '../store/UIContext';
+import { useTheme } from '../store/ThemeContext';
 import { categoriesFor, getCategory } from '../data/categories';
-import { colors, radius, shadow, spacing } from '../theme';
+import { radius, spacing } from '../theme';
 import { Transaction, TxType } from '../types';
 import { groupByDay } from '../utils/stats';
 import { formatMoney } from '../utils/money';
@@ -19,6 +20,7 @@ type TypeFilter = 'all' | TxType;
 export function HistoryScreen() {
   const finance = useFinance();
   const ui = useUI();
+  const { t, isDark } = useTheme();
   const { contentWidth } = useResponsive();
   const [query, setQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
@@ -26,12 +28,12 @@ export function HistoryScreen() {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return finance.transactions.filter((t) => {
-      if (typeFilter !== 'all' && t.type !== typeFilter) return false;
-      if (categoryFilter && t.categoryId !== categoryFilter) return false;
+    return finance.transactions.filter((tx) => {
+      if (typeFilter !== 'all' && tx.type !== typeFilter) return false;
+      if (categoryFilter && tx.categoryId !== categoryFilter) return false;
       if (q) {
-        const cat = getCategory(t.categoryId);
-        const haystack = `${t.note ?? ''} ${cat?.label ?? ''} ${t.amount}`.toLowerCase();
+        const cat = getCategory(tx.categoryId);
+        const haystack = `${tx.note ?? ''} ${cat?.label ?? ''} ${tx.amount}`.toLowerCase();
         if (!haystack.includes(q)) return false;
       }
       return true;
@@ -62,13 +64,13 @@ export function HistoryScreen() {
           <TextInput
             style={styles.searchInput}
             placeholder="Search note, category or amount…"
-            placeholderTextColor={colors.faint}
+            placeholderTextColor="rgba(255,255,255,0.55)"
             value={query}
             onChangeText={setQuery}
           />
           {query.length > 0 && (
             <TouchableOpacity onPress={() => setQuery('')}>
-              <Ionicons name="close-circle" size={16} color={colors.faint} />
+              <Ionicons name="close-circle" size={16} color="rgba(255,255,255,0.55)" />
             </TouchableOpacity>
           )}
         </View>
@@ -86,21 +88,21 @@ export function HistoryScreen() {
       </GradientHeader>
 
       {/* category filter strip */}
-      <View style={styles.catStrip}>
+      <View style={[styles.catStrip, { backgroundColor: isDark ? 'rgba(14,34,62,0.75)' : 'rgba(255,255,255,0.6)', borderBottomColor: t.line }]}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.catStripContent}>
           <TouchableOpacity
             onPress={() => setCategoryFilter(null)}
-            style={[styles.catChip, categoryFilter === null && styles.catChipOn]}
+            style={[styles.catChip, { backgroundColor: t.ice50, borderColor: t.line }, categoryFilter === null && styles.catChipOn]}
           >
-            <Text style={[styles.catChipText, categoryFilter === null && styles.catChipTextOn]}>All categories</Text>
+            <Text style={[styles.catChipText, { color: t.text }, categoryFilter === null && styles.catChipTextOn]}>All categories</Text>
           </TouchableOpacity>
           {categoriesFor(typeFilter === 'income' ? 'income' : 'expense').map((c) => (
             <TouchableOpacity
               key={c.id}
               onPress={() => setCategoryFilter(categoryFilter === c.id ? null : c.id)}
-              style={[styles.catChip, categoryFilter === c.id && styles.catChipOn]}
+              style={[styles.catChip, { backgroundColor: t.ice50, borderColor: t.line }, categoryFilter === c.id && styles.catChipOn]}
             >
-              <Text style={[styles.catChipText, categoryFilter === c.id && styles.catChipTextOn]}>
+              <Text style={[styles.catChipText, { color: t.text }, categoryFilter === c.id && styles.catChipTextOn]}>
                 {c.emoji} {c.label}
               </Text>
             </TouchableOpacity>
@@ -121,32 +123,32 @@ export function HistoryScreen() {
           {groups.map((g) => (
             <View key={g.date}>
               <View style={styles.dayHead}>
-                <Text style={styles.dayText}>{g.date}</Text>
-                <Text style={styles.dayTotal}>
-                  {g.income > 0 && <Text style={{ color: colors.income }}>+{formatMoney(g.income, finance.settings.currency)}  </Text>}
-                  {g.expense > 0 && <Text style={{ color: colors.expense }}>−{formatMoney(g.expense, finance.settings.currency)}</Text>}
+                <Text style={[styles.dayText, { color: t.subtext }]}>{g.date}</Text>
+                <Text style={[styles.dayTotal, { color: t.subtext }]}>
+                  {g.income > 0 && <Text style={{ color: t.income }}>+{formatMoney(g.income, finance.settings.currency)}  </Text>}
+                  {g.expense > 0 && <Text style={{ color: t.expense }}>−{formatMoney(g.expense, finance.settings.currency)}</Text>}
                 </Text>
               </View>
-              {g.items.map((t) => {
-                const cat = getCategory(t.categoryId);
+              {g.items.map((tx) => {
+                const cat = getCategory(tx.categoryId);
                 if (!cat) return null;
                 return (
                   <TransactionRow
-                    key={t.id}
+                    key={tx.id}
                     category={cat}
-                    amount={t.amount}
-                    type={t.type}
-                    date={t.date}
-                    note={t.note}
+                    amount={tx.amount}
+                    type={tx.type}
+                    date={tx.date}
+                    note={tx.note}
                     currency={finance.settings.currency}
-                    onPress={() => ui.openEdit(t)}
-                    onLongPress={() => confirmDelete(t)}
+                    onPress={() => ui.openEdit(tx)}
+                    onLongPress={() => confirmDelete(tx)}
                   />
                 );
               })}
             </View>
           ))}
-          <Text style={styles.hint}>
+          <Text style={[styles.hint, { color: t.faint }]}>
             Tip: tap a transaction to edit it, long-press to delete.
           </Text>
       </ScrollView>
@@ -169,7 +171,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     marginTop: spacing.lg,
   },
-  searchInput: { flex: 1, color: colors.white, fontSize: 14, paddingVertical: 0 },
+  searchInput: { flex: 1, color: '#FFFFFF', fontSize: 14, paddingVertical: 0 },
   chipRow: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
   chip: {
     paddingHorizontal: 14,
@@ -179,26 +181,22 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.3)',
   },
-  chipOn: { backgroundColor: colors.white, borderColor: colors.white },
+  chipOn: { backgroundColor: '#FFFFFF', borderColor: '#FFFFFF' },
   chipText: { color: 'rgba(255,255,255,0.92)', fontSize: 13, fontWeight: '700' },
-  chipTextOn: { color: colors.ocean800 },
+  chipTextOn: { color: '#0B4F8A' },
   catStrip: {
-    backgroundColor: 'rgba(255,255,255,0.6)',
     borderBottomWidth: 1,
-    borderBottomColor: colors.line,
   },
   catStripContent: { paddingHorizontal: spacing.xl, paddingVertical: 10, gap: 8 },
   catChip: {
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: radius.pill,
-    backgroundColor: colors.ice50,
     borderWidth: 1.5,
-    borderColor: colors.line,
   },
-  catChipOn: { backgroundColor: colors.ocean600, borderColor: colors.ocean600 },
-  catChipText: { color: colors.text, fontSize: 12, fontWeight: '600' },
-  catChipTextOn: { color: colors.white },
+  catChipOn: { backgroundColor: '#0EA5E9', borderColor: '#0EA5E9' },
+  catChipText: { fontSize: 12, fontWeight: '600' },
+  catChipTextOn: { color: '#FFFFFF' },
   list: { paddingHorizontal: spacing.xl, paddingBottom: 120 },
   dayHead: {
     flexDirection: 'row',
@@ -208,7 +206,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
     paddingHorizontal: 2,
   },
-  dayText: { color: colors.subtext, fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },
-  dayTotal: { color: colors.subtext, fontSize: 12, fontWeight: '700' },
-  hint: { color: colors.faint, fontSize: 12, textAlign: 'center', marginTop: spacing.lg },
+  dayText: { fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },
+  dayTotal: { fontSize: 12, fontWeight: '700' },
+  hint: { fontSize: 12, textAlign: 'center', marginTop: spacing.lg },
 });

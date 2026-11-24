@@ -4,6 +4,8 @@ import { BlurView } from 'expo-blur';
 import { BottomTabBarProps, createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { darkColors, lightColors, mix, spacing } from '../theme';
+import { useTheme } from '../store/ThemeContext';
 import { PressableScale } from '../components/PressableScale';
 import { HomeScreen } from '../screens/HomeScreen';
 import { HistoryScreen } from '../screens/HistoryScreen';
@@ -11,7 +13,6 @@ import { ScanScreen } from '../screens/ScanScreen';
 import { AdvisorScreen } from '../screens/AdvisorScreen';
 import { TasksScreen } from '../screens/TasksScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
-import { colors, gradients, shadow, spacing } from '../theme';
 
 export type RootTabParamList = {
   Home: undefined;
@@ -32,6 +33,7 @@ const TAB_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
 
 /** Tab icon that springs up when it becomes active. */
 function TabIcon({ name, focused, size }: { name: keyof typeof Ionicons.glyphMap; focused: boolean; size: number }) {
+  const { t } = useTheme();
   const scale = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
@@ -46,7 +48,7 @@ function TabIcon({ name, focused, size }: { name: keyof typeof Ionicons.glyphMap
   const filled = name.replace('-outline', '') as keyof typeof Ionicons.glyphMap;
   return (
     <Animated.View style={{ transform: [{ scale }] }}>
-      <Ionicons name={focused ? filled : name} size={size} color={focused ? colors.ocean600 : colors.faint} />
+      <Ionicons name={focused ? filled : name} size={size} color={focused ? t.ocean600 : t.faint} />
     </Animated.View>
   );
 }
@@ -82,20 +84,24 @@ function FabGlow() {
 
 /** Floating frosted-glass tab bar with a raised ocean-gradient FAB in the middle (Scan). */
 function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+  const { progress, isDark } = useTheme();
   const supportsBlur = Platform.OS === 'ios' || Platform.OS === 'android';
+  const tintBg = mix(progress, 'rgba(255,255,255,0.66)', 'rgba(9,24,44,0.74)');
+  const fallbackBg = mix(progress, 'rgba(255,255,255,0.92)', 'rgba(11,33,64,0.96)');
+  const borderColor = mix(progress, lightColors.glassBorder, darkColors.glassBorder);
   return (
     <View style={styles.barWrap} pointerEvents="box-none">
-      <View style={styles.barShell}>
+      <Animated.View style={[styles.barShell, { borderColor }]}>
         <View style={styles.blurWrap} pointerEvents="none">
           {supportsBlur ? (
             <BlurView
               intensity={46}
-              tint="light"
+              tint={isDark ? 'dark' : 'light'}
               experimentalBlurMethod="dimezisBlurView"
               style={StyleSheet.absoluteFill}
             />
           ) : null}
-          <View style={[styles.barTint, !supportsBlur && styles.barFallback]} />
+          <Animated.View style={[StyleSheet.absoluteFill, supportsBlur ? tintBg : fallbackBg]} />
         </View>
         <View style={styles.bar}>
           {state.routes.map((route, index) => {
@@ -104,47 +110,57 @@ function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 
             if (route.name === 'Scan') {
               return (
-                <PressableScale
-                  key={route.key}
-                  style={styles.fabSlot}
-                  onPress={() => navigation.navigate(route.name)}
-                  scaleTo={0.9}
-                  haptic="medium"
-                >
-                  <FabGlow />
-                  <LinearGradient
-                    colors={gradients.fab}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={[styles.fab, shadow.fab]}
+                <View key={route.key} style={styles.slotWrap}>
+                  <PressableScale
+                    style={styles.fabSlot}
+                    onPress={() => navigation.navigate(route.name)}
+                    scaleTo={0.9}
+                    haptic="medium"
                   >
-                    <Ionicons name="camera" size={24} color={colors.white} />
-                  </LinearGradient>
-                  <Text style={styles.fabLabel}>Scan</Text>
-                </PressableScale>
+                    <FabGlow />
+                    <LinearGradient
+                      colors={isDark ? ['#0C4A6E', '#0EA5E9', '#7DD3FC'] : ['#072F52', '#0EA5E9', '#67E8F9']}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={[styles.fab, { borderColor: isDark ? 'rgba(10,30,55,0.92)' : 'rgba(255,255,255,0.92)' }]}
+                    >
+                      <Ionicons name="camera" size={24} color={lightColors.white} />
+                    </LinearGradient>
+                    <Animated.Text style={[styles.fabLabel, { color: mix(progress, lightColors.faint, darkColors.faint) }]}>
+                      Scan
+                    </Animated.Text>
+                  </PressableScale>
+                </View>
               );
             }
 
             const icon = TAB_ICONS[route.name] ?? 'ellipse-outline';
             return (
-              <PressableScale
-                key={route.key}
-                style={styles.tab}
-                scaleTo={0.9}
-                onPress={() => {
-                  const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
-                  if (!focused && !event.defaultPrevented) navigation.navigate(route.name);
-                }}
-              >
-                <TabIcon name={icon} focused={focused} size={22} />
-                <Text style={[styles.tabLabel, focused && { color: colors.ocean600, fontWeight: '800' }]}>
-                  {label}
-                </Text>
-              </PressableScale>
+              <View key={route.key} style={styles.slotWrap}>
+                <PressableScale
+                  style={styles.tab}
+                  scaleTo={0.9}
+                  onPress={() => {
+                    const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
+                    if (!focused && !event.defaultPrevented) navigation.navigate(route.name);
+                  }}
+                >
+                  <TabIcon name={icon} focused={focused} size={22} />
+                  <Animated.Text
+                    style={[
+                      styles.tabLabel,
+                      { color: mix(progress, lightColors.faint, darkColors.faint) },
+                      focused && { color: mix(progress, lightColors.ocean600, darkColors.ocean600), fontWeight: '800' },
+                    ]}
+                  >
+                    {label}
+                  </Animated.Text>
+                </PressableScale>
+              </View>
             );
           })}
         </View>
-      </View>
+      </Animated.View>
     </View>
   );
 }
@@ -152,12 +168,14 @@ function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 const Tab = createBottomTabNavigator<RootTabParamList>();
 
 export function RootNavigator() {
+  const { t } = useTheme();
   return (
     <Tab.Navigator
       tabBar={(props) => <TabBar {...props} />}
       screenOptions={{
         headerShown: false,
-        sceneStyle: { backgroundColor: 'transparent' },
+        // opaque so a not-yet-hidden previous tab never bleeds through
+        sceneStyle: { backgroundColor: t.bg },
       }}
     >
       <Tab.Screen name="Home" component={HomeScreen} options={{ title: 'Home' }} />
@@ -189,24 +207,21 @@ const styles = StyleSheet.create({
     height: BAR_HEIGHT,
     borderRadius: BAR_HEIGHT / 2 + 4,
     borderWidth: 1,
-    borderColor: colors.glassBorder,
-    ...shadow.cardHi,
   },
   blurWrap: {
     ...ABS_FILL,
     borderRadius: BAR_HEIGHT / 2 + 4,
     overflow: 'hidden',
   },
-  barTint: { ...ABS_FILL, backgroundColor: 'rgba(255,255,255,0.66)' },
-  barFallback: { backgroundColor: 'rgba(255,255,255,0.92)' },
   bar: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
   },
-  tab: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 2 },
-  tabLabel: { color: colors.faint, fontSize: 10, fontWeight: '600' },
-  fabSlot: { flex: 1, alignItems: 'center', justifyContent: 'flex-end', height: BAR_HEIGHT },
+  slotWrap: { flex: 1, alignSelf: 'stretch' },
+  tab: { flex: 1, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center', gap: 2 },
+  tabLabel: { fontSize: 10, fontWeight: '600' },
+  fabSlot: { flex: 1, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'flex-end', height: BAR_HEIGHT },
   fabGlow: {
     position: 'absolute',
     top: -26,
@@ -224,7 +239,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 4,
-    borderColor: 'rgba(255,255,255,0.92)',
   },
-  fabLabel: { color: colors.faint, fontSize: 10, fontWeight: '700', marginTop: 34 },
+  fabLabel: { fontSize: 10, fontWeight: '700', marginTop: 34 },
 });

@@ -19,8 +19,9 @@ import { GradientHeader, GlassCard } from '../components/GradientHeader';
 import { AuroraBackground } from '../components/AuroraBackground';
 import { useFinance } from '../store/FinanceContext';
 import { useUI } from '../store/UIContext';
+import { useTheme } from '../store/ThemeContext';
 import { categoriesFor } from '../data/categories';
-import { colors, gradients, radius, shadow, spacing } from '../theme';
+import { radius, spacing } from '../theme';
 import { parseReceiptText, receiptSummary } from '../utils/receipt';
 import { todayISO } from '../utils/stats';
 import { formatMoney, parseAmount } from '../utils/money';
@@ -43,6 +44,7 @@ type Stage = 'camera' | 'review';
 export function ScanScreen() {
   const finance = useFinance();
   const ui = useUI();
+  const { t, isDark, gradients } = useTheme();
   const { contentWidth } = useResponsive();
   const cameraRef = useRef<CameraView>(null);
   const [permission, requestPermission] = useCameraPermissions();
@@ -135,15 +137,15 @@ export function ScanScreen() {
         <GradientHeader title="Scan receipt" subtitle="Point your camera at a grocery receipt" />
         <View style={styles.permissionBox}>
           <Text style={styles.permissionEmoji}>📷</Text>
-          <Text style={styles.permissionTitle}>Camera access needed</Text>
-          <Text style={styles.permissionBody}>
+          <Text style={[styles.permissionTitle, { color: t.text }]}>Camera access needed</Text>
+          <Text style={[styles.permissionBody, { color: t.subtext }]}>
             Aiserie uses the camera only to read receipts on your device. Nothing is uploaded anywhere.
           </Text>
-          <TouchableOpacity onPress={requestPermission} style={styles.permissionBtn}>
-            <Text style={styles.permissionBtnText}>Allow camera</Text>
+          <TouchableOpacity onPress={requestPermission} style={[styles.permissionBtn, { backgroundColor: t.ocean600 }]}>
+            <Text style={[styles.permissionBtnText, { color: t.white }]}>Allow camera</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={startManual}>
-            <Text style={styles.permissionManual}>or enter it manually instead</Text>
+            <Text style={[styles.permissionManual, { color: t.ocean600 }]}>or enter it manually instead</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -166,23 +168,23 @@ export function ScanScreen() {
           <CameraView ref={cameraRef} style={styles.camera} facing="back" enableTorch={torch} mode="picture" />
           <View style={styles.cameraControls}>
             <TouchableOpacity style={styles.toolBtn} onPress={() => setTorch((v) => !v)}>
-              <Ionicons name={torch ? 'flash' : 'flash-outline'} size={22} color={colors.white} />
+              <Ionicons name={torch ? 'flash' : 'flash-outline'} size={22} color={t.white} />
             </TouchableOpacity>
 
             <TouchableOpacity onPress={capture} disabled={busy !== ''} activeOpacity={0.8}>
               <View style={styles.captureOuter}>
                 <View style={[styles.captureInner, busy !== '' && { opacity: 0.6 }]}>
                   {busy !== '' ? (
-                    <ActivityIndicator color={colors.ocean600} />
+                    <ActivityIndicator color={t.ocean600} />
                   ) : (
-                    <View style={styles.captureCore} />
+                    <View style={[styles.captureCore, { backgroundColor: t.ocean600 }]} />
                   )}
                 </View>
               </View>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.toolBtn} onPress={startManual}>
-              <Ionicons name="create-outline" size={22} color={colors.white} />
+              <Ionicons name="create-outline" size={22} color={t.white} />
             </TouchableOpacity>
           </View>
           <Text style={styles.captureHint}>
@@ -198,49 +200,49 @@ export function ScanScreen() {
             {photoUri && (
               <Image source={{ uri: photoUri }} style={styles.photo} resizeMode="cover" />
             )}
-            <View style={[styles.reviewCard, shadow.card]}>
-              <Text style={styles.ocrInfo}>{ocrInfo}</Text>
+            <View style={[styles.reviewCard, { backgroundColor: t.card, borderColor: t.glassBorderSoft }]}>
+              <Text style={[styles.ocrInfo, { color: t.subtext }]}>{ocrInfo}</Text>
 
-              <Text style={styles.label}>TOTAL AMOUNT</Text>
-              <View style={styles.amountRow}>
-                <Text style={styles.peso}>
+              <Text style={[styles.label, { color: t.subtext }]}>TOTAL AMOUNT</Text>
+              <View style={[styles.amountRow, { backgroundColor: t.ice50, borderColor: t.ocean600 }]}>
+                <Text style={[styles.peso, { color: t.ocean600 }]}>
                   {finance.settings.currency === 'PHP' ? '₱' : finance.settings.currency}
                 </Text>
                 <TextInput
-                  style={styles.amountInput}
+                  style={[styles.amountInput, { color: t.text }]}
                   value={amountRaw}
                   onChangeText={setAmountRaw}
                   keyboardType="numeric"
                   placeholder="0.00"
-                  placeholderTextColor={colors.faint}
+                  placeholderTextColor={t.faint}
                 />
               </View>
               {parseAmount(amountRaw) !== null && (
-                <Text style={styles.formatted}>{formatMoney(parseAmount(amountRaw)!, finance.settings.currency)}</Text>
+                <Text style={[styles.formatted, { color: t.faint }]}>{formatMoney(parseAmount(amountRaw)!, finance.settings.currency)}</Text>
               )}
 
-              <Text style={styles.label}>CATEGORY</Text>
+              <Text style={[styles.label, { color: t.subtext }]}>CATEGORY</Text>
               <View style={styles.chips}>
                 {categoriesFor('expense').slice(0, 6).map((c) => (
                   <TouchableOpacity
                     key={c.id}
                     onPress={() => setCategoryId(c.id)}
-                    style={[styles.chip, categoryId === c.id && { backgroundColor: c.color, borderColor: c.color }]}
+                    style={[styles.chip, { backgroundColor: t.ice50, borderColor: t.line }, categoryId === c.id && { backgroundColor: c.color, borderColor: c.color }]}
                   >
-                    <Text style={[styles.chipText, categoryId === c.id && { color: colors.white }]}>
+                    <Text style={[styles.chipText, { color: t.text }, categoryId === c.id && { color: t.white }]}>
                       {c.emoji} {c.label}
                     </Text>
                   </TouchableOpacity>
                 ))}
               </View>
 
-              <Text style={styles.label}>NOTE</Text>
+              <Text style={[styles.label, { color: t.subtext }]}>NOTE</Text>
               <TextInput
-                style={styles.noteInput}
+                style={[styles.noteInput, { backgroundColor: t.ice50, borderColor: t.line, color: t.text }]}
                 value={note}
                 onChangeText={setNote}
                 placeholder="Where did you shop?"
-                placeholderTextColor={colors.faint}
+                placeholderTextColor={t.faint}
               />
 
               <View style={styles.reviewActions}>
@@ -249,9 +251,9 @@ export function ScanScreen() {
                     setStage('camera');
                     setPhotoUri(null);
                   }}
-                  style={styles.retakeBtn}
+                  style={[styles.retakeBtn, { backgroundColor: t.ice100 }]}
                 >
-                  <Text style={styles.retakeText}>Retake</Text>
+                  <Text style={[styles.retakeText, { color: t.ocean800 }]}>Retake</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={{ flex: 1 }} onPress={saveDraft}>
                   <LinearGradient
@@ -260,7 +262,7 @@ export function ScanScreen() {
                     end={{ x: 1, y: 1 }}
                     style={styles.saveBtn}
                   >
-                    <Text style={styles.saveText}>Save expense</Text>
+                    <Text style={[styles.saveText, { color: t.white }]}>Save expense</Text>
                   </LinearGradient>
                 </TouchableOpacity>
               </View>
@@ -274,14 +276,14 @@ export function ScanScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: 'transparent' },
-  tipText: { color: colors.white, fontSize: 13, lineHeight: 19 },
+  tipText: { color: '#FFFFFF', fontSize: 13, lineHeight: 19 },
   permissionBox: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.xxl },
   permissionEmoji: { fontSize: 46, marginBottom: spacing.md },
-  permissionTitle: { color: colors.text, fontSize: 19, fontWeight: '800', marginBottom: 6 },
-  permissionBody: { color: colors.subtext, fontSize: 13, textAlign: 'center', lineHeight: 19, marginBottom: spacing.lg },
-  permissionBtn: { backgroundColor: colors.ocean600, borderRadius: radius.md, paddingHorizontal: 26, paddingVertical: 13 },
-  permissionBtnText: { color: colors.white, fontWeight: '800' },
-  permissionManual: { color: colors.ocean600, marginTop: spacing.md, fontWeight: '600', fontSize: 13 },
+  permissionTitle: { fontSize: 19, fontWeight: '800', marginBottom: 6 },
+  permissionBody: { fontSize: 13, textAlign: 'center', lineHeight: 19, marginBottom: spacing.lg },
+  permissionBtn: { borderRadius: radius.md, paddingHorizontal: 26, paddingVertical: 13 },
+  permissionBtnText: { fontWeight: '800' },
+  permissionManual: { marginTop: spacing.md, fontWeight: '600', fontSize: 13 },
   cameraWrap: { flex: 1, overflow: 'hidden', borderBottomLeftRadius: radius.lg, borderBottomRightRadius: radius.lg },
   camera: { flex: 1 },
   cameraControls: {
@@ -306,7 +308,7 @@ const styles = StyleSheet.create({
     height: 78,
     borderRadius: 39,
     borderWidth: 4,
-    borderColor: colors.white,
+    borderColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -314,11 +316,11 @@ const styles = StyleSheet.create({
     width: 62,
     height: 62,
     borderRadius: 31,
-    backgroundColor: colors.white,
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  captureCore: { width: 48, height: 48, borderRadius: 24, backgroundColor: colors.ocean600 },
+  captureCore: { width: 48, height: 48, borderRadius: 24 },
   captureHint: {
     position: 'absolute',
     bottom: 10,
@@ -327,50 +329,41 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   review: { padding: spacing.xl, paddingBottom: 140 },
-  photo: { width: '100%', height: 180, borderRadius: radius.md, marginBottom: spacing.lg, backgroundColor: colors.ice100 },
+  photo: { width: '100%', height: 180, borderRadius: radius.md, marginBottom: spacing.lg, backgroundColor: 'rgba(125,211,252,0.15)' },
   reviewCard: {
-    backgroundColor: colors.card,
     borderWidth: 1,
-    borderColor: colors.glassBorderSoft,
     borderRadius: radius.lg,
     padding: spacing.lg,
   },
-  ocrInfo: { color: colors.subtext, fontSize: 13, lineHeight: 19, marginBottom: spacing.md },
-  label: { color: colors.subtext, fontSize: 11, fontWeight: '800', letterSpacing: 0.8, marginBottom: 6, marginTop: spacing.md },
+  ocrInfo: { fontSize: 13, lineHeight: 19, marginBottom: spacing.md },
+  label: { fontSize: 11, fontWeight: '800', letterSpacing: 0.8, marginBottom: 6, marginTop: spacing.md },
   amountRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.ice50,
     borderWidth: 2,
-    borderColor: colors.ocean600,
     borderRadius: radius.md,
     paddingHorizontal: spacing.md,
   },
-  peso: { fontSize: 24, fontWeight: '800', color: colors.ocean600, marginRight: 8 },
-  amountInput: { flex: 1, fontSize: 26, fontWeight: '800', color: colors.text, paddingVertical: 8 },
-  formatted: { color: colors.faint, fontSize: 12, marginTop: 4 },
+  peso: { fontSize: 24, fontWeight: '800', marginRight: 8 },
+  amountInput: { flex: 1, fontSize: 26, fontWeight: '800', paddingVertical: 8 },
+  formatted: { fontSize: 12, marginTop: 4 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: {
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: radius.pill,
-    backgroundColor: colors.ice50,
     borderWidth: 1.5,
-    borderColor: colors.line,
   },
-  chipText: { color: colors.text, fontSize: 13, fontWeight: '600' },
+  chipText: { fontSize: 13, fontWeight: '600' },
   noteInput: {
-    backgroundColor: colors.ice50,
     borderWidth: 1.5,
-    borderColor: colors.line,
     borderRadius: radius.md,
     paddingVertical: 10,
     paddingHorizontal: spacing.md,
-    color: colors.text,
   },
   reviewActions: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginTop: spacing.lg },
-  retakeBtn: { paddingVertical: 14, paddingHorizontal: 18, borderRadius: radius.md, backgroundColor: colors.ice100 },
-  retakeText: { color: colors.ocean800, fontWeight: '800' },
-  saveBtn: { borderRadius: radius.md, paddingVertical: 15, alignItems: 'center', ...shadow.fab },
-  saveText: { color: colors.white, fontWeight: '800', fontSize: 16 },
+  retakeBtn: { paddingVertical: 14, paddingHorizontal: 18, borderRadius: radius.md },
+  retakeText: { fontWeight: '800' },
+  saveBtn: { borderRadius: radius.md, paddingVertical: 15, alignItems: 'center' },
+  saveText: { fontWeight: '800', fontSize: 16 },
 });

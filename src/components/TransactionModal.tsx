@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
+  Image,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -16,9 +17,11 @@ import { LinearGradient } from 'expo-linear-gradient';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useFinance } from '../store/FinanceContext';
 import { useUI } from '../store/UIContext';
+import { useTheme } from '../store/ThemeContext';
 import { categoriesFor, getCategory } from '../data/categories';
+import { getBrand } from '../data/banks';
 import { Transaction, TxType } from '../types';
-import { colors, gradients, radius, shadow, spacing } from '../theme';
+import { radius, spacing } from '../theme';
 import { formatMoney, parseAmount } from '../utils/money';
 import { todayISO } from '../utils/stats';
 import { useResponsive } from '../hooks/useResponsive';
@@ -51,6 +54,7 @@ function WebDateInput({ valueISO, onChangeISO, style }: { valueISO: string; onCh
 export function TransactionModal() {
   const ui = useUI();
   const finance = useFinance();
+  const { t, gradients, isDark } = useTheme();
   const { sheetWidth } = useResponsive();
   const { visible, editing, preset } = ui;
 
@@ -85,10 +89,10 @@ export function TransactionModal() {
   const cats = useMemo(() => categoriesFor(type), [type]);
   const displayAmount = parseAmount(amountRaw);
 
-  const switchType = (t: TxType) => {
-    setType(t);
+  const switchType = (tx: TxType) => {
+    setType(tx);
     const keep = getCategory(categoryId);
-    if (!keep || keep.type !== t) setCategoryId(t === 'expense' ? 'groceries' : 'salary');
+    if (!keep || keep.type !== tx) setCategoryId(tx === 'expense' ? 'groceries' : 'salary');
   };
 
   const onDateChange = (event: DateTimePickerEvent, d?: Date) => {
@@ -146,48 +150,54 @@ export function TransactionModal() {
     <Modal visible={visible} animationType="slide" transparent onRequestClose={ui.close}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.backdrop}>
         <Pressable style={styles.pressAway} onPress={ui.close} />
-        <View style={[styles.sheet, sheetWidth ? { alignSelf: 'center', width: '100%', maxWidth: sheetWidth + 20 } : null]}>
-          <View style={styles.grabber} />
-          <Text style={styles.title}>{editing ? 'Edit transaction' : 'New transaction'}</Text>
+        <View
+          style={[
+            styles.sheet,
+            { backgroundColor: isDark ? 'rgba(10,26,50,0.98)' : 'rgba(255,255,255,0.97)' },
+            sheetWidth ? { alignSelf: 'center', width: '100%', maxWidth: sheetWidth + 20 } : null,
+          ]}
+        >
+          <View style={[styles.grabber, { backgroundColor: t.line }]} />
+          <Text style={[styles.title, { color: t.text }]}>{editing ? 'Edit transaction' : 'New transaction'}</Text>
 
           {/* type toggle */}
-          <View style={styles.toggle}>
+          <View style={[styles.toggle, { backgroundColor: t.ice100 }]}>
             <TouchableOpacity
-              style={[styles.toggleBtn, type === 'expense' && styles.toggleExpense]}
+              style={[styles.toggleBtn, type === 'expense' && { backgroundColor: t.expense }]}
               onPress={() => switchType('expense')}
             >
-              <Text style={[styles.toggleText, type === 'expense' && styles.toggleTextOn]}>− Expense</Text>
+              <Text style={[styles.toggleText, { color: t.subtext }, type === 'expense' && { color: t.white }]}>− Expense</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.toggleBtn, type === 'income' && styles.toggleIncome]}
+              style={[styles.toggleBtn, type === 'income' && { backgroundColor: t.income }]}
               onPress={() => switchType('income')}
             >
-              <Text style={[styles.toggleText, type === 'income' && styles.toggleTextOn]}>+ Income</Text>
+              <Text style={[styles.toggleText, { color: t.subtext }, type === 'income' && { color: t.white }]}>+ Income</Text>
             </TouchableOpacity>
           </View>
 
           {/* amount */}
-          <View style={[styles.amountBox, { borderColor: type === 'income' ? colors.income : colors.expense }]}>
-            <Text style={[styles.currencyChip, { color: type === 'income' ? colors.income : colors.expense }]}>
+          <View style={[styles.amountBox, { backgroundColor: t.ice50 }, { borderColor: type === 'income' ? t.income : t.expense }]}>
+            <Text style={[styles.currencyChip, { color: type === 'income' ? t.income : t.expense }]}>
               {finance.settings.currency === 'PHP' ? '₱' : finance.settings.currency}
             </Text>
             <TextInput
-              style={styles.amountInput}
+              style={[styles.amountInput, { color: t.text }]}
               value={amountRaw}
               onChangeText={setAmountRaw}
               placeholder="0.00"
-              placeholderTextColor={colors.faint}
+              placeholderTextColor={t.faint}
               keyboardType="numeric"
               autoFocus={!editing}
             />
             {displayAmount !== null && (
-              <Text style={styles.amountHint}>{formatMoney(displayAmount, finance.settings.currency)}</Text>
+              <Text style={[styles.amountHint, { color: t.faint }]}>{formatMoney(displayAmount, finance.settings.currency)}</Text>
             )}
           </View>
 
           <ScrollView style={{ maxHeight: 260 }} showsVerticalScrollIndicator={false}>
             {/* categories */}
-            <Text style={styles.section}>Category</Text>
+            <Text style={[styles.section, { color: t.subtext }]}>Category</Text>
             <View style={styles.chips}>
               {cats.map((c) => (
                 <TouchableOpacity
@@ -195,10 +205,11 @@ export function TransactionModal() {
                   onPress={() => setCategoryId(c.id)}
                   style={[
                     styles.chip,
+                    { backgroundColor: t.ice50, borderColor: t.line },
                     categoryId === c.id && { backgroundColor: c.color, borderColor: c.color },
                   ]}
                 >
-                  <Text style={[styles.chipText, categoryId === c.id && { color: colors.white }]}>
+                  <Text style={[styles.chipText, { color: t.text }, categoryId === c.id && { color: t.white }]}>
                     {c.emoji} {c.label}
                   </Text>
                 </TouchableOpacity>
@@ -206,29 +217,42 @@ export function TransactionModal() {
             </View>
 
             {/* wallet */}
-            <Text style={styles.section}>Wallet</Text>
+            <Text style={[styles.section, { color: t.subtext }]}>Wallet</Text>
             <View style={styles.chips}>
               <TouchableOpacity
                 onPress={() => setAccountId(null)}
-                style={[styles.chip, accountId === null && { backgroundColor: colors.ocean600, borderColor: colors.ocean600 }]}
+                style={[
+                  styles.chip,
+                  { backgroundColor: t.ice50, borderColor: t.line },
+                  accountId === null && { backgroundColor: t.ocean600, borderColor: t.ocean600 },
+                ]}
               >
-                <Text style={[styles.chipText, accountId === null && { color: colors.white }]}>No wallet</Text>
+                <Text style={[styles.chipText, { color: t.text }, accountId === null && { color: t.white }]}>No wallet</Text>
               </TouchableOpacity>
-              {finance.accounts.map((a) => (
-                <TouchableOpacity
-                  key={a.id}
-                  onPress={() => setAccountId(a.id)}
-                  style={[styles.chip, accountId === a.id && { backgroundColor: a.color, borderColor: a.color }]}
-                >
-                  <Text style={[styles.chipText, accountId === a.id && { color: colors.white }]}>
-                    {a.emoji} {a.name}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+              {finance.accounts.map((a) => {
+                const brand = getBrand(a.logoId);
+                return (
+                  <TouchableOpacity
+                    key={a.id}
+                    onPress={() => setAccountId(a.id)}
+                    style={[
+                      styles.chip,
+                      { backgroundColor: t.ice50, borderColor: t.line },
+                      accountId === a.id && { backgroundColor: a.color, borderColor: a.color },
+                    ]}
+                  >
+                    <View style={styles.chipRow}>
+                      {brand && <Image source={brand.logo} style={styles.chipLogo} resizeMode="contain" />}
+                      {!brand && <Text style={styles.chipEmoji}>{a.emoji}</Text>}
+                      <Text style={[styles.chipText, { color: t.text }, accountId === a.id && { color: t.white }]}>{a.name}</Text>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
 
             {/* date */}
-            <Text style={styles.section}>Date</Text>
+            <Text style={[styles.section, { color: t.subtext }]}>Date</Text>
             {Platform.OS === 'web' ? (
               <WebDateInput
                 valueISO={toISODate(date)}
@@ -243,28 +267,28 @@ export function TransactionModal() {
                   fontSize: 15,
                   fontWeight: 600,
                   fontFamily: 'inherit',
-                  color: colors.text,
-                  backgroundColor: colors.ice50,
-                  border: `1.5px solid ${colors.line}`,
+                  color: t.text,
+                  backgroundColor: t.ice50,
+                  border: `1.5px solid ${t.line}`,
                   borderRadius: radius.md,
                 }}
               />
             ) : (
-              <TouchableOpacity style={styles.dateBtn} onPress={() => setIosPicker(true)}>
-                <Text style={styles.dateText}>
+              <TouchableOpacity style={[styles.dateBtn, { backgroundColor: t.ice50, borderColor: t.line }]} onPress={() => setIosPicker(true)}>
+                <Text style={[styles.dateText, { color: t.text }]}>
                   📅 {date.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}
                 </Text>
               </TouchableOpacity>
             )}
 
             {/* note */}
-            <Text style={styles.section}>Note</Text>
+            <Text style={[styles.section, { color: t.subtext }]}>Note</Text>
             <TextInput
-              style={styles.noteInput}
+              style={[styles.noteInput, { backgroundColor: t.ice50, borderColor: t.line, color: t.text }]}
               value={note}
               onChangeText={setNote}
               placeholder="e.g. Weekly grocery at Puregold"
-              placeholderTextColor={colors.faint}
+              placeholderTextColor={t.faint}
               multiline
             />
             <View style={{ height: 8 }} />
@@ -273,8 +297,8 @@ export function TransactionModal() {
           {/* actions */}
           <View style={styles.actions}>
             {editing && (
-              <TouchableOpacity style={styles.deleteBtn} onPress={confirmDelete}>
-                <Text style={styles.deleteText}>Delete</Text>
+              <TouchableOpacity style={[styles.deleteBtn, { backgroundColor: isDark ? 'rgba(248,113,113,0.14)' : '#FDECEC' }]} onPress={confirmDelete}>
+                <Text style={[styles.deleteText, { color: t.risk }]}>Delete</Text>
               </TouchableOpacity>
             )}
             <TouchableOpacity style={{ flex: 1 }} onPress={save}>
@@ -284,7 +308,7 @@ export function TransactionModal() {
                 end={{ x: 1, y: 1 }}
                 style={styles.saveBtn}
               >
-                <Text style={styles.saveText}>{editing ? 'Save changes' : 'Add transaction'}</Text>
+                <Text style={[styles.saveText, { color: t.white }]}>{editing ? 'Save changes' : 'Add transaction'}</Text>
               </LinearGradient>
             </TouchableOpacity>
           </View>
@@ -293,11 +317,11 @@ export function TransactionModal() {
         {/* date picker: iOS spinner in sub-modal, Android native dialog */}
         {Platform.OS === 'ios' ? (
           <Modal visible={iosPicker} transparent animationType="fade" onRequestClose={() => setIosPicker(false)}>
-            <View style={styles.pickerBackdrop}>
-              <View style={styles.pickerSheet}>
+            <View style={[styles.pickerBackdrop, { backgroundColor: isDark ? 'rgba(2,10,20,0.6)' : 'rgba(6,38,64,0.45)' }]}>
+              <View style={[styles.pickerSheet, { backgroundColor: t.cardSolid }]}>
                 <DateTimePicker value={date} mode="date" display="spinner" onChange={onDateChange} />
                 <TouchableOpacity style={styles.pickerDone} onPress={() => setIosPicker(false)}>
-                  <Text style={styles.pickerDoneText}>Done</Text>
+                  <Text style={[styles.pickerDoneText, { color: t.ocean600 }]}>Done</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -311,10 +335,9 @@ export function TransactionModal() {
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: 'rgba(6, 38, 64, 0.45)', justifyContent: 'flex-end' },
+  backdrop: { flex: 1, backgroundColor: 'rgba(4, 16, 31, 0.5)', justifyContent: 'flex-end' },
   pressAway: { flex: 1 },
   sheet: {
-    backgroundColor: 'rgba(255,255,255,0.96)',
     borderTopLeftRadius: radius.lg + 8,
     borderTopRightRadius: radius.lg + 8,
     paddingHorizontal: spacing.xl,
@@ -322,14 +345,11 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xl,
     maxHeight: '92%',
   },
-  grabber: { alignSelf: 'center', width: 44, height: 5, borderRadius: 3, backgroundColor: colors.line, marginBottom: spacing.md },
-  title: { color: colors.text, fontSize: 20, fontWeight: '800', marginBottom: spacing.lg },
-  toggle: { flexDirection: 'row', backgroundColor: colors.ice100, borderRadius: radius.md, padding: 4, marginBottom: spacing.lg },
+  grabber: { alignSelf: 'center', width: 44, height: 5, borderRadius: 3, marginBottom: spacing.md },
+  title: { fontSize: 20, fontWeight: '800', marginBottom: spacing.lg },
+  toggle: { flexDirection: 'row', borderRadius: radius.md, padding: 4, marginBottom: spacing.lg },
   toggleBtn: { flex: 1, paddingVertical: 10, borderRadius: radius.md - 4, alignItems: 'center' },
-  toggleExpense: { backgroundColor: colors.expense },
-  toggleIncome: { backgroundColor: colors.income },
-  toggleText: { color: colors.subtext, fontWeight: '700', fontSize: 14 },
-  toggleTextOn: { color: colors.white },
+  toggleText: { fontWeight: '700', fontSize: 14 },
   amountBox: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -338,49 +358,44 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     marginBottom: spacing.lg,
-    backgroundColor: colors.ice50,
   },
   currencyChip: { fontSize: 24, fontWeight: '800', marginRight: 10 },
-  amountInput: { flex: 1, fontSize: 26, fontWeight: '800', color: colors.text, paddingVertical: 4 },
-  amountHint: { color: colors.faint, fontSize: 12 },
-  section: { color: colors.subtext, fontSize: 12, fontWeight: '700', marginTop: spacing.md, marginBottom: spacing.sm, textTransform: 'uppercase', letterSpacing: 0.6 },
+  amountInput: { flex: 1, fontSize: 26, fontWeight: '800', paddingVertical: 4 },
+  amountHint: { fontSize: 12 },
+  section: { fontSize: 12, fontWeight: '700', marginTop: spacing.md, marginBottom: spacing.sm, textTransform: 'uppercase', letterSpacing: 0.6 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: {
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: radius.pill,
-    backgroundColor: colors.ice50,
     borderWidth: 1.5,
-    borderColor: colors.line,
   },
-  chipText: { color: colors.text, fontSize: 13, fontWeight: '600' },
+  chipRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  chipLogo: { width: 18, height: 18, borderRadius: 5 },
+  chipEmoji: { fontSize: 13 },
+  chipText: { fontSize: 13, fontWeight: '600' },
   dateBtn: {
-    backgroundColor: colors.ice50,
     borderWidth: 1.5,
-    borderColor: colors.line,
     borderRadius: radius.md,
     paddingVertical: 12,
     paddingHorizontal: spacing.md,
   },
-  dateText: { color: colors.text, fontSize: 15, fontWeight: '600' },
+  dateText: { fontSize: 15, fontWeight: '600' },
   noteInput: {
-    backgroundColor: colors.ice50,
     borderWidth: 1.5,
-    borderColor: colors.line,
     borderRadius: radius.md,
     paddingVertical: 10,
     paddingHorizontal: spacing.md,
-    color: colors.text,
     minHeight: 44,
     textAlignVertical: 'top',
   },
   actions: { flexDirection: 'row', alignItems: 'center', marginTop: spacing.lg, gap: spacing.md },
-  deleteBtn: { paddingVertical: 14, paddingHorizontal: 18, borderRadius: radius.md, backgroundColor: '#FDECEC' },
-  deleteText: { color: colors.risk, fontWeight: '800' },
-  saveBtn: { borderRadius: radius.md, paddingVertical: 15, alignItems: 'center', ...shadow.fab },
-  saveText: { color: colors.white, fontWeight: '800', fontSize: 16 },
-  pickerBackdrop: { flex: 1, backgroundColor: 'rgba(6,38,64,0.45)', justifyContent: 'flex-end' },
-  pickerSheet: { backgroundColor: colors.card, paddingBottom: spacing.lg },
+  deleteBtn: { paddingVertical: 14, paddingHorizontal: 18, borderRadius: radius.md },
+  deleteText: { fontWeight: '800' },
+  saveBtn: { borderRadius: radius.md, paddingVertical: 15, alignItems: 'center' },
+  saveText: { fontWeight: '800', fontSize: 16 },
+  pickerBackdrop: { flex: 1, justifyContent: 'flex-end' },
+  pickerSheet: { paddingBottom: spacing.lg },
   pickerDone: { alignSelf: 'center', marginTop: -spacing.sm, paddingHorizontal: 24, paddingVertical: 10 },
-  pickerDoneText: { color: colors.ocean600, fontWeight: '800', fontSize: 16 },
+  pickerDoneText: { fontWeight: '800', fontSize: 16 },
 });

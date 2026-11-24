@@ -8,7 +8,8 @@ import { Entrance } from '../components/Entrance';
 import { EmptyState } from '../components/EmptyState';
 import { PressableScale } from '../components/PressableScale';
 import { useTasks } from '../store/TasksContext';
-import { colors, gradients, radius, spacing } from '../theme';
+import { useTheme } from '../store/ThemeContext';
+import { radius, spacing } from '../theme';
 import { Task } from '../types';
 import { useResponsive } from '../hooks/useResponsive';
 
@@ -26,6 +27,7 @@ function TaskRow({
   onStar: () => void;
   onDelete: () => void;
 }) {
+  const { t } = useTheme();
   const removal = useRef(new Animated.Value(1)).current;
   const check = useRef(new Animated.Value(task.done ? 1 : 0)).current;
 
@@ -40,9 +42,9 @@ function TaskRow({
 
   const handleDelete = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
-    Animated.parallel([
-      Animated.timing(removal, { toValue: 0, duration: 230, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
-    ]).start(() => onDelete());
+    Animated.timing(removal, { toValue: 0, duration: 230, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start(
+      () => onDelete()
+    );
   };
 
   const checkScale = check.interpolate({ inputRange: [0, 1], outputRange: [0.4, 1] });
@@ -56,14 +58,20 @@ function TaskRow({
       }}
     >
       <GlassCard onPress={onToggle} style={styles.rowCard}>
-        <View style={[styles.circle, task.done && styles.circleDone]}>
+        <View
+          style={[
+            styles.circle,
+            { borderColor: t.ocean500 },
+            task.done && { borderColor: t.income, backgroundColor: t.income },
+          ]}
+        >
           <Animated.View style={{ transform: [{ scale: checkScale }] }}>
-            <Ionicons name="checkmark-sharp" size={15} color={colors.white} />
+            <Ionicons name="checkmark-sharp" size={15} color={t.white} />
           </Animated.View>
         </View>
         <View style={styles.rowMid}>
           <Text
-            style={[styles.rowTitle, task.done && styles.rowTitleDone]}
+            style={[styles.rowTitle, { color: task.done ? t.faint : t.text }, task.done && styles.rowTitleDone]}
             numberOfLines={2}
           >
             {task.title}
@@ -75,14 +83,10 @@ function TaskRow({
           style={styles.iconBtn}
           scaleTo={0.82}
         >
-          <Ionicons
-            name={task.important ? 'star' : 'star-outline'}
-            size={19}
-            color={task.important ? colors.warn : colors.faint}
-          />
+          <Ionicons name={task.important ? 'star' : 'star-outline'} size={19} color={task.important ? t.warn : t.faint} />
         </PressableScale>
         <PressableScale onPress={handleDelete} style={styles.iconBtn} scaleTo={0.82}>
-          <Ionicons name="trash-outline" size={18} color={colors.faint} />
+          <Ionicons name="trash-outline" size={18} color={t.faint} />
         </PressableScale>
       </GlassCard>
     </Animated.View>
@@ -92,6 +96,7 @@ function TaskRow({
 export function TasksScreen() {
   const store = useTasks();
   const { contentWidth } = useResponsive();
+  const { t, isDark, gradients } = useTheme();
   const [draft, setDraft] = useState('');
   const [markImportant, setMarkImportant] = useState(false);
   const [filter, setFilter] = useState<TaskFilter>('all');
@@ -107,12 +112,12 @@ export function TasksScreen() {
   const open = useMemo(
     () =>
       store.tasks
-        .filter((t) => !t.done)
+        .filter((x) => !x.done)
         .sort((a, b) => Number(b.important) - Number(a.important) || b.createdAt - a.createdAt),
     [store.tasks]
   );
   const done = useMemo(
-    () => store.tasks.filter((t) => t.done).sort((a, b) => (b.doneAt ?? 0) - (a.doneAt ?? 0)),
+    () => store.tasks.filter((x) => x.done).sort((a, b) => (b.doneAt ?? 0) - (a.doneAt ?? 0)),
     [store.tasks]
   );
 
@@ -188,15 +193,15 @@ export function TasksScreen() {
                 style={styles.starToggle}
                 scaleTo={0.85}
               >
-                <Ionicons name={markImportant ? 'star' : 'star-outline'} size={21} color={markImportant ? colors.warn : colors.faint} />
+                <Ionicons name={markImportant ? 'star' : 'star-outline'} size={21} color={markImportant ? t.warn : t.faint} />
               </PressableScale>
               <TextInput
-                style={styles.composerInput}
+                style={[styles.composerInput, { color: t.text }]}
                 value={draft}
                 onChangeText={setDraft}
                 onSubmitEditing={submit}
                 placeholder="Add a task… e.g. Pay the electricity bill"
-                placeholderTextColor={colors.faint}
+                placeholderTextColor={t.faint}
                 returnKeyType="done"
                 maxLength={140}
               />
@@ -205,9 +210,9 @@ export function TasksScreen() {
                 disabled={draft.trim().length === 0}
                 haptic="medium"
                 scaleTo={0.88}
-                style={[styles.addBtn, draft.trim().length === 0 && styles.addBtnOff]}
+                style={[styles.addBtn, { backgroundColor: draft.trim().length === 0 ? t.faint : t.ocean600 }, draft.trim().length === 0 && { opacity: 0.5 }]}
               >
-                <Ionicons name="add" size={22} color={colors.white} />
+                <Ionicons name="add" size={22} color={t.white} />
               </PressableScale>
             </GlassCard>
           </Entrance>
@@ -219,8 +224,14 @@ export function TasksScreen() {
                 const on = filter === c.key;
                 return (
                   <PressableScale key={c.key} onPress={() => setFilter(c.key)} haptic={on ? false : 'light'} scaleTo={0.94}>
-                    <View style={[styles.chip, on && styles.chipOn]}>
-                      <Text style={[styles.chipText, on && styles.chipTextOn]}>{c.label}</Text>
+                    <View
+                      style={[
+                        styles.chip,
+                        { backgroundColor: t.card, borderColor: t.glassBorderSoft },
+                        on && { backgroundColor: t.ocean600, borderColor: t.ocean600 },
+                      ]}
+                    >
+                      <Text style={[styles.chipText, { color: on ? t.white : t.subtext }]}>{c.label}</Text>
                     </View>
                   </PressableScale>
                 );
@@ -228,7 +239,7 @@ export function TasksScreen() {
               {filter !== 'open' && store.doneCount > 0 ? (
                 <PressableScale onPress={() => store.clearDone()} scaleTo={0.94}>
                   <View style={styles.clearChip}>
-                    <Text style={styles.clearChipText}>Clear done</Text>
+                    <Text style={[styles.clearChipText, { color: t.expense }]}>Clear done</Text>
                   </View>
                 </PressableScale>
               ) : null}
@@ -248,17 +259,17 @@ export function TasksScreen() {
               ) : null}
               {showOpen && open.length > 0 ? (
                 <View>
-                  {filter === 'all' ? <Text style={styles.groupLabel}>Open</Text> : null}
-                  {open.map((t, i) => (
-                    <Entrance key={t.id} delay={200 + i * 40}>
+                  {filter === 'all' ? <Text style={[styles.groupLabel, { color: t.subtext }]}>Open</Text> : null}
+                  {open.map((task, i) => (
+                    <Entrance key={task.id} delay={200 + i * 40}>
                       <TaskRow
-                        task={t}
+                        task={task}
                         onToggle={() => {
                           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-                          store.toggleTask(t.id);
+                          store.toggleTask(task.id);
                         }}
-                        onStar={() => store.toggleImportant(t.id)}
-                        onDelete={() => store.removeTask(t.id)}
+                        onStar={() => store.toggleImportant(task.id)}
+                        onDelete={() => store.removeTask(task.id)}
                       />
                     </Entrance>
                   ))}
@@ -266,14 +277,14 @@ export function TasksScreen() {
               ) : null}
               {showDone && done.length > 0 ? (
                 <View>
-                  {filter === 'all' && open.length > 0 ? <Text style={styles.groupLabel}>Completed</Text> : null}
-                  {done.map((t, i) => (
-                    <Entrance key={t.id} delay={filter === 'all' ? 200 + i * 40 : 200 + i * 40}>
+                  {filter === 'all' && open.length > 0 ? <Text style={[styles.groupLabel, { color: t.subtext }]}>Completed</Text> : null}
+                  {done.map((task, i) => (
+                    <Entrance key={task.id} delay={200 + i * 40}>
                       <TaskRow
-                        task={t}
-                        onToggle={() => store.toggleTask(t.id)}
-                        onStar={() => store.toggleImportant(t.id)}
-                        onDelete={() => store.removeTask(t.id)}
+                        task={task}
+                        onToggle={() => store.toggleTask(task.id)}
+                        onStar={() => store.toggleImportant(task.id)}
+                        onDelete={() => store.removeTask(task.id)}
                       />
                     </Entrance>
                   ))}
@@ -294,7 +305,7 @@ const styles = StyleSheet.create({
   root: { flex: 1 },
   progressHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   progressLabel: { color: 'rgba(255,255,255,0.82)', fontSize: 13, fontWeight: '700' },
-  progressValue: { color: colors.white, fontSize: 16, fontWeight: '900' },
+  progressValue: { color: '#FFFFFF', fontSize: 16, fontWeight: '900' },
   track: {
     height: 9,
     borderRadius: radius.pill,
@@ -316,32 +327,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
   },
   starToggle: { padding: 8 },
-  composerInput: { flex: 1, color: colors.text, fontSize: 15, fontWeight: '600', paddingVertical: 8, paddingHorizontal: 4 },
+  composerInput: { flex: 1, fontSize: 15, fontWeight: '600', paddingVertical: 8, paddingHorizontal: 4 },
   addBtn: {
     width: 40,
     height: 40,
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.ocean600,
   },
-  addBtnOff: { backgroundColor: colors.faint, opacity: 0.5 },
   chipRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.lg, marginBottom: spacing.sm, flexWrap: 'wrap' },
   chip: {
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: radius.pill,
     borderWidth: 1,
-    borderColor: colors.glassBorderSoft,
-    backgroundColor: colors.card,
   },
-  chipOn: { backgroundColor: colors.ocean600, borderColor: colors.ocean600 },
-  chipText: { color: colors.subtext, fontSize: 12.5, fontWeight: '800' },
-  chipTextOn: { color: colors.white },
+  chipText: { fontSize: 12.5, fontWeight: '800' },
   clearChip: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: radius.pill },
-  clearChipText: { color: colors.expense, fontSize: 12, fontWeight: '800' },
+  clearChipText: { fontSize: 12, fontWeight: '800' },
   groupLabel: {
-    color: colors.subtext,
     fontSize: 11.5,
     fontWeight: '800',
     textTransform: 'uppercase',
@@ -361,17 +365,12 @@ const styles = StyleSheet.create({
     height: 27,
     borderRadius: 14,
     borderWidth: 2,
-    borderColor: colors.ocean500,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'transparent',
   },
-  circleDone: {
-    borderColor: colors.income,
-    backgroundColor: colors.income,
-  },
   rowMid: { flex: 1, marginHorizontal: spacing.md },
-  rowTitle: { color: colors.text, fontWeight: '700', fontSize: 15, lineHeight: 20 },
-  rowTitleDone: { color: colors.faint, textDecorationLine: 'line-through' },
+  rowTitle: { fontWeight: '700', fontSize: 15, lineHeight: 20 },
+  rowTitleDone: { textDecorationLine: 'line-through' },
   iconBtn: { padding: 6 },
 });

@@ -10,13 +10,15 @@ import { BarChart } from '../components/BarChart';
 import { Entrance } from '../components/Entrance';
 import { PressableScale } from '../components/PressableScale';
 import { useFinance } from '../store/FinanceContext';
-import { colors, radius, shadow, spacing } from '../theme';
+import { useTheme } from '../store/ThemeContext';
+import { radius, spacing } from '../theme';
 import { buildAdvisorReport, currentMonthKey, monthLabel, shiftMonth } from '../utils/stats';
 import { formatMoney } from '../utils/money';
 import { useResponsive } from '../hooks/useResponsive';
 
 export function AdvisorScreen() {
   const finance = useFinance();
+  const { t } = useTheme();
   const { contentWidth } = useResponsive();
   const [ym, setYm] = useState(currentMonthKey());
 
@@ -38,7 +40,7 @@ export function AdvisorScreen() {
         <GradientHeader title="Finance Advisor" subtitle="Personal coaching from your own data">
           <View style={styles.monthRow}>
             <PressableScale onPress={() => setYm(shiftMonth(ym, -1))} style={styles.monthBtn} scaleTo={0.88}>
-              <Ionicons name="chevron-back" size={18} color={colors.white} />
+              <Ionicons name="chevron-back" size={18} color={t.white} />
             </PressableScale>
             <Text style={styles.monthText}>{monthLabel(ym, true)}</Text>
             <PressableScale
@@ -50,7 +52,7 @@ export function AdvisorScreen() {
               <Ionicons
                 name="chevron-forward"
                 size={18}
-                color={ym >= currentMonthKey() ? 'rgba(255,255,255,0.35)' : colors.white}
+                color={ym >= currentMonthKey() ? 'rgba(255,255,255,0.35)' : t.white}
               />
             </PressableScale>
           </View>
@@ -87,28 +89,28 @@ export function AdvisorScreen() {
         <View style={styles.body}>
           {/* savings rate strip */}
           <Entrance delay={0}>
-            <View style={styles.rateCard}>
+            <View style={[styles.rateCard, { backgroundColor: t.card, borderColor: t.glassBorderSoft }]}>
               <View style={styles.rateRow}>
                 <View style={styles.rateItem}>
-                  <Text style={[styles.rateNum, { color: savingsPct >= 20 ? colors.good : savingsPct >= 0 ? colors.warn : colors.risk }]}>
+                  <Text style={[styles.rateNum, { color: savingsPct >= 20 ? t.good : savingsPct >= 0 ? t.warn : t.risk }]}>
                     {savingsPct}%
                   </Text>
-                  <Text style={styles.rateLabel}>savings rate</Text>
+                  <Text style={[styles.rateLabel, { color: t.subtext }]}>savings rate</Text>
                 </View>
                 <View style={styles.rateItem}>
-                  <Text style={styles.rateNum}>{formatMoney(report.dailyAvgExpense, finance.settings.currency)}</Text>
-                  <Text style={styles.rateLabel}>daily spend</Text>
+                  <Text style={[styles.rateNum, { color: t.text }]}>{formatMoney(report.dailyAvgExpense, finance.settings.currency)}</Text>
+                  <Text style={[styles.rateLabel, { color: t.subtext }]}>daily spend</Text>
                 </View>
                 <View style={styles.rateItem}>
-                  <Text style={styles.rateNum}>{report.categoryTotals.length}</Text>
-                  <Text style={styles.rateLabel}>categories used</Text>
+                  <Text style={[styles.rateNum, { color: t.text }]}>{report.categoryTotals.length}</Text>
+                  <Text style={[styles.rateLabel, { color: t.subtext }]}>categories used</Text>
                 </View>
               </View>
             </View>
           </Entrance>
 
           {/* insights */}
-          <Text style={styles.sectionTitle}>This month's coaching</Text>
+          <Text style={[styles.sectionTitle, { color: t.text }]}>This month's coaching</Text>
           {report.insights.map((i, idx) => (
             <Entrance key={i.id} delay={60 + idx * 45}>
               <InsightCard insight={i} />
@@ -131,25 +133,22 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: 'transparent' },
   monthRow: { flexDirection: 'row', alignItems: 'center', marginTop: spacing.lg },
   monthBtn: { padding: 6 },
-  monthText: { color: colors.white, fontSize: 15, fontWeight: '700', marginHorizontal: spacing.sm },
+  monthText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700', marginHorizontal: spacing.sm },
   heroLabel: { color: 'rgba(255,255,255,0.82)', fontSize: 13, marginBottom: 2 },
-  heroValue: { color: colors.white, fontSize: 30, fontWeight: '900' },
+  heroValue: { color: '#FFFFFF', fontSize: 30, fontWeight: '900' },
   heroSub: { color: 'rgba(255,255,255,0.85)', fontSize: 13, marginTop: 4 },
   heroSub2: { color: 'rgba(255,255,255,0.9)', fontSize: 12.5, lineHeight: 18 },
   heroDivider: { height: 1, backgroundColor: 'rgba(255,255,255,0.25)', marginVertical: spacing.md },
   body: { paddingHorizontal: spacing.xl, paddingTop: spacing.lg },
   rateCard: {
-    backgroundColor: colors.card,
     borderWidth: 1,
-    borderColor: colors.glassBorderSoft,
     borderRadius: radius.lg,
     paddingVertical: spacing.lg,
     paddingHorizontal: spacing.md,
-    ...shadow.card,
   },
   rateRow: { flexDirection: 'row' },
   rateItem: { flex: 1, alignItems: 'center' },
-  rateNum: { color: colors.text, fontSize: 18, fontWeight: '900' },
-  rateLabel: { color: colors.subtext, fontSize: 11, marginTop: 3 },
-  sectionTitle: { color: colors.text, fontSize: 17, fontWeight: '800', marginVertical: spacing.lg },
+  rateNum: { fontSize: 18, fontWeight: '900' },
+  rateLabel: { fontSize: 11, marginTop: 3 },
+  sectionTitle: { fontSize: 17, fontWeight: '800', marginVertical: spacing.lg },
 });
