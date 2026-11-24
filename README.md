@@ -1,22 +1,26 @@
 # Aiserie Tracks 🌊
 
-A light-blue, ocean-gradient **personal finance tracker** that runs as a **native Android app (APK)**, an **iPhone/iPad app**, and an **installable PWA** — built with [Expo](https://expo.dev), React Native and TypeScript.
+A light-blue, ocean-gradient **personal finance tracker** that runs as a **native Android app (APK)**, an **iPhone/iPad app**, and an **installable PWA** — built with [Expo](https://expo.dev), React Native and TypeScript. v2.0.0 "Midnight Ocean" adds a full **dark mode with animated switching**, a new **wave logo**, an **official animated boot screen**, and **one-tap wallet setup with official Philippine bank & e-wallet logos**.
 
 ![stack](https://img.shields.io/badge/Expo-SDK%2058-0EA5E9) ![platform](https://img.shields.io/badge/Android%20%7C%20iOS%20%7C%20Web-Expo%20EAS%20%2B%20PWA-22D3EE) ![cost](https://img.shields.io/badge/distribution-%240-success)
 
 ## Features
 
+- **🌙 Dark mode, done properly** — System / Light / Dark switch in Settings; dark is a deep **midnight navy glass** with glowing sky accents, and every surface (aurora wash, headers, glass cards, tab bar, modals) **cross-fades live** when you flip the switch
+- **🌊 New professional identity** — custom wave logo across the app icon, adaptive Android icons (with monochrome), splash, favicon and PWA icons; boot curtain with progress shimmer and the *Made by Viztech Studios* credit
 - **Income & expense log** — categories, wallets, dates, notes; tap to edit, long-press to delete
-- **👛 Wallets & balances** — track GCash, Maya, bank accounts and cash in one read-only view. Balances are set manually (never connected, never logged in) and auto-adjust as you log transactions to them; reconcile in one tap.
+- **👛 Wallets & balances, one tap each** — pick from **22 official brand tiles**: GCash, Maya, Coins.ph, GrabPay, ShopeePay, BPI, BDO, Metrobank, AUB, UnionBank, Security Bank, Landbank, RCBC, PNB, China Bank, EastWest, PSBank, Maribank, GoTyme, CIMB, Tonik and Cash. The logo, name and color fill in automatically — just type the balance. Balances adjust as you log transactions; reconcile in one tap. Custom wallets still supported.
 - **🔔 Purchase detection** — paste any e-wallet/bank SMS or notification text and Aiserie reads the amount + direction on-device, then pre-fills a transaction. No message access, no monitoring.
 - **🧾 Receipt scanning** — point your camera at a grocery receipt and on-device OCR (ML Kit) reads the total, defaults to the *Groceries* category. Nothing is uploaded. (PWA falls back to manual entry.)
 - **🧠 Finance advisor** — safe-to-spend per day, month-end projections, savings rate, category concentration warnings, momentum and recurring-bill reminders
+- **✅ Things-to-do** — money chores with springy check-offs, star pinning, progress ring
+- **🚀 Update nudges** — on boot the app checks GitHub Releases; when a newer version exists, a glass "Update available" card deep-links to `releases/latest` (3-day snooze, manual check in Settings)
 - **📊 Visual reports** — category donut chart, 6-month income/expense bars, month-by-month navigation
 - **₱ Philippine-first** — default currency is **PHP**, switchable to USD, EUR, GBP, JPY, SGD and more
 - **💙 Personal** — greets the user by name (default **Aiserie**, editable in Settings)
 - **🔒 Private by design** — all data on-device (AsyncStorage on native, localStorage on web). No account, no cloud, no tracking. Privacy Policy & T&C included in-app.
 - **📱 Responsive** — phones and tablets, with a mobile-first web layout and real `<input type="date">` on web
-- **✨ Gentle animations** — subtle entrance fades, count-up balances, soft press feedback
+- **✨ Gentle animations** — entrance fades, count-up balances, springy press feedback, animated theme cross-fade
 
 ## Project structure
 
@@ -75,7 +79,7 @@ open the site in **Safari** → **Share** □↑ → **Add to Home Screen** → 
 
 ### 2. Android as a downloadable APK
 
-**✅ v1.3.0 APK is live:** [Releases → v1.3.0](https://github.com/ViztechStudios/aiserie-tracks/releases/tag/v1.3.0) → download `AiserieTracks-v1.3.0.apk` → allow *"install unknown apps"* for the browser when Android asks → install. v1.3.0 adds the Tasks (things-to-do) tab, the glass UI overhaul and app-wide animations; **Android 13+ only** (minSdk 33). Updating from v1.2.0 keeps all data. The in-app Settings → **Get the Android app (APK)** row (visible on the PWA) links to `releases/latest` directly.
+**✅ v2.0.0 APK is live:** [Releases → v2.0.0](https://github.com/ViztechStudios/aiserie-tracks/releases/latest) → download `AiserieTracks-v2.0.0.apk` → allow *"install unknown apps"* for the browser when Android asks → install. v2.0.0 adds dark mode with animated switching, the new wave logo & boot screen, one-tap wallet setup with official bank logos, and update notifications pointing at this Releases page; **Android 13+ only** (minSdk 33). Updating from v1.x keeps all data — existing installs will show the in-app update nudge for v2.0.0 automatically.
 
 How it was built, and how future versions get built (Expo free tier, 30 builds/month):
 
