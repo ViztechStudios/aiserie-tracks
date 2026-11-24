@@ -1,86 +1,134 @@
 # Aiserie Tracks 🌊
 
-A light-blue, ocean-gradient **personal finance tracker** for **iOS and Android**, built with [Expo](https://expo.dev) and React Native.
+A light-blue, ocean-gradient **personal finance tracker** that runs as a **native Android app (APK)**, an **iPhone/iPad app**, and an **installable PWA** — built with [Expo](https://expo.dev), React Native and TypeScript.
 
-![stack](https://img.shields.io/badge/Expo-SDK%2058-0EA5E9) ![platform](https://img.shields.io/badge/iOS%20%26%20Android-Expo%20EAS-22D3EE)
+![stack](https://img.shields.io/badge/Expo-SDK%2058-0EA5E9) ![platform](https://img.shields.io/badge/Android%20%7C%20iOS%20%7C%20Web-Expo%20EAS%20%2B%20PWA-22D3EE) ![cost](https://img.shields.io/badge/distribution-%240-success)
 
 ## Features
 
 - **Income & expense log** — categories, wallets, dates, notes; tap to edit, long-press to delete
-- **👛 Wallets & balances** — track GCash, Maya, bank accounts and cash in one read-only view. Balances are set manually (never connected, never logged in) and auto-adjust as you log transactions to them; reconcile in one tap. Works great as a simple pocket-budget view.
-- **🔔 Purchase detection** — paste any e-wallet/bank SMS or notification text and Aiserie reads the amount + direction on-device, then pre-fills a transaction. No message access, no monitoring, both platforms. (Automatic notification reading isn't possible on iOS by design.)
-- **🧾 Receipt scanning** — point your camera at a grocery receipt and on-device OCR (ML Kit) reads the total, defaults to the *Groceries* category. Nothing is uploaded; all recognition happens on the phone.
-- **🧠 Finance advisor** — rule-based coaching: safe-to-spend per day, month-end projections, savings rate, category concentration warnings, week-over-week momentum and recurring-bill reminders
+- **👛 Wallets & balances** — track GCash, Maya, bank accounts and cash in one read-only view. Balances are set manually (never connected, never logged in) and auto-adjust as you log transactions to them; reconcile in one tap.
+- **🔔 Purchase detection** — paste any e-wallet/bank SMS or notification text and Aiserie reads the amount + direction on-device, then pre-fills a transaction. No message access, no monitoring.
+- **🧾 Receipt scanning** — point your camera at a grocery receipt and on-device OCR (ML Kit) reads the total, defaults to the *Groceries* category. Nothing is uploaded. (PWA falls back to manual entry.)
+- **🧠 Finance advisor** — safe-to-spend per day, month-end projections, savings rate, category concentration warnings, momentum and recurring-bill reminders
 - **📊 Visual reports** — category donut chart, 6-month income/expense bars, month-by-month navigation
-- **₱ Philippine-first** — default currency is **PHP**, switchable to USD, EUR, GBP, JPY, SGD and more in Settings
+- **₱ Philippine-first** — default currency is **PHP**, switchable to USD, EUR, GBP, JPY, SGD and more
 - **💙 Personal** — greets the user by name (default **Aiserie**, editable in Settings)
-- **🔒 Private by design** — all data lives on-device (AsyncStorage). No account, no cloud, no tracking. Privacy Policy & Terms & Conditions included in-app (Settings → Legal).
-- **📱 iPad-ready** — `supportsTablet` enabled with responsive centered layouts for tablets and phones
-- **✨ Gentle animations** — subtle entrance fades, count-up balances and soft press feedback; nothing flashy
+- **🔒 Private by design** — all data on-device (AsyncStorage on native, localStorage on web). No account, no cloud, no tracking. Privacy Policy & T&C included in-app.
+- **📱 Responsive** — phones and tablets, with a mobile-first web layout and real `<input type="date">` on web
+- **✨ Gentle animations** — subtle entrance fades, count-up balances, soft press feedback
 
 ## Project structure
 
 ```
 aiserie-tracks/
-├── App.tsx                  # providers + navigation root
-├── app.json                 # Expo config (name, icons, splash, permissions)
-├── eas.json                 # EAS build profiles (preview APK, production)
+├── App.tsx                     # providers + navigation root
+├── index.ts                    # registerRootComponent entry
+├── app.json                    # Expo config (icons, splash, web/PWA, baseUrl)
+├── eas.json                    # EAS profiles: preview (APK), production (AAB)
+├── public/                     # PWA static assets (copied into every web export)
+│   ├── icons/                  # 192 / 512 / maskable-512 manifest icons
+│   ├── splash/                 # per-device iPhone startup images
+│   ├── apple-touch-icon.png    # iOS home screen icon (180×180)
+│   └── sw.js                   # offline-shell service worker
+├── scripts/
+│   └── patch-pwa-html.mjs      # post-export PWA patcher (manifest, iOS meta, SW)
 ├── .github/workflows/
-│   └── eas-build.yml        # GitHub -> Expo cloud builds
-└── src/
-    ├── components/          # header, cards, charts, transaction modal…
-    ├── data/                # categories, currencies, sample data
-    ├── navigation/          # bottom tabs with center Scan FAB
-    ├── screens/             # Home, History, Scan, Advisor, Settings
-    ├── store/               # FinanceContext (storage) + UIContext (modals)
-    ├── theme.ts             # ocean-gradient design tokens
-    └── utils/               # money, stats/advisor engine, receipt parser
+│   ├── web-deploy.yml          # every push -> web build -> GitHub Pages (PWA)
+│   └── eas-build.yml           # manual dispatch -> Expo cloud APK/AAB builds
+└── src/                        # app code (components, screens, store, utils…)
 ```
 
 ## Run locally
 
 ```bash
 npm install
-npx expo start
+npx expo start          # native: scan QR with Expo Go
+npx expo start --web    # web: opens http://localhost:8081 in the browser
 ```
 
-Scan the QR code with **Expo Go** on your phone (App Store / Play Store). In Expo Go everything works except on-device OCR — the scan screen falls back to manual entry there.
+In Expo Go everything works except on-device OCR — the scan screen falls back to manual entry.
 
-## Publish to iOS and Android (GitHub → Expo, fully connected)
+## Distribute at zero cost
 
-This repo ships with **`.github/workflows/eas-build.yml`**, so GitHub can trigger Expo cloud builds for you. One-time setup:
+| Platform | How users get it | Cost | Automation |
+| --- | --- | --- | --- |
+| **Android** | Signed **APK** downloaded from a GitHub Release | ₱0 — no Play Console needed | EAS Build workflow (manual dispatch) |
+| **iPhone / iPad** | **PWA** — Safari → Share → *Add to Home Screen* | ₱0 — no Apple Developer fee | `web-deploy.yml` on every push |
+| **Future Play Store** | `eas build -p android --profile production` → **AAB** | $25 one-time, only when you decide | same workflow, `profile: production` |
+| **Future App Store** | EAS iOS build → **.ipa** | $99/yr, only when you decide | same workflow, `platform: ios` |
 
-1. **Create a free Expo account** at [expo.dev](https://expo.dev), then:
-   ```bash
-   npm install -g eas-cli
-   eas login
-   npx eas init        # links this repo to an Expo project, writes projectId into app.json
-   ```
-2. **Create an Expo access token**: expo.dev → Account Settings → **Access Tokens** → New token.
-3. **Add it to GitHub**: this repo → *Settings* → *Secrets and variables* → *Actions* → New repository secret → name `EXPO_TOKEN`.
-4. Push to `main` (or run the **EAS Build** workflow manually from the Actions tab) — GitHub builds the app in Expo's cloud:
-   - **Android**: `preview` profile produces an **APK** you can install directly on any phone; `production` produces an **AAB** for Google Play.
-   - **iOS**: build on EAS's macOS cloud runners — no Mac needed. `production` produces an `.ipa` for App Store Connect (requires the [Apple Developers Program](https://developer.apple.com/programs/)).
+### 1. iOS as an installable PWA (fully automatic)
 
-Prefer building from your computer? `eas build -p android --profile preview` works too.
+Every push to `main` runs `.github/workflows/web-deploy.yml`: it builds the web app (`npm run export:web` = `expo export --platform web` + PWA patcher) and publishes it to **GitHub Pages** with free HTTPS. All installability requirements are handled by the patcher:
 
-### Store listings
+- `manifest.webmanifest` — name, standalone display, portrait, theme colors, icons at 192/512/maskable
+- `apple-touch-icon` + per-device `apple-touch-startup-image` splash screens (7 iPhone sizes)
+- `apple-mobile-web-app-capable` meta set → launches full-screen from the Home Screen icon
+- Service worker → offline shell
 
-- **Google Play**: one-time $25 fee, then submit the AAB from the `production` profile.
-- **App Store**: $99/yr Apple Developer Program, then submit the `.ipa` (or use `eas submit`).
+**One-time setup:** repo → *Settings* → *Pages* → *Build and deployment source* → **GitHub Actions** (or the deploy job's first run will surface the exact button). Live URL:
+`https://viztechstudios.github.io/aiserie-tracks/`
+
+**iPhone install steps (shown in-app too, Settings → Install & share):**
+open the site in **Safari** → **Share** □↑ → **Add to Home Screen** → **Add**. Aiserie now launches full-screen with its own icon and splash — no App Store, no fee.
+
+### 2. Android as a downloadable APK
+
+The APK is built in Expo's cloud (free tier) and attached to a GitHub Release, so users download it straight from the browser:
+
+```bash
+npm install -g eas-cli
+eas login                                  # free Expo account
+npx eas init                               # one-time: writes projectId into app.json
+eas build -p android --profile preview     # -> signed installable APK
+```
+
+Then attach the APK to a release:
+
+```bash
+gh release create v1.2.0 --title "Aiserie Tracks v1.2.0" --notes "First public APK"
+# or upload manually on the Releases page (drag & drop the .apk)
+```
+
+Users open **Releases → latest → download APK** → allow *"install unknown apps"* for their browser → install. The in-app Settings → **Get the Android app (APK)** row (visible on the PWA) links to `releases/latest` directly.
+
+> Optional CI: add an `EXPO_TOKEN` repository secret (expo.dev → Access Tokens) and run the **EAS Build** workflow manually from the Actions tab — it creates the project, builds and links artifacts without any local commands.
+
+### 3. Alternative web hosting (Vercel / Cloudflare Pages)
+
+The export is a plain static folder, so any free static host works. For root-domain hosting, first set the base path to empty in `app.json`:
+
+```jsonc
+"experiments": { "baseUrl": "" }   // then: npm run export:web
+```
+
+```bash
+# Vercel
+npx vercel dist --prod
+
+# Cloudflare Pages
+npx wrangler pages deploy dist
+```
+
+(GitHub Pages keeps the `/aiserie-tracks` base path configured in `app.json`.)
+
+### Future store compatibility
+
+Nothing needs to be rebuilt: the same codebase produces store artifacts whenever you want them — `production` profile already outputs an **AAB** with `autoIncrement` for Play, and `eas build -p ios --profile production` produces the App Store **IPA**. Bundle IDs (`com.aiserie.tracks`) are already configured for both.
 
 ## Receipt scanning notes
 
-- OCR uses [`@react-native-ml-kit/text-recognition`](https://github.com/AugmentedMode/react-native-ml-kit) (Google ML Kit), fully **on-device**.
-- Works in development builds and production builds created with EAS. In **Expo Go** the native module is unavailable — the app detects this and lets you enter the total manually instead of crashing.
+- OCR uses [`@react-native-ml-kit/text-recognition`](https://github.com/AugmentedMode/react-native-ml-kit) (Google ML Kit), fully **on-device**; the module is loaded lazily and never bundled into the web build.
+- Works in development and production builds created with EAS. In **Expo Go** and on **web** the app detects the missing native module and falls back to manual entry instead of crashing.
 
 ## Tech stack
 
-Expo SDK 58 · React Native 0.88 · TypeScript · @react-navigation/bottom-tabs · AsyncStorage · expo-linear-gradient · expo-camera · react-native-svg · @react-native-ml-kit/text-recognition
+Expo SDK 58 · React Native 0.88 · react-native-web (PWA) · TypeScript · @react-navigation/bottom-tabs · AsyncStorage · expo-linear-gradient · expo-camera · react-native-svg · @react-native-ml-kit/text-recognition
 
 ## Security note
 
-The GitHub token used to create this repository was shared in chat and should be **revoked and regenerated** in GitHub → Settings → Developer settings after setup is complete.
+The GitHub token and any Expo access token used during setup were shared in chat — **rotate/revoke both** in GitHub → Settings → Developer settings and expo.dev → Account Settings → Access tokens once everything is running.
 
 ---
 

@@ -30,6 +30,24 @@ function toISODate(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
+// react-native-web only — Metro strips this branch from native bundles.
+const webCreateElement: ((tag: string, props: Record<string, unknown>) => React.ReactElement) | null =
+  Platform.OS === 'web'
+    ? (require('react-native-web') as { unstable_createElement: (tag: string, props: Record<string, unknown>) => React.ReactElement }).unstable_createElement
+    : null;
+
+/** Browser-native <input type="date"> for the PWA; never rendered on native. */
+function WebDateInput({ valueISO, onChangeISO, style }: { valueISO: string; onChangeISO: (v: string) => void; style: Record<string, unknown> }) {
+  if (!webCreateElement) return null;
+  return webCreateElement('input', {
+    type: 'date',
+    value: valueISO,
+    onChange: (e: { target: { value: string } }) => onChangeISO(e.target.value),
+    style,
+    'aria-label': 'Transaction date',
+  });
+}
+
 export function TransactionModal() {
   const ui = useUI();
   const finance = useFinance();
@@ -211,11 +229,33 @@ export function TransactionModal() {
 
             {/* date */}
             <Text style={styles.section}>Date</Text>
-            <TouchableOpacity style={styles.dateBtn} onPress={() => setIosPicker(true)}>
-              <Text style={styles.dateText}>
-                📅 {date.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}
-              </Text>
-            </TouchableOpacity>
+            {Platform.OS === 'web' ? (
+              <WebDateInput
+                valueISO={toISODate(date)}
+                onChangeISO={(v) => {
+                  const d = new Date(v + 'T12:00:00');
+                  if (!Number.isNaN(d.getTime())) setDate(d);
+                }}
+                style={{
+                  width: '100%',
+                  boxSizing: 'border-box',
+                  padding: '12px 14px',
+                  fontSize: 15,
+                  fontWeight: 600,
+                  fontFamily: 'inherit',
+                  color: colors.text,
+                  backgroundColor: colors.ice50,
+                  border: `1.5px solid ${colors.line}`,
+                  borderRadius: radius.md,
+                }}
+              />
+            ) : (
+              <TouchableOpacity style={styles.dateBtn} onPress={() => setIosPicker(true)}>
+                <Text style={styles.dateText}>
+                  📅 {date.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}
+                </Text>
+              </TouchableOpacity>
+            )}
 
             {/* note */}
             <Text style={styles.section}>Note</Text>

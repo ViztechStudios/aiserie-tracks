@@ -2,7 +2,7 @@
   "expo": {
     "name": "Aiserie Tracks",
     "slug": "aiserie-tracks",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -28,7 +28,17 @@
       ]
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "output": "single",
+      "favicon": "./assets/favicon.png",
+      "name": "Aiserie Tracks",
+      "shortName": "Aiserie",
+      "lang": "en",
+      "themeColor": "#0EA5E9",
+      "backgroundColor": "#F2F9FE",
+      "description": "Personal finance tracker \u2014 budgets, wallets and receipts, all on your device."
+    },
+    "experiments": {
+      "baseUrl": "/aiserie-tracks"
     },
     "plugins": [
       "@react-native-community/datetimepicker",

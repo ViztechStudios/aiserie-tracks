@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Alert, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, Linking, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { GradientHeader } from '../components/GradientHeader';
 import { Entrance } from '../components/Entrance';
@@ -17,6 +17,7 @@ export function SettingsScreen() {
   const { contentWidth } = useResponsive();
   const [pickerOpen, setPickerOpen] = useState(false);
   const [nameDraft, setNameDraft] = useState(finance.settings.userName);
+  const [iosHelp, setIosHelp] = useState(false);
 
   // keep the local draft in sync when the saved name changes elsewhere
   useEffect(() => {
@@ -162,14 +163,48 @@ export function SettingsScreen() {
             </PressableScale>
           </Entrance>
 
-          <Entrance delay={300}>
+          {Platform.OS === 'web' && (
+            <Entrance delay={280}>
+              <Text style={styles.section}>Install & share</Text>
+              <PressableScale
+                onPress={() => {
+                  Linking.openURL('https://github.com/ViztechStudios/aiserie-tracks/releases/latest');
+                }}
+                style={[styles.row, shadow.card]}
+              >
+                <Text style={styles.rowEmoji}>🤖</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.rowTitle}>Get the Android app (APK)</Text>
+                  <Text style={styles.rowSub}>
+                    Faster native experience with the camera scanner. Downloads the latest signed APK — allow
+                    “install from this source” when prompted.
+                  </Text>
+                </View>
+                <Ionicons name="open-outline" size={16} color={colors.faint} />
+              </PressableScale>
+              <PressableScale onPress={() => setIosHelp((v) => !v)} style={[styles.row, shadow.card]}>
+                <Text style={styles.rowEmoji}>📲</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.rowTitle}>Install on iPhone (Home Screen)</Text>
+                  <Text style={styles.rowSub}>
+                    {iosHelp
+                      ? '1. Open this site in Safari.  2. Tap the Share button (□↑).  3. Scroll and tap “Add to Home Screen”.  4. Tap Add — Aiserie launches full-screen with its own icon and splash.'
+                      : 'Add Aiserie to your Home Screen from Safari — full-screen, with icon and splash. Tap to show the steps.'}
+                  </Text>
+                </View>
+                <Ionicons name={iosHelp ? 'chevron-up' : 'chevron-down'} size={16} color={colors.faint} />
+              </PressableScale>
+            </Entrance>
+          )}
+
+          <Entrance delay={340}>
             <Text style={styles.section}>About</Text>
             <View style={[styles.row, shadow.card]}>
               <Text style={styles.rowEmoji}>🌊</Text>
               <View style={{ flex: 1 }}>
-                <Text style={styles.rowTitle}>Aiserie Tracks v1.1.0</Text>
+                <Text style={styles.rowTitle}>Aiserie Tracks v1.2.0</Text>
                 <Text style={styles.rowSub}>
-                  A light-blue finance companion for iPhone, iPad and Android — built with Expo and a lot of ocean
+                  A light-blue finance companion for Android, iPhone and the web — built with Expo and a lot of ocean
                   gradients, made with 💙 for Aiserie.
                 </Text>
               </View>

@@ -24,7 +24,18 @@ import { parseReceiptText, receiptSummary } from '../utils/receipt';
 import { todayISO } from '../utils/stats';
 import { formatMoney, parseAmount } from '../utils/money';
 import { useResponsive } from '../hooks/useResponsive';
-import TextRecognition from '@react-native-ml-kit/text-recognition';
+
+// ML Kit OCR is a native-only module. Keep it out of the web bundle by
+// requiring it lazily on native platforms only.
+type TextRecognitionModule = { recognize: (imageUri: string) => Promise<{ text: string }> } | null;
+let TextRecognition: TextRecognitionModule = null;
+if (Platform.OS !== 'web') {
+  try {
+    TextRecognition = require('@react-native-ml-kit/text-recognition').default as TextRecognitionModule;
+  } catch {
+    TextRecognition = null; // e.g. Expo Go
+  }
+}
 
 type Stage = 'camera' | 'review';
 
@@ -82,15 +93,17 @@ export function ScanScreen() {
       let merchant: string | null = null;
       let lines = 0;
       let ocrOk = false;
-      try {
-        const result = await TextRecognition.recognize(photo.uri);
-        const parsed = parseReceiptText(result.text);
-        parsedTotal = parsed.total;
-        merchant = parsed.merchant;
-        lines = parsed.lines.length;
-        ocrOk = true;
-      } catch {
-        ocrOk = false; // ML Kit native module not available (e.g. Expo Go)
+      if (TextRecognition) {
+        try {
+          const result = await TextRecognition.recognize(photo.uri);
+          const parsed = parseReceiptText(result.text);
+          parsedTotal = parsed.total;
+          merchant = parsed.merchant;
+          lines = parsed.lines.length;
+          ocrOk = true;
+        } catch {
+          ocrOk = false; // ML Kit native module not available (e.g. Expo Go)
+        }
       }
 
       if (ocrOk && parsedTotal !== null) {

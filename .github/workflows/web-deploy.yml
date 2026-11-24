@@ -1,0 +1,62 @@
+name: Deploy PWA (GitHub Pages)
+
+# Builds the web (PWA) version of Aiserie Tracks and publishes it to GitHub
+# Pages — free HTTPS hosting for the iOS "Add to Home Screen" install path.
+#
+# Site URL after the first successful run:
+#   https://viztechstudios.github.io/aiserie-tracks/
+#
+# iPhone install: open the site in Safari -> Share -> Add to Home Screen.
+# Android users get the native APK instead (see EAS Build workflow + Releases).
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**.md'
+      - 'LICENSE'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Export web bundle and patch PWA files
+        run: npm run export:web
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -15,8 +15,9 @@ name: EAS Build
 # into app.json (extra.eas.projectId) and the link step will skip itself.
 
 on:
-  push:
-    branches: [main]
+  # Manual builds only — Android APKs are submitted from here once the
+  # EXPO_TOKEN secret exists (repo -> Settings -> Secrets and variables ->
+  # Actions). Re-add `push: branches: [main]` for automatic builds after that.
   workflow_dispatch:
     inputs:
       platform:
