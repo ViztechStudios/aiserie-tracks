@@ -79,7 +79,7 @@ open the site in **Safari** → **Share** □↑ → **Add to Home Screen** → 
 
 ### 2. Android as a downloadable APK
 
-**✅ v2.0.0 APK is live:** [Releases → v2.0.0](https://github.com/ViztechStudios/aiserie-tracks/releases/latest) → download `AiserieTracks-v2.0.0.apk` → allow *"install unknown apps"* for the browser when Android asks → install. v2.0.0 adds dark mode with animated switching, the new wave logo & boot screen, one-tap wallet setup with official bank logos, and update notifications pointing at this Releases page; **Android 13+ only** (minSdk 33). Updating from v1.x keeps all data — existing installs will show the in-app update nudge for v2.0.0 automatically.
+**✅ v2.0.1 APK is live:** [Releases → v2.0.1](https://github.com/ViztechStudios/aiserie-tracks/releases/latest) → download `AiserieTracks-v2.0.1.apk` → allow *"install unknown apps"* for the browser when Android asks → install. v2.0.x ("Midnight Ocean") ships dark mode with animated switching, the new wave logo & boot screen, one-tap wallet setup with official bank logos, and update notifications pointing at this Releases page; **Android 13+ only** (minSdk 33). v2.0.1 adds the Manrope typeface, a woven banig backdrop, capiz-shell card details and true depth shadows on the PWA. Updating from v1.x keeps all data — existing installs will show the in-app update nudge automatically.
 
 How it was built, and how future versions get built (Expo free tier, 30 builds/month):
 
