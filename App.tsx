@@ -8,6 +8,8 @@ import { FinanceProvider } from './src/store/FinanceContext';
 import { UIProvider } from './src/store/UIContext';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { TransactionModal } from './src/components/TransactionModal';
+import { WalletsModal } from './src/components/WalletsModal';
+import { LegalModal } from './src/components/LegalModal';
 import { colors } from './src/theme';
 
 const navTheme = {
@@ -35,6 +37,8 @@ export default function App() {
               <StatusBar style="light" />
               <RootNavigator />
               <TransactionModal />
+              <WalletsModal />
+              <LegalModal />
             </NavigationContainer>
           </UIProvider>
         </FinanceProvider>

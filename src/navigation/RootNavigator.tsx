@@ -3,6 +3,7 @@ import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native
 import { BottomTabBarProps, createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { PressableScale } from '../components/PressableScale';
 import { HomeScreen } from '../screens/HomeScreen';
 import { HistoryScreen } from '../screens/HistoryScreen';
 import { ScanScreen } from '../screens/ScanScreen';
@@ -36,11 +37,11 @@ function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 
           if (route.name === 'Scan') {
             return (
-              <TouchableOpacity
+              <PressableScale
                 key={route.key}
                 style={styles.fabSlot}
-                activeOpacity={0.85}
                 onPress={() => navigation.navigate(route.name)}
+                scaleTo={0.92}
               >
                 <LinearGradient
                   colors={gradients.fab}
@@ -51,7 +52,7 @@ function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
                   <Ionicons name="camera" size={24} color={colors.white} />
                 </LinearGradient>
                 <Text style={styles.fabLabel}>Scan</Text>
-              </TouchableOpacity>
+              </PressableScale>
             );
           }
 

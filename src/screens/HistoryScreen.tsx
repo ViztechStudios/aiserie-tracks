@@ -11,12 +11,14 @@ import { colors, radius, shadow, spacing } from '../theme';
 import { Transaction, TxType } from '../types';
 import { groupByDay } from '../utils/stats';
 import { formatMoney } from '../utils/money';
+import { useResponsive } from '../hooks/useResponsive';
 
 type TypeFilter = 'all' | TxType;
 
 export function HistoryScreen() {
   const finance = useFinance();
   const ui = useUI();
+  const { contentWidth } = useResponsive();
   const [query, setQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
@@ -107,7 +109,13 @@ export function HistoryScreen() {
       {filtered.length === 0 ? (
         <EmptyState emoji="🔎" title="Nothing found" body="Try a different search term, or clear the filters above." />
       ) : (
-        <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={[
+          styles.list,
+          contentWidth ? { alignSelf: 'center', width: '100%', maxWidth: contentWidth } : null,
+        ]}
+        showsVerticalScrollIndicator={false}
+      >
           {groups.map((g) => (
             <View key={g.date}>
               <View style={styles.dayHead}>
@@ -139,7 +147,7 @@ export function HistoryScreen() {
           <Text style={styles.hint}>
             Tip: tap a transaction to edit it, long-press to delete.
           </Text>
-        </ScrollView>
+      </ScrollView>
       )}
     </View>
   );

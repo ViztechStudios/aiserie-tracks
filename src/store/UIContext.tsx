@@ -1,12 +1,15 @@
 import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
 import { Transaction } from '../types';
 
+export type LegalDoc = 'privacy' | 'terms';
+
 export interface ModalPreset {
   categoryId?: string;
   amount?: number;
   note?: string;
   date?: string;
-  source?: 'manual' | 'scan';
+  source?: 'manual' | 'scan' | 'detect';
+  accountId?: string;
 }
 
 interface ModalState {
@@ -16,8 +19,13 @@ interface ModalState {
 }
 
 interface UIContextValue extends ModalState {
+  walletsVisible: boolean;
+  editAccountId?: string;
+  legalDoc: LegalDoc | null;
   openAdd: (preset?: ModalPreset) => void;
   openEdit: (tx: Transaction) => void;
+  openWallets: (editAccountId?: string) => void;
+  openLegal: (doc: LegalDoc) => void;
   close: () => void;
 }
 
@@ -25,6 +33,9 @@ const UIContext = createContext<UIContextValue | null>(null);
 
 export function UIProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<ModalState>({ visible: false });
+  const [walletsVisible, setWalletsVisible] = useState(false);
+  const [editAccountId, setEditAccountId] = useState<string | undefined>(undefined);
+  const [legalDoc, setLegalDoc] = useState<LegalDoc | null>(null);
 
   const openAdd = useCallback((preset?: ModalPreset) => {
     setState({ visible: true, editing: undefined, preset });
@@ -34,17 +45,41 @@ export function UIProvider({ children }: { children: React.ReactNode }) {
     setState({ visible: true, editing: tx, preset: undefined });
   }, []);
 
+  const openWallets = useCallback((id?: string) => {
+    setEditAccountId(id);
+    setWalletsVisible(true);
+  }, []);
+
+  const openLegal = useCallback((doc: LegalDoc) => {
+    setLegalDoc(doc);
+  }, []);
+
   const close = useCallback(() => {
     setState({ visible: false, editing: undefined, preset: undefined });
   }, []);
 
-  const value = useMemo(() => ({ ...state, openAdd, openEdit, close }), [state, openAdd, openEdit, close]);
+  const value = useMemo(
+    () => ({
+      ...state,
+      walletsVisible,
+      editAccountId,
+      legalDoc,
+      openAdd,
+      openEdit,
+      openWallets,
+      openLegal,
+      close,
+      closeWallets: () => setWalletsVisible(false),
+      closeLegal: () => setLegalDoc(null),
+    }),
+    [state, walletsVisible, editAccountId, legalDoc, openAdd, openEdit, openWallets, openLegal, close]
+  );
 
   return <UIContext.Provider value={value}>{children}</UIContext.Provider>;
 }
 
-export function useUI(): UIContextValue {
+export function useUI(): UIContextValue & { closeWallets: () => void; closeLegal: () => void } {
   const ctx = useContext(UIContext);
   if (!ctx) throw new Error('useUI must be used inside UIProvider');
-  return ctx;
+  return ctx as UIContextValue & { closeWallets: () => void; closeLegal: () => void };
 }

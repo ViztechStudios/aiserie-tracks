@@ -6,12 +6,17 @@ A light-blue, ocean-gradient **personal finance tracker** for **iOS and Android*
 
 ## Features
 
-- **Income & expense log** — categories, dates, notes; tap to edit, long-press to delete
+- **Income & expense log** — categories, wallets, dates, notes; tap to edit, long-press to delete
+- **👛 Wallets & balances** — track GCash, Maya, bank accounts and cash in one read-only view. Balances are set manually (never connected, never logged in) and auto-adjust as you log transactions to them; reconcile in one tap. Works great as a simple pocket-budget view.
+- **🔔 Purchase detection** — paste any e-wallet/bank SMS or notification text and Aiserie reads the amount + direction on-device, then pre-fills a transaction. No message access, no monitoring, both platforms. (Automatic notification reading isn't possible on iOS by design.)
 - **🧾 Receipt scanning** — point your camera at a grocery receipt and on-device OCR (ML Kit) reads the total, defaults to the *Groceries* category. Nothing is uploaded; all recognition happens on the phone.
 - **🧠 Finance advisor** — rule-based coaching: safe-to-spend per day, month-end projections, savings rate, category concentration warnings, week-over-week momentum and recurring-bill reminders
 - **📊 Visual reports** — category donut chart, 6-month income/expense bars, month-by-month navigation
 - **₱ Philippine-first** — default currency is **PHP**, switchable to USD, EUR, GBP, JPY, SGD and more in Settings
-- **🔒 Private by design** — all data lives on-device (AsyncStorage). No account, no cloud, no tracking.
+- **💙 Personal** — greets the user by name (default **Aiserie**, editable in Settings)
+- **🔒 Private by design** — all data lives on-device (AsyncStorage). No account, no cloud, no tracking. Privacy Policy & Terms & Conditions included in-app (Settings → Legal).
+- **📱 iPad-ready** — `supportsTablet` enabled with responsive centered layouts for tablets and phones
+- **✨ Gentle animations** — subtle entrance fades, count-up balances and soft press feedback; nothing flashy
 
 ## Project structure
 

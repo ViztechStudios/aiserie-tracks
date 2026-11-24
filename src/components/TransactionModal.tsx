@@ -21,6 +21,7 @@ import { Transaction, TxType } from '../types';
 import { colors, gradients, radius, shadow, spacing } from '../theme';
 import { formatMoney, parseAmount } from '../utils/money';
 import { todayISO } from '../utils/stats';
+import { useResponsive } from '../hooks/useResponsive';
 
 function toISODate(d: Date): string {
   const y = d.getFullYear();
@@ -32,6 +33,7 @@ function toISODate(d: Date): string {
 export function TransactionModal() {
   const ui = useUI();
   const finance = useFinance();
+  const { sheetWidth } = useResponsive();
   const { visible, editing, preset } = ui;
 
   const [type, setType] = useState<TxType>('expense');
@@ -39,6 +41,7 @@ export function TransactionModal() {
   const [categoryId, setCategoryId] = useState('groceries');
   const [date, setDate] = useState(new Date());
   const [note, setNote] = useState('');
+  const [accountId, setAccountId] = useState<string | null>(null);
   const [iosPicker, setIosPicker] = useState(false);
 
   useEffect(() => {
@@ -49,12 +52,14 @@ export function TransactionModal() {
       setCategoryId(editing.categoryId);
       setDate(new Date(editing.date + 'T12:00:00'));
       setNote(editing.note ?? '');
+      setAccountId(editing.accountId ?? null);
     } else {
       setType('expense');
       setAmountRaw(preset?.amount !== undefined ? String(preset.amount) : '');
       setCategoryId(preset?.categoryId ?? 'groceries');
       setDate(preset?.date ? new Date(preset.date + 'T12:00:00') : new Date());
       setNote(preset?.note ?? '');
+      setAccountId(preset?.accountId ?? null);
     }
     setIosPicker(false);
   }, [visible, editing, preset]);
@@ -80,7 +85,15 @@ export function TransactionModal() {
       return;
     }
     if (editing) {
-      const updated: Transaction = { ...editing, type, amount, categoryId, date: toISODate(date), note: note.trim() || undefined };
+      const updated: Transaction = {
+        ...editing,
+        type,
+        amount,
+        categoryId,
+        date: toISODate(date),
+        note: note.trim() || undefined,
+        accountId: accountId ?? undefined,
+      };
       finance.updateTransaction(updated);
     } else {
       finance.addTransaction({
@@ -90,6 +103,7 @@ export function TransactionModal() {
         date: toISODate(date),
         note: note.trim() || undefined,
         source: preset?.source ?? 'manual',
+        accountId: accountId ?? undefined,
       });
     }
     ui.close();
@@ -114,7 +128,7 @@ export function TransactionModal() {
     <Modal visible={visible} animationType="slide" transparent onRequestClose={ui.close}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.backdrop}>
         <Pressable style={styles.pressAway} onPress={ui.close} />
-        <View style={styles.sheet}>
+        <View style={[styles.sheet, sheetWidth ? { alignSelf: 'center', width: '100%', maxWidth: sheetWidth + 20 } : null]}>
           <View style={styles.grabber} />
           <Text style={styles.title}>{editing ? 'Edit transaction' : 'New transaction'}</Text>
 
@@ -168,6 +182,28 @@ export function TransactionModal() {
                 >
                   <Text style={[styles.chipText, categoryId === c.id && { color: colors.white }]}>
                     {c.emoji} {c.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* wallet */}
+            <Text style={styles.section}>Wallet</Text>
+            <View style={styles.chips}>
+              <TouchableOpacity
+                onPress={() => setAccountId(null)}
+                style={[styles.chip, accountId === null && { backgroundColor: colors.ocean600, borderColor: colors.ocean600 }]}
+              >
+                <Text style={[styles.chipText, accountId === null && { color: colors.white }]}>No wallet</Text>
+              </TouchableOpacity>
+              {finance.accounts.map((a) => (
+                <TouchableOpacity
+                  key={a.id}
+                  onPress={() => setAccountId(a.id)}
+                  style={[styles.chip, accountId === a.id && { backgroundColor: a.color, borderColor: a.color }]}
+                >
+                  <Text style={[styles.chipText, accountId === a.id && { color: colors.white }]}>
+                    {a.emoji} {a.name}
                   </Text>
                 </TouchableOpacity>
               ))}

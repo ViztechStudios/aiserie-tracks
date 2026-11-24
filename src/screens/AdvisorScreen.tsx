@@ -1,17 +1,21 @@
 import React, { useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { GradientHeader, GlassCard } from '../components/GradientHeader';
 import { InsightCard } from '../components/InsightCard';
 import { DonutChart } from '../components/DonutChart';
 import { BarChart } from '../components/BarChart';
+import { Entrance } from '../components/Entrance';
+import { PressableScale } from '../components/PressableScale';
 import { useFinance } from '../store/FinanceContext';
 import { colors, radius, spacing } from '../theme';
 import { buildAdvisorReport, currentMonthKey, monthLabel, shiftMonth } from '../utils/stats';
 import { formatMoney } from '../utils/money';
+import { useResponsive } from '../hooks/useResponsive';
 
 export function AdvisorScreen() {
   const finance = useFinance();
+  const { contentWidth } = useResponsive();
   const [ym, setYm] = useState(currentMonthKey());
 
   const report = useMemo(
@@ -23,16 +27,21 @@ export function AdvisorScreen() {
 
   return (
     <View style={styles.root}>
-      <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        bounces={false}
+        contentContainerStyle={contentWidth ? { alignSelf: 'center', width: '100%', maxWidth: contentWidth } : null}
+      >
         <GradientHeader title="Finance Advisor" subtitle="Personal coaching from your own data">
           <View style={styles.monthRow}>
-            <TouchableOpacity onPress={() => setYm(shiftMonth(ym, -1))} style={styles.monthBtn}>
+            <PressableScale onPress={() => setYm(shiftMonth(ym, -1))} style={styles.monthBtn} scaleTo={0.88}>
               <Ionicons name="chevron-back" size={18} color={colors.white} />
-            </TouchableOpacity>
+            </PressableScale>
             <Text style={styles.monthText}>{monthLabel(ym, true)}</Text>
-            <TouchableOpacity
+            <PressableScale
               onPress={() => setYm(shiftMonth(ym, 1))}
               style={styles.monthBtn}
+              scaleTo={0.88}
               disabled={ym >= currentMonthKey()}
             >
               <Ionicons
@@ -40,7 +49,7 @@ export function AdvisorScreen() {
                 size={18}
                 color={ym >= currentMonthKey() ? 'rgba(255,255,255,0.35)' : colors.white}
               />
-            </TouchableOpacity>
+            </PressableScale>
           </View>
 
           {/* hero: safe to spend */}
@@ -74,37 +83,41 @@ export function AdvisorScreen() {
 
         <View style={styles.body}>
           {/* savings rate strip */}
-          <View style={styles.rateCard}>
-            <View style={styles.rateRow}>
-              <View style={styles.rateItem}>
-                <Text style={[styles.rateNum, { color: savingsPct >= 20 ? colors.good : savingsPct >= 0 ? colors.warn : colors.risk }]}>
-                  {savingsPct}%
-                </Text>
-                <Text style={styles.rateLabel}>savings rate</Text>
-              </View>
-              <View style={styles.rateItem}>
-                <Text style={styles.rateNum}>{formatMoney(report.dailyAvgExpense, finance.settings.currency)}</Text>
-                <Text style={styles.rateLabel}>daily spend</Text>
-              </View>
-              <View style={styles.rateItem}>
-                <Text style={styles.rateNum}>{report.categoryTotals.length}</Text>
-                <Text style={styles.rateLabel}>categories used</Text>
+          <Entrance delay={0}>
+            <View style={styles.rateCard}>
+              <View style={styles.rateRow}>
+                <View style={styles.rateItem}>
+                  <Text style={[styles.rateNum, { color: savingsPct >= 20 ? colors.good : savingsPct >= 0 ? colors.warn : colors.risk }]}>
+                    {savingsPct}%
+                  </Text>
+                  <Text style={styles.rateLabel}>savings rate</Text>
+                </View>
+                <View style={styles.rateItem}>
+                  <Text style={styles.rateNum}>{formatMoney(report.dailyAvgExpense, finance.settings.currency)}</Text>
+                  <Text style={styles.rateLabel}>daily spend</Text>
+                </View>
+                <View style={styles.rateItem}>
+                  <Text style={styles.rateNum}>{report.categoryTotals.length}</Text>
+                  <Text style={styles.rateLabel}>categories used</Text>
+                </View>
               </View>
             </View>
-          </View>
+          </Entrance>
 
           {/* insights */}
           <Text style={styles.sectionTitle}>This month's coaching</Text>
-          {report.insights.map((i) => (
-            <InsightCard key={i.id} insight={i} />
+          {report.insights.map((i, idx) => (
+            <Entrance key={i.id} delay={60 + idx * 45}>
+              <InsightCard insight={i} />
+            </Entrance>
           ))}
 
-          <View style={{ marginTop: spacing.md }}>
+          <Entrance delay={240}>
             <DonutChart data={report.categoryTotals} currency={finance.settings.currency} />
-          </View>
-          <View style={{ marginTop: spacing.lg, marginBottom: 120 }}>
+          </Entrance>
+          <Entrance delay={300} style={{ marginTop: spacing.lg, marginBottom: 120 }}>
             <BarChart months={report.months} currency={finance.settings.currency} />
-          </View>
+          </Entrance>
         </View>
       </ScrollView>
     </View>

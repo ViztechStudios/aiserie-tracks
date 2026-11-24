@@ -1,29 +1,32 @@
 import React, { useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { GradientHeader, GlassCard } from '../components/GradientHeader';
 import { TransactionRow } from '../components/TransactionRow';
 import { EmptyState } from '../components/EmptyState';
+import { Entrance } from '../components/Entrance';
+import { AnimatedNumber } from '../components/AnimatedNumber';
+import { AccountsStrip } from '../components/AccountsStrip';
+import { PressableScale } from '../components/PressableScale';
 import { useFinance } from '../store/FinanceContext';
 import { useUI } from '../store/UIContext';
 import { getCategory } from '../data/categories';
 import { colors, radius, shadow, spacing } from '../theme';
 import { currentMonthKey, monthKey, monthLabel, shiftMonth, totalsForMonth } from '../utils/stats';
 import { formatMoney } from '../utils/money';
+import { useResponsive } from '../hooks/useResponsive';
 
 export function HomeScreen() {
   const finance = useFinance();
   const ui = useUI();
   const navigation = useNavigation();
+  const { contentWidth } = useResponsive();
   const [ym, setYm] = useState(currentMonthKey());
 
   const totals = useMemo(() => totalsForMonth(finance.transactions, ym), [finance.transactions, ym]);
   const recent = useMemo(
-    () =>
-      finance.transactions
-        .filter((t) => monthKey(t.date) === ym)
-        .slice(0, 5),
+    () => finance.transactions.filter((t) => monthKey(t.date) === ym).slice(0, 5),
     [finance.transactions, ym]
   );
   const daysSoFar = ym === currentMonthKey() ? new Date().getDate() : 1;
@@ -32,94 +35,112 @@ export function HomeScreen() {
   return (
     <View style={styles.root}>
       <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
-        <GradientHeader title="Aiserie Tracks" subtitle="Your money, in clear blue water">
+        <GradientHeader title={`Hi, ${finance.settings.userName} 👋`} subtitle="Aiserie Tracks · your money at a glance">
           {/* month switcher */}
-          <View style={styles.monthRow}>
-            <TouchableOpacity onPress={() => setYm(shiftMonth(ym, -1))} style={styles.monthBtn}>
-              <Ionicons name="chevron-back" size={18} color={colors.white} />
-            </TouchableOpacity>
-            <Text style={styles.monthText}>{monthLabel(ym, true)}</Text>
-            <TouchableOpacity
-              onPress={() => setYm(shiftMonth(ym, 1))}
-              style={styles.monthBtn}
-              disabled={ym >= currentMonthKey()}
-            >
-              <Ionicons
-                name="chevron-forward"
-                size={18}
-                color={ym >= currentMonthKey() ? 'rgba(255,255,255,0.35)' : colors.white}
-              />
-            </TouchableOpacity>
-          </View>
+          <Entrance delay={0}>
+            <View style={styles.monthRow}>
+              <PressableScale onPress={() => setYm(shiftMonth(ym, -1))} style={styles.monthBtn} scaleTo={0.88}>
+                <Ionicons name="chevron-back" size={18} color={colors.white} />
+              </PressableScale>
+              <Text style={styles.monthText}>{monthLabel(ym, true)}</Text>
+              <PressableScale
+                onPress={() => setYm(shiftMonth(ym, 1))}
+                style={styles.monthBtn}
+                scaleTo={0.88}
+                disabled={ym >= currentMonthKey()}
+              >
+                <Ionicons
+                  name="chevron-forward"
+                  size={18}
+                  color={ym >= currentMonthKey() ? 'rgba(255,255,255,0.35)' : colors.white}
+                />
+              </PressableScale>
+            </View>
+          </Entrance>
 
           {/* balance glass card */}
-          <GlassCard>
-            <Text style={styles.glassLabel}>Net this month</Text>
-            <Text style={[styles.net, { color: totals.net >= 0 ? '#D9FBF3' : '#FFD9DD' }]}>
-              {formatMoney(totals.net, finance.settings.currency)}
-            </Text>
-            <View style={styles.splitRow}>
-              <View style={styles.split}>
-                <View style={styles.dotRow}>
-                  <View style={[styles.dot, { backgroundColor: '#5CEBC0' }]} />
-                  <Text style={styles.splitLabel}>Income</Text>
+          <Entrance delay={60}>
+            <GlassCard>
+              <Text style={styles.glassLabel}>Net this month</Text>
+              <AnimatedNumber
+                value={totals.net}
+                format={(n) => formatMoney(n, finance.settings.currency)}
+                style={[styles.net, { color: totals.net >= 0 ? '#D9FBF3' : '#FFD9DD' }]}
+              />
+              <View style={styles.splitRow}>
+                <View style={styles.split}>
+                  <View style={styles.dotRow}>
+                    <View style={[styles.dot, { backgroundColor: '#5CEBC0' }]} />
+                    <Text style={styles.splitLabel}>Income</Text>
+                  </View>
+                  <Text style={styles.splitValue}>{formatMoney(totals.income, finance.settings.currency)}</Text>
                 </View>
-                <Text style={styles.splitValue}>{formatMoney(totals.income, finance.settings.currency)}</Text>
-              </View>
-              <View style={styles.divider} />
-              <View style={styles.split}>
-                <View style={styles.dotRow}>
-                  <View style={[styles.dot, { backgroundColor: '#FF9AA5' }]} />
-                  <Text style={styles.splitLabel}>Spent</Text>
+                <View style={styles.divider} />
+                <View style={styles.split}>
+                  <View style={styles.dotRow}>
+                    <View style={[styles.dot, { backgroundColor: '#FF9AA5' }]} />
+                    <Text style={styles.splitLabel}>Spent</Text>
+                  </View>
+                  <Text style={styles.splitValue}>{formatMoney(totals.expense, finance.settings.currency)}</Text>
                 </View>
-                <Text style={styles.splitValue}>{formatMoney(totals.expense, finance.settings.currency)}</Text>
               </View>
-            </View>
-          </GlassCard>
+            </GlassCard>
+          </Entrance>
+
+          {/* wallets strip */}
+          <Entrance delay={120}>
+            <AccountsStrip />
+          </Entrance>
         </GradientHeader>
 
         {/* quick stats + actions */}
-        <View style={styles.body}>
-          <View style={styles.statsRow}>
-            <View style={[styles.statCard, shadow.card]}>
-              <Text style={styles.statLabel}>Daily average</Text>
-              <Text style={styles.statValue}>{formatMoney(dailyAvg, finance.settings.currency)}</Text>
-            </View>
-            <TouchableOpacity
-              style={[styles.statCard, shadow.card]}
-              onPress={() => navigation.navigate('Advisor' as never)}
-            >
-              <Text style={styles.statLabel}>Advisor</Text>
-              <View style={styles.statAction}>
-                <Ionicons name="sparkles" size={16} color={colors.ocean600} />
-                <Text style={[styles.statValue, { color: colors.ocean600, fontSize: 14 }]}>Get tips</Text>
+        <View style={[styles.body, contentWidth ? { alignSelf: 'center', width: '100%', maxWidth: contentWidth } : null]}>
+          <Entrance delay={180}>
+            <View style={styles.statsRow}>
+              <View style={[styles.statCard, shadow.card]}>
+                <Text style={styles.statLabel}>Daily average</Text>
+                <Text style={styles.statValue}>{formatMoney(dailyAvg, finance.settings.currency)}</Text>
               </View>
-            </TouchableOpacity>
-          </View>
+              <PressableScale
+                style={[styles.statCard, shadow.card]}
+                onPress={() => navigation.navigate('Advisor' as never)}
+              >
+                <Text style={styles.statLabel}>Advisor</Text>
+                <View style={styles.statAction}>
+                  <Ionicons name="sparkles" size={16} color={colors.ocean600} />
+                  <Text style={[styles.statValue, { color: colors.ocean600, fontSize: 14 }]}>Get tips</Text>
+                </View>
+              </PressableScale>
+            </View>
+          </Entrance>
 
-          <View style={styles.actionRow}>
-            <TouchableOpacity style={styles.addBtn} onPress={() => ui.openAdd()}>
-              <Ionicons name="add-circle" size={22} color={colors.white} />
-              <Text style={styles.addText}>Add</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.addBtn, { backgroundColor: colors.aqua400 }]}
-              onPress={() => navigation.navigate('Scan' as never)}
-            >
-              <Ionicons name="scan-outline" size={22} color={colors.white} />
-              <Text style={styles.addText}>Scan receipt</Text>
-            </TouchableOpacity>
-          </View>
+          <Entrance delay={240}>
+            <View style={styles.actionRow}>
+              <PressableScale style={styles.addBtn} onPress={() => ui.openAdd()}>
+                <Ionicons name="add-circle" size={22} color={colors.white} />
+                <Text style={styles.addText}>Add</Text>
+              </PressableScale>
+              <PressableScale
+                style={[styles.addBtn, { backgroundColor: colors.aqua400 }]}
+                onPress={() => navigation.navigate('Scan' as never)}
+              >
+                <Ionicons name="scan-outline" size={22} color={colors.white} />
+                <Text style={styles.addText}>Scan receipt</Text>
+              </PressableScale>
+            </View>
+          </Entrance>
 
           {/* recent */}
-          <View style={styles.recentHead}>
-            <Text style={styles.recentTitle}>Recent transactions</Text>
-            {recent.length > 0 && (
-              <TouchableOpacity onPress={() => navigation.navigate('History' as never)}>
-                <Text style={styles.seeAll}>See all</Text>
-              </TouchableOpacity>
-            )}
-          </View>
+          <Entrance delay={300}>
+            <View style={styles.recentHead}>
+              <Text style={styles.recentTitle}>Recent transactions</Text>
+              {recent.length > 0 && (
+                <PressableScale onPress={() => navigation.navigate('History' as never)}>
+                  <Text style={styles.seeAll}>See all</Text>
+                </PressableScale>
+              )}
+            </View>
+          </Entrance>
 
           {recent.length === 0 ? (
             <EmptyState
@@ -128,20 +149,21 @@ export function HomeScreen() {
               body="Tap Add to log your first expense, or Scan to capture a grocery receipt — your advisor wakes up with the first entry."
             />
           ) : (
-            recent.map((t) => {
+            recent.map((t, i) => {
               const cat = getCategory(t.categoryId);
               if (!cat) return null;
               return (
-                <TransactionRow
-                  key={t.id}
-                  category={cat}
-                  amount={t.amount}
-                  type={t.type}
-                  date={t.date}
-                  note={t.note}
-                  currency={finance.settings.currency}
-                  onPress={() => ui.openEdit(t)}
-                />
+                <Entrance key={t.id} delay={340 + i * 45}>
+                  <TransactionRow
+                    category={cat}
+                    amount={t.amount}
+                    type={t.type}
+                    date={t.date}
+                    note={t.note}
+                    currency={finance.settings.currency}
+                    onPress={() => ui.openEdit(t)}
+                  />
+                </Entrance>
               );
             })
           )}

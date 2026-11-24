@@ -1,11 +1,26 @@
 export type TxType = 'expense' | 'income';
 
+export type TxSource = 'manual' | 'scan' | 'sample' | 'detect';
+
+export type AccountType = 'ewallet' | 'bank' | 'cash';
+
 export interface Category {
   id: string;
   label: string;
   emoji: string;
   color: string;
   type: TxType;
+}
+
+export interface Account {
+  id: string;
+  name: string;
+  type: AccountType;
+  emoji: string;
+  color: string;
+  /** Balance the user declared when creating/reconciling the wallet. */
+  openingBalance: number;
+  updatedAt: number;
 }
 
 export interface Transaction {
@@ -17,12 +32,15 @@ export interface Transaction {
   /** ISO date string: YYYY-MM-DD */
   date: string;
   note?: string;
-  source: 'manual' | 'scan' | 'sample';
+  source: TxSource;
   createdAt: number;
+  /** Optional wallet this transaction moved money in/out of. */
+  accountId?: string;
 }
 
 export interface Settings {
   currency: string; // ISO 4217 code, default PHP
+  userName: string; // default "Aiserie"
 }
 
 export interface MonthTotals {

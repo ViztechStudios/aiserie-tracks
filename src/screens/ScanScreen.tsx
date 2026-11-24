@@ -23,6 +23,7 @@ import { colors, gradients, radius, shadow, spacing } from '../theme';
 import { parseReceiptText, receiptSummary } from '../utils/receipt';
 import { todayISO } from '../utils/stats';
 import { formatMoney, parseAmount } from '../utils/money';
+import { useResponsive } from '../hooks/useResponsive';
 import TextRecognition from '@react-native-ml-kit/text-recognition';
 
 type Stage = 'camera' | 'review';
@@ -30,6 +31,7 @@ type Stage = 'camera' | 'review';
 export function ScanScreen() {
   const finance = useFinance();
   const ui = useUI();
+  const { contentWidth } = useResponsive();
   const cameraRef = useRef<CameraView>(null);
   const [permission, requestPermission] = useCameraPermissions();
   const [torch, setTorch] = useState(false);
@@ -173,7 +175,10 @@ export function ScanScreen() {
         </View>
       ) : (
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
-          <ScrollView contentContainerStyle={styles.review} keyboardShouldPersistTaps="handled">
+          <ScrollView
+            contentContainerStyle={[styles.review, contentWidth ? { alignSelf: 'center', width: '100%', maxWidth: contentWidth } : null]}
+            keyboardShouldPersistTaps="handled"
+          >
             {photoUri && (
               <Image source={{ uri: photoUri }} style={styles.photo} resizeMode="cover" />
             )}

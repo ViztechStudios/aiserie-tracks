@@ -1,9 +1,19 @@
-import { Transaction } from '../types';
+import { Account, Transaction } from '../types';
 import { todayISO, currentMonthKey, shiftMonth, daysInMonth } from '../utils/stats';
 
 /** Deterministic-ish id generator (no native deps). */
 export function makeId(): string {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}`;
+}
+
+/** Default wallets used by "Load sample data". */
+export function buildSampleAccounts(): Account[] {
+  const base = Date.now();
+  return [
+    { id: makeId(), name: 'GCash', type: 'ewallet', emoji: '📱', color: '#0EA5E9', openingBalance: 2350, updatedAt: base },
+    { id: makeId(), name: 'Maya', type: 'ewallet', emoji: '💳', color: '#16B8A0', openingBalance: 890, updatedAt: base },
+    { id: makeId(), name: 'Cash wallet', type: 'cash', emoji: '💵', color: '#F5A524', openingBalance: 600, updatedAt: base },
+  ];
 }
 
 interface Seed {
@@ -56,10 +66,11 @@ function amount(seed: Seed): number {
  * Builds a realistic set of Philippine-flavored transactions for the last
  * `months` months (including the current, partial month).
  */
-export function buildSampleTransactions(months = 4): Transaction[] {
+export function buildSampleTransactions(months = 4, accounts: Account[] = []): Transaction[] {
   const out: Transaction[] = [];
   const today = todayISO();
   const thisMonth = currentMonthKey();
+  const bigSpendAccounts = accounts; // groceries & bills go through wallets
 
   for (let i = months - 1; i >= 0; i--) {
     const ym = shiftMonth(thisMonth, -i);
@@ -76,6 +87,19 @@ export function buildSampleTransactions(months = 4): Transaction[] {
         }
         const date = `${ym}-${String(Math.min(day, dim)).padStart(2, '0')}`;
         if (date > today) continue; // never seed future transactions
+
+        // link most transactions to a wallet when sample wallets exist
+        let accountId: string | undefined;
+        if (bigSpendAccounts.length > 0 && Math.random() < 0.7) {
+          if (['groceries', 'bills', 'shopping'].includes(seed.categoryId)) {
+            accountId = bigSpendAccounts[0].id; // GCash
+          } else if (seed.income) {
+            accountId = bigSpendAccounts[1].id; // Maya
+          } else {
+            accountId = bigSpendAccounts[2].id; // Cash
+          }
+        }
+
         out.push({
           id: makeId(),
           type: seed.income ? 'income' : 'expense',
@@ -85,6 +109,7 @@ export function buildSampleTransactions(months = 4): Transaction[] {
           note: seed.note,
           source: 'sample',
           createdAt: Date.now() - Math.floor(Math.random() * 5_000_000),
+          accountId,
         });
       }
     }

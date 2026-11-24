@@ -2,14 +2,14 @@
   "expo": {
     "name": "Aiserie Tracks",
     "slug": "aiserie-tracks",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "backgroundColor": "#F2F9FE",
     "ios": {
       "bundleIdentifier": "com.aiserie.tracks",
-      "supportsTablet": false,
+      "supportsTablet": true,
       "infoPlist": {
         "NSCameraUsageDescription": "Aiserie Tracks uses the camera to scan grocery receipts. Photos are processed on your device only."
       }

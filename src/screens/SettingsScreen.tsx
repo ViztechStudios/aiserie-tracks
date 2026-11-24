@@ -1,37 +1,43 @@
-import React, { useMemo, useState } from 'react';
-import { Alert, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Alert, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { GradientHeader } from '../components/GradientHeader';
+import { Entrance } from '../components/Entrance';
+import { PressableScale } from '../components/PressableScale';
 import { useFinance } from '../store/FinanceContext';
+import { useUI } from '../store/UIContext';
 import { CURRENCIES } from '../data/currencies';
 import { colors, radius, shadow, spacing } from '../theme';
 import { formatMoney } from '../utils/money';
+import { useResponsive } from '../hooks/useResponsive';
 
 export function SettingsScreen() {
   const finance = useFinance();
+  const ui = useUI();
+  const { contentWidth } = useResponsive();
   const [pickerOpen, setPickerOpen] = useState(false);
-  const current = useMemo(
-    () => CURRENCIES.find((c) => c.code === finance.settings.currency) ?? CURRENCIES[0],
-    [finance.settings.currency]
-  );
+  const [nameDraft, setNameDraft] = useState(finance.settings.userName);
+
+  // keep the local draft in sync when the saved name changes elsewhere
+  useEffect(() => {
+    setNameDraft(finance.settings.userName);
+  }, [finance.settings.userName]);
+
+  const current = CURRENCIES.find((c) => c.code === finance.settings.currency) ?? CURRENCIES[0];
 
   const askSample = () => {
     if (finance.transactions.length > 0) {
-      Alert.alert(
-        'Load sample data?',
-        'This replaces your current transactions with 4 months of example data.',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Replace', style: 'destructive', onPress: finance.loadSampleData },
-        ]
-      );
+      Alert.alert('Load sample data?', 'This replaces your current transactions with 4 months of example data.', [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Replace', style: 'destructive', onPress: finance.loadSampleData },
+      ]);
     } else {
       finance.loadSampleData();
     }
   };
 
   const askClear = () => {
-    Alert.alert('Erase everything?', 'All transactions saved on this device will be permanently deleted.', [
+    Alert.alert('Erase everything?', 'All transactions and wallets saved on this device will be permanently deleted.', [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Erase', style: 'destructive', onPress: () => finance.clearAllData() },
     ]);
@@ -39,71 +45,136 @@ export function SettingsScreen() {
 
   return (
     <View style={styles.root}>
-      <ScrollView contentContainerStyle={{ paddingBottom: 140 }} showsVerticalScrollIndicator={false} bounces={false}>
-        <GradientHeader title="Settings" subtitle="Tune Aiserie to your money life" />
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: 140, ...(contentWidth ? { alignSelf: 'center', width: '100%', maxWidth: contentWidth } : {}) }}
+        showsVerticalScrollIndicator={false}
+        bounces={false}
+      >
+        <GradientHeader title="Settings" subtitle="Make Aiserie Tracks yours" />
 
         <View style={styles.body}>
-          <Text style={styles.section}>Currency</Text>
-          <TouchableOpacity style={[styles.row, shadow.card]} onPress={() => setPickerOpen(true)}>
-            <Text style={styles.rowEmoji}>{current.flag}</Text>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.rowTitle}>{current.label}</Text>
-              <Text style={styles.rowSub}>
-                {formatMoney(1250, finance.settings.currency)} · used across every screen
-              </Text>
+          <Entrance delay={0}>
+            <Text style={styles.section}>Profile</Text>
+            <View style={[styles.row, shadow.card]}>
+              <Text style={styles.rowEmoji}>💙</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.rowTitle}>Your name</Text>
+                <TextInput
+                  style={styles.nameInput}
+                  value={nameDraft}
+                  onChangeText={setNameDraft}
+                  onBlur={() => finance.setUserName(nameDraft)}
+                  onSubmitEditing={() => finance.setUserName(nameDraft)}
+                  placeholder="Aiserie"
+                  placeholderTextColor={colors.faint}
+                  maxLength={24}
+                  returnKeyType="done"
+                />
+              </View>
             </View>
-            <Ionicons name="chevron-forward" size={16} color={colors.faint} />
-          </TouchableOpacity>
+            <Text style={styles.hint}>Shown on your Home greeting — default is Aiserie.</Text>
+          </Entrance>
 
-          <Text style={styles.section}>Your data</Text>
-          <View style={[styles.row, shadow.card]}>
-            <Text style={styles.rowEmoji}>🔒</Text>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.rowTitle}>Private by design</Text>
-              <Text style={styles.rowSub}>
-                {finance.transactions.length} transaction{finance.transactions.length === 1 ? '' : 's'} stored only on this
-                device — no account, no cloud, no tracking.
-              </Text>
-            </View>
-          </View>
-          <TouchableOpacity style={[styles.row, shadow.card]} onPress={askSample}>
-            <Text style={styles.rowEmoji}>🧪</Text>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.rowTitle}>Load sample data</Text>
-              <Text style={styles.rowSub}>Try the app with 4 months of realistic demo transactions.</Text>
-            </View>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.row, shadow.card]} onPress={askClear}>
-            <Text style={styles.rowEmoji}>🗑️</Text>
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.rowTitle, { color: colors.risk }]}>Erase all transactions</Text>
-              <Text style={styles.rowSub}>Wipe every transaction from this device.</Text>
-            </View>
-          </TouchableOpacity>
+          <Entrance delay={60}>
+            <Text style={styles.section}>Wallets & currency</Text>
+            <PressableScale onPress={() => ui.openWallets()} style={[styles.row, shadow.card]}>
+              <Text style={styles.rowEmoji}>👛</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.rowTitle}>Wallets & balances</Text>
+                <Text style={styles.rowSub}>
+                  {finance.accounts.length === 0
+                    ? 'Add GCash, Maya, a bank or cash — balances stay manual.'
+                    : `${finance.accounts.length} wallet${finance.accounts.length === 1 ? '' : 's'} · balances update from your transactions.`}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={16} color={colors.faint} />
+            </PressableScale>
+            <PressableScale onPress={() => setPickerOpen(true)} style={[styles.row, shadow.card]}>
+              <Text style={styles.rowEmoji}>{current.flag}</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.rowTitle}>{current.label}</Text>
+                <Text style={styles.rowSub}>{formatMoney(1250, finance.settings.currency)} · used across every screen</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={16} color={colors.faint} />
+            </PressableScale>
+          </Entrance>
 
-          <Text style={styles.section}>Receipt scanning</Text>
-          <View style={[styles.row, shadow.card]}>
-            <Text style={styles.rowEmoji}>🧾</Text>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.rowTitle}>How it works</Text>
-              <Text style={styles.rowSub}>
-                On-device text recognition reads the receipt total — the photo never leaves your phone. In Expo Go the OCR
-                engine is unavailable; install a development or production build for full scanning.
-              </Text>
+          <Entrance delay={120}>
+            <Text style={styles.section}>Purchase detection</Text>
+            <View style={[styles.row, shadow.card]}>
+              <Text style={styles.rowEmoji}>🔔</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.rowTitle}>How detection works</Text>
+                <Text style={styles.rowSub}>
+                  Paste any e-wallet or bank SMS / notification into Wallets → “Detect a purchase from text”. Aiserie reads
+                  the amount on-device and pre-fills the transaction. iOS doesn't allow apps to read other apps'
+                  notifications, so nothing is monitored automatically — your messages stay private.
+                </Text>
+              </View>
             </View>
-          </View>
+          </Entrance>
 
-          <Text style={styles.section}>About</Text>
-          <View style={[styles.row, shadow.card]}>
-            <Text style={styles.rowEmoji}>🌊</Text>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.rowTitle}>Aiserie Tracks v1.0.0</Text>
-              <Text style={styles.rowSub}>
-                A light-blue finance companion for iOS and Android. Built with Expo, React Native and a lot of ocean
-                gradients.
-              </Text>
+          <Entrance delay={180}>
+            <Text style={styles.section}>Your data</Text>
+            <View style={[styles.row, shadow.card]}>
+              <Text style={styles.rowEmoji}>🔒</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.rowTitle}>Private by design</Text>
+                <Text style={styles.rowSub}>
+                  {finance.transactions.length} transaction{finance.transactions.length === 1 ? '' : 's'} stored only on this
+                  device — no account, no cloud, no tracking.
+                </Text>
+              </View>
             </View>
-          </View>
+            <PressableScale onPress={askSample} style={[styles.row, shadow.card]}>
+              <Text style={styles.rowEmoji}>🧪</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.rowTitle}>Load sample data</Text>
+                <Text style={styles.rowSub}>Try the app with 4 months of realistic demo transactions and wallets.</Text>
+              </View>
+            </PressableScale>
+            <PressableScale onPress={askClear} style={[styles.row, shadow.card]}>
+              <Text style={styles.rowEmoji}>🗑️</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.rowTitle, { color: colors.risk }]}>Erase all transactions</Text>
+                <Text style={styles.rowSub}>Wipe every transaction and wallet from this device.</Text>
+              </View>
+            </PressableScale>
+          </Entrance>
+
+          <Entrance delay={240}>
+            <Text style={styles.section}>Legal</Text>
+            <PressableScale onPress={() => ui.openLegal('privacy')} style={[styles.row, shadow.card]}>
+              <Text style={styles.rowEmoji}>🛡️</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.rowTitle}>Privacy Policy</Text>
+                <Text style={styles.rowSub}>What the app stores (only on-device) and what it never does.</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={16} color={colors.faint} />
+            </PressableScale>
+            <PressableScale onPress={() => ui.openLegal('terms')} style={[styles.row, shadow.card]}>
+              <Text style={styles.rowEmoji}>📄</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.rowTitle}>Terms & Conditions</Text>
+                <Text style={styles.rowSub}>Personal-use licence, “not financial advice”, and the honest fine print.</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={16} color={colors.faint} />
+            </PressableScale>
+          </Entrance>
+
+          <Entrance delay={300}>
+            <Text style={styles.section}>About</Text>
+            <View style={[styles.row, shadow.card]}>
+              <Text style={styles.rowEmoji}>🌊</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.rowTitle}>Aiserie Tracks v1.1.0</Text>
+                <Text style={styles.rowSub}>
+                  A light-blue finance companion for iPhone, iPad and Android — built with Expo and a lot of ocean
+                  gradients, made with 💙 for Aiserie.
+                </Text>
+              </View>
+            </View>
+          </Entrance>
         </View>
       </ScrollView>
 
@@ -129,9 +200,7 @@ export function SettingsScreen() {
                       {c.code} · {formatMoney(1250, c.code)}
                     </Text>
                   </View>
-                  {c.code === finance.settings.currency && (
-                    <Ionicons name="checkmark-circle" size={20} color={colors.ocean600} />
-                  )}
+                  {c.code === finance.settings.currency && <Ionicons name="checkmark-circle" size={20} color={colors.ocean600} />}
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -168,6 +237,8 @@ const styles = StyleSheet.create({
   rowEmoji: { fontSize: 22, marginRight: spacing.md },
   rowTitle: { color: colors.text, fontWeight: '800', fontSize: 15 },
   rowSub: { color: colors.subtext, fontSize: 12.5, lineHeight: 18, marginTop: 2 },
+  nameInput: { color: colors.ocean600, fontWeight: '800', fontSize: 17, paddingVertical: 6, paddingHorizontal: 0 },
+  hint: { color: colors.faint, fontSize: 11.5, marginTop: -spacing.md, marginBottom: spacing.md },
   pickerBackdrop: { flex: 1, backgroundColor: 'rgba(6,38,64,0.5)', justifyContent: 'flex-end' },
   pickerSheet: {
     backgroundColor: colors.card,
@@ -185,7 +256,12 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.line,
   },
-  currencyRowOn: { backgroundColor: colors.ice50, marginHorizontal: -spacing.md, paddingHorizontal: spacing.md, borderRadius: radius.md },
+  currencyRowOn: {
+    backgroundColor: colors.ice50,
+    marginHorizontal: -spacing.md,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.md,
+  },
   currencyFlag: { fontSize: 24, marginRight: spacing.md },
   currencyLabel: { color: colors.text, fontWeight: '700', fontSize: 15 },
   currencyCode: { color: colors.subtext, fontSize: 12, marginTop: 1 },
