@@ -35,7 +35,7 @@
       "lang": "en",
       "themeColor": "#0EA5E9",
       "backgroundColor": "#F2F9FE",
-      "description": "Personal finance tracker \u2014 budgets, wallets and receipts, all on your device."
+      "description": "Personal finance tracker — budgets, wallets and receipts, all on your device."
     },
     "experiments": {
       "baseUrl": "/aiserie-tracks"
@@ -54,10 +54,17 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Allow Aiserie Tracks to use the camera to scan your grocery receipts."
+          "cameraPermission": "Allow Aiserie Tracks to use the camera to scan your grocery receipts.",
+          "recordAudioAndroid": false
         }
       ],
       "expo-font"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "7009b2cc-4608-463b-b903-cc7b0e9fbda8"
+      }
+    },
+    "owner": "viztechstudiosss"
   }
 }
