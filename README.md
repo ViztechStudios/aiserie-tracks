@@ -75,25 +75,20 @@ open the site in **Safari** → **Share** □↑ → **Add to Home Screen** → 
 
 ### 2. Android as a downloadable APK
 
-The APK is built in Expo's cloud (free tier) and attached to a GitHub Release, so users download it straight from the browser:
+**✅ v1.2.0 APK is live:** [Releases → v1.2.0](https://github.com/ViztechStudios/aiserie-tracks/releases/tag/v1.2.0) → download `AiserieTracks-v1.2.0.apk` → allow *"install unknown apps"* for the browser when Android asks → install. The in-app Settings → **Get the Android app (APK)** row (visible on the PWA) links to `releases/latest` directly.
+
+How it was built, and how future versions get built (Expo free tier, 30 builds/month):
 
 ```bash
 npm install -g eas-cli
 eas login                                  # free Expo account
-npx eas init                               # one-time: writes projectId into app.json
+npx eas init                               # already done — projectId 7009b2cc… lives in app.json
 eas build -p android --profile preview     # -> signed installable APK
 ```
 
-Then attach the APK to a release:
+Then attach the new APK to a release: Releases page → Edit → drag & drop, or `gh release upload <tag> app-release.apk`.
 
-```bash
-gh release create v1.2.0 --title "Aiserie Tracks v1.2.0" --notes "First public APK"
-# or upload manually on the Releases page (drag & drop the .apk)
-```
-
-Users open **Releases → latest → download APK** → allow *"install unknown apps"* for their browser → install. The in-app Settings → **Get the Android app (APK)** row (visible on the PWA) links to `releases/latest` directly.
-
-> Optional CI: add an `EXPO_TOKEN` repository secret (expo.dev → Access Tokens) and run the **EAS Build** workflow manually from the Actions tab — it creates the project, builds and links artifacts without any local commands.
+> CI also works: `EXPO_TOKEN` is already configured as a repository secret, so the **EAS Build** workflow can build from the Actions tab (manual dispatch, platform `android`, profile `preview`) — no local commands needed.
 
 ### 3. Alternative web hosting (Vercel / Cloudflare Pages)
 
