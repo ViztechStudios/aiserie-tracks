@@ -2,6 +2,7 @@ import React from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { AuroraBackground } from './AuroraBackground';
 import { PRIVACY_POLICY, TERMS, LegalSection } from '../data/legal';
 import { colors, gradients, radius, spacing } from '../theme';
 import { useUI } from '../store/UIContext';
@@ -20,7 +21,7 @@ function DocBody({ sections }: { sections: LegalSection[] }) {
           ))}
         </View>
       ))}
-      <Text style={styles.footer}>Last updated: November 2026 · Aiserie Tracks v1.1.0</Text>
+      <Text style={styles.footer}>Last updated: November 2026 · Aiserie Tracks v1.3.0</Text>
     </>
   );
 }
@@ -34,6 +35,7 @@ export function LegalModal() {
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={ui.closeLegal}>
       <View style={styles.screen}>
+        <AuroraBackground />
         <LinearGradient colors={gradients.header} start={{ x: 0, y: 0 }} end={{ x: 1.2, y: 1 }} style={styles.header}>
           <View style={styles.headerRow}>
             <Pressable onPress={ui.closeLegal} hitSlop={12}>
@@ -60,7 +62,7 @@ export function LegalModal() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.bg },
+  screen: { flex: 1, backgroundColor: 'transparent' },
   header: {
     paddingHorizontal: spacing.xl,
     paddingTop: 54,

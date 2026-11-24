@@ -16,6 +16,7 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { GradientHeader, GlassCard } from '../components/GradientHeader';
+import { AuroraBackground } from '../components/AuroraBackground';
 import { useFinance } from '../store/FinanceContext';
 import { useUI } from '../store/UIContext';
 import { categoriesFor } from '../data/categories';
@@ -130,6 +131,7 @@ export function ScanScreen() {
   if (!permission.granted) {
     return (
       <View style={styles.root}>
+        <AuroraBackground />
         <GradientHeader title="Scan receipt" subtitle="Point your camera at a grocery receipt" />
         <View style={styles.permissionBox}>
           <Text style={styles.permissionEmoji}>📷</Text>
@@ -150,6 +152,7 @@ export function ScanScreen() {
 
   return (
     <View style={styles.root}>
+      <AuroraBackground />
       <GradientHeader title="Scan receipt" subtitle="Point at the receipt, hold steady, tap capture">
         <GlassCard>
           <Text style={styles.tipText}>
@@ -270,7 +273,7 @@ export function ScanScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.bg },
+  root: { flex: 1, backgroundColor: 'transparent' },
   tipText: { color: colors.white, fontSize: 13, lineHeight: 19 },
   permissionBox: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.xxl },
   permissionEmoji: { fontSize: 46, marginBottom: spacing.md },
@@ -325,7 +328,13 @@ const styles = StyleSheet.create({
   },
   review: { padding: spacing.xl, paddingBottom: 140 },
   photo: { width: '100%', height: 180, borderRadius: radius.md, marginBottom: spacing.lg, backgroundColor: colors.ice100 },
-  reviewCard: { backgroundColor: colors.card, borderRadius: radius.lg, padding: spacing.lg },
+  reviewCard: {
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.glassBorderSoft,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+  },
   ocrInfo: { color: colors.subtext, fontSize: 13, lineHeight: 19, marginBottom: spacing.md },
   label: { color: colors.subtext, fontSize: 11, fontWeight: '800', letterSpacing: 0.8, marginBottom: 6, marginTop: spacing.md },
   amountRow: {

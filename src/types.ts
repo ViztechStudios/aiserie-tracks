@@ -77,3 +77,14 @@ export interface ParsedReceipt {
   itemCount: number;
   lines: string[];
 }
+
+/** One item on the Things-to-do list (money chores, goals, reminders). */
+export interface Task {
+  id: string;
+  title: string;
+  done: boolean;
+  /** Starred tasks float to the top of the open list. */
+  important: boolean;
+  createdAt: number;
+  doneAt?: number;
+}

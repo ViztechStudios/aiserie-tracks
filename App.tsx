@@ -5,6 +5,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { DarkTheme, DefaultTheme, NavigationContainer } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import { FinanceProvider } from './src/store/FinanceContext';
+import { TasksProvider } from './src/store/TasksContext';
 import { UIProvider } from './src/store/UIContext';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { TransactionModal } from './src/components/TransactionModal';
@@ -19,7 +20,7 @@ const navTheme = {
     ...DarkTheme.colors,
     background: colors.bg,
     primary: colors.ocean600,
-    card: colors.card,
+    card: colors.cardSolid,
     text: colors.text,
     border: colors.line,
     notification: colors.aqua400,
@@ -32,7 +33,8 @@ export default function App() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <FinanceProvider>
-          <UIProvider>
+          <TasksProvider>
+            <UIProvider>
             <NavigationContainer theme={navTheme}>
               <StatusBar style="light" />
               <RootNavigator />
@@ -40,7 +42,8 @@ export default function App() {
               <WalletsModal />
               <LegalModal />
             </NavigationContainer>
-          </UIProvider>
+            </UIProvider>
+          </TasksProvider>
         </FinanceProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { GradientHeader } from '../components/GradientHeader';
+import { AuroraBackground } from '../components/AuroraBackground';
 import { TransactionRow } from '../components/TransactionRow';
 import { EmptyState } from '../components/EmptyState';
 import { useFinance } from '../store/FinanceContext';
@@ -54,9 +55,10 @@ export function HistoryScreen() {
 
   return (
     <View style={styles.root}>
+      <AuroraBackground />
       <GradientHeader title="History" subtitle={`${filtered.length} transaction${filtered.length === 1 ? '' : 's'}`}>
         <View style={styles.searchBox}>
-          <Ionicons name="search" size={16} color={colors.subtext} />
+          <Ionicons name="search" size={16} color="rgba(255,255,255,0.75)" />
           <TextInput
             style={styles.searchInput}
             placeholder="Search note, category or amount…"
@@ -154,18 +156,20 @@ export function HistoryScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.bg },
+  root: { flex: 1, backgroundColor: 'transparent' },
   searchBox: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: colors.card,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    borderColor: 'rgba(255,255,255,0.3)',
+    borderWidth: 1,
     borderRadius: radius.md,
     paddingHorizontal: spacing.md,
     paddingVertical: 10,
     marginTop: spacing.lg,
   },
-  searchInput: { flex: 1, color: colors.text, fontSize: 14, paddingVertical: 0 },
+  searchInput: { flex: 1, color: colors.white, fontSize: 14, paddingVertical: 0 },
   chipRow: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
   chip: {
     paddingHorizontal: 14,
@@ -178,7 +182,11 @@ const styles = StyleSheet.create({
   chipOn: { backgroundColor: colors.white, borderColor: colors.white },
   chipText: { color: 'rgba(255,255,255,0.92)', fontSize: 13, fontWeight: '700' },
   chipTextOn: { color: colors.ocean800 },
-  catStrip: { backgroundColor: colors.card, borderBottomWidth: 1, borderBottomColor: colors.line },
+  catStrip: {
+    backgroundColor: 'rgba(255,255,255,0.6)',
+    borderBottomWidth: 1,
+    borderBottomColor: colors.line,
+  },
   catStripContent: { paddingHorizontal: spacing.xl, paddingVertical: 10, gap: 8 },
   catChip: {
     paddingHorizontal: 12,

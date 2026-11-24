@@ -1,5 +1,6 @@
 import React, { useRef } from 'react';
-import { Animated, Easing, Pressable, StyleProp, ViewStyle } from 'react-native';
+import { Animated, Pressable, StyleProp, ViewStyle } from 'react-native';
+import * as Haptics from 'expo-haptics';
 
 interface Props {
   onPress?: () => void;
@@ -9,31 +10,50 @@ interface Props {
   /** How much to shrink while pressed. Keep it subtle. */
   scaleTo?: number;
   disabled?: boolean;
+  /** Light haptic tap on press (default: off). */
+  haptic?: boolean | 'light' | 'medium';
 }
 
-/** Pressable that gently scales down while touched (120ms). */
-export function PressableScale({ onPress, onLongPress, style, children, scaleTo = 0.97, disabled }: Props) {
+/**
+ * Pressable with premium tactile feel: quick ease-in scale on touch,
+ * springy release, optional light haptic tick.
+ */
+export function PressableScale({ onPress, onLongPress, style, children, scaleTo = 0.97, disabled, haptic }: Props) {
   const scale = useRef(new Animated.Value(1)).current;
 
   const pressIn = () => {
-    Animated.timing(scale, {
+    Animated.spring(scale, {
       toValue: scaleTo,
-      duration: 110,
-      easing: Easing.out(Easing.quad),
+      speed: 42,
+      bounciness: 0,
       useNativeDriver: true,
     }).start();
   };
   const pressOut = () => {
-    Animated.timing(scale, {
+    Animated.spring(scale, {
       toValue: 1,
-      duration: 150,
-      easing: Easing.out(Easing.back(1.6)),
+      speed: 26,
+      bounciness: 7,
       useNativeDriver: true,
     }).start();
   };
 
+  const handlePress = () => {
+    if (haptic) {
+      const style = haptic === 'medium' ? Haptics.ImpactFeedbackStyle.Medium : Haptics.ImpactFeedbackStyle.Light;
+      Haptics.impactAsync(style).catch(() => {});
+    }
+    onPress?.();
+  };
+
   return (
-    <Pressable onPress={onPress} onLongPress={onLongPress} onPressIn={pressIn} onPressOut={pressOut} disabled={disabled}>
+    <Pressable
+      onPress={handlePress}
+      onLongPress={onLongPress}
+      onPressIn={pressIn}
+      onPressOut={pressOut}
+      disabled={disabled}
+    >
       <Animated.View style={[style, { transform: [{ scale }] }]}>{children}</Animated.View>
     </Pressable>
   );

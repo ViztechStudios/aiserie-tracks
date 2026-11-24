@@ -1,9 +1,10 @@
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { colors, radius, shadow, spacing } from '../theme';
+import { StyleSheet, Text, View } from 'react-native';
+import { colors, glass, radius, shadow, spacing } from '../theme';
 import { Category } from '../types';
 import { formatMoney } from '../utils/money';
 import { dayLabel } from '../utils/stats';
+import { PressableScale } from './PressableScale';
 
 interface Props {
   category: Category;
@@ -18,12 +19,11 @@ interface Props {
 
 export function TransactionRow({ category, amount, type, date, note, currency, onPress, onLongPress }: Props) {
   return (
-    <TouchableOpacity
-      style={[styles.row, shadow.card]}
-      activeOpacity={0.75}
+    <PressableScale
+      style={[styles.row, glass.surface, shadow.card]}
       onPress={onPress}
       onLongPress={onLongPress}
-      delayLongPress={350}
+      scaleTo={0.975}
     >
       <View style={[styles.icon, { backgroundColor: category.color + '22' }]}>
         <Text style={styles.emoji}>{category.emoji}</Text>
@@ -40,7 +40,7 @@ export function TransactionRow({ category, amount, type, date, note, currency, o
         {type === 'income' ? '+' : '−'}
         {formatMoney(amount, currency)}
       </Text>
-    </TouchableOpacity>
+    </PressableScale>
   );
 }
 
@@ -48,7 +48,6 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.card,
     borderRadius: radius.md,
     padding: spacing.md + 2,
     marginBottom: spacing.sm + 2,

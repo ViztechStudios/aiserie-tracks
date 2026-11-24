@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Alert, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { AuroraBackground } from './AuroraBackground';
 import { useFinance } from '../store/FinanceContext';
 import { useUI } from '../store/UIContext';
 import { Account, AccountType } from '../types';
@@ -106,6 +107,7 @@ export function WalletsModal() {
   return (
     <Modal visible={ui.walletsVisible} animationType="slide" onRequestClose={ui.closeWallets}>
       <View style={styles.screen}>
+        <AuroraBackground />
         {/* header */}
         <LinearGradient colors={gradients.header} start={{ x: 0, y: 0 }} end={{ x: 1.2, y: 1 }} style={styles.header}>
           <View style={styles.headerRow}>
@@ -279,7 +281,7 @@ export function WalletsModal() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.bg },
+  screen: { flex: 1, backgroundColor: 'transparent' },
   header: {
     paddingHorizontal: spacing.xl,
     paddingTop: 54,
@@ -291,7 +293,13 @@ const styles = StyleSheet.create({
   headerTitle: { color: colors.white, fontSize: 20, fontWeight: '800' },
   headerSub: { color: 'rgba(255,255,255,0.85)', fontSize: 12.5, lineHeight: 18, marginTop: spacing.sm },
   body: { padding: spacing.xl, paddingBottom: 60, gap: spacing.md },
-  card: { backgroundColor: colors.card, borderRadius: radius.lg, padding: spacing.lg },
+  card: {
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.glassBorderSoft,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+  },
   rowMain: { flexDirection: 'row', alignItems: 'center' },
   rowIcon: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', marginRight: spacing.md },
   rowEmoji: { fontSize: 20 },

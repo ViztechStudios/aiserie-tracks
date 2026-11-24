@@ -1,8 +1,11 @@
 import React, { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import { GradientHeader, GlassCard } from '../components/GradientHeader';
+import { GradientHeader } from '../components/GradientHeader';
+import { GlassCard } from '../components/GlassCard';
+import { AuroraBackground } from '../components/AuroraBackground';
 import { TransactionRow } from '../components/TransactionRow';
 import { EmptyState } from '../components/EmptyState';
 import { Entrance } from '../components/Entrance';
@@ -10,15 +13,17 @@ import { AnimatedNumber } from '../components/AnimatedNumber';
 import { AccountsStrip } from '../components/AccountsStrip';
 import { PressableScale } from '../components/PressableScale';
 import { useFinance } from '../store/FinanceContext';
+import { useTasks } from '../store/TasksContext';
 import { useUI } from '../store/UIContext';
 import { getCategory } from '../data/categories';
-import { colors, radius, shadow, spacing } from '../theme';
+import { colors, glass, gradients, radius, shadow, spacing } from '../theme';
 import { currentMonthKey, monthKey, monthLabel, shiftMonth, totalsForMonth } from '../utils/stats';
 import { formatMoney } from '../utils/money';
 import { useResponsive } from '../hooks/useResponsive';
 
 export function HomeScreen() {
   const finance = useFinance();
+  const tasks = useTasks();
   const ui = useUI();
   const navigation = useNavigation();
   const { contentWidth } = useResponsive();
@@ -29,11 +34,16 @@ export function HomeScreen() {
     () => finance.transactions.filter((t) => monthKey(t.date) === ym).slice(0, 5),
     [finance.transactions, ym]
   );
+  const nextTask = useMemo(
+    () => tasks.tasks.filter((t) => !t.done).sort((a, b) => Number(b.important) - Number(a.important) || b.createdAt - a.createdAt)[0],
+    [tasks.tasks]
+  );
   const daysSoFar = ym === currentMonthKey() ? new Date().getDate() : 1;
   const dailyAvg = totals.expense / Math.max(daysSoFar, 1);
 
   return (
     <View style={styles.root}>
+      <AuroraBackground />
       <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
         <GradientHeader title={`Hi, ${finance.settings.userName} 👋`} subtitle="Aiserie Tracks · your money at a glance">
           {/* month switcher */}
@@ -60,7 +70,7 @@ export function HomeScreen() {
 
           {/* balance glass card */}
           <Entrance delay={60}>
-            <GlassCard>
+            <GlassCard hi>
               <Text style={styles.glassLabel}>Net this month</Text>
               <AnimatedNumber
                 value={totals.net}
@@ -97,38 +107,72 @@ export function HomeScreen() {
         <View style={[styles.body, contentWidth ? { alignSelf: 'center', width: '100%', maxWidth: contentWidth } : null]}>
           <Entrance delay={180}>
             <View style={styles.statsRow}>
-              <View style={[styles.statCard, shadow.card]}>
+              <View style={[styles.statCard, glass.surface, shadow.card]}>
                 <Text style={styles.statLabel}>Daily average</Text>
                 <Text style={styles.statValue}>{formatMoney(dailyAvg, finance.settings.currency)}</Text>
               </View>
-              <PressableScale
-                style={[styles.statCard, shadow.card]}
-                onPress={() => navigation.navigate('Advisor' as never)}
-              >
+              <GlassCard style={styles.statCard} onPress={() => navigation.navigate('Advisor' as never)}>
                 <Text style={styles.statLabel}>Advisor</Text>
                 <View style={styles.statAction}>
                   <Ionicons name="sparkles" size={16} color={colors.ocean600} />
                   <Text style={[styles.statValue, { color: colors.ocean600, fontSize: 14 }]}>Get tips</Text>
                 </View>
-              </PressableScale>
+              </GlassCard>
             </View>
           </Entrance>
 
           <Entrance delay={240}>
             <View style={styles.actionRow}>
-              <PressableScale style={styles.addBtn} onPress={() => ui.openAdd()}>
-                <Ionicons name="add-circle" size={22} color={colors.white} />
-                <Text style={styles.addText}>Add</Text>
+              <PressableScale style={styles.actionBtn} onPress={() => ui.openAdd()} haptic="light">
+                <LinearGradient
+                  colors={gradients.fab}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.actionGradient}
+                >
+                  <Ionicons name="add-circle" size={22} color={colors.white} />
+                  <Text style={styles.addText}>Add</Text>
+                </LinearGradient>
               </PressableScale>
               <PressableScale
-                style={[styles.addBtn, { backgroundColor: colors.aqua400 }]}
+                style={styles.actionBtn}
                 onPress={() => navigation.navigate('Scan' as never)}
+                haptic="light"
               >
-                <Ionicons name="scan-outline" size={22} color={colors.white} />
-                <Text style={styles.addText}>Scan receipt</Text>
+                <LinearGradient
+                  colors={['#0AA4C4', '#22D3EE'] as const}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.actionGradient}
+                >
+                  <Ionicons name="scan-outline" size={22} color={colors.white} />
+                  <Text style={styles.addText}>Scan receipt</Text>
+                </LinearGradient>
               </PressableScale>
             </View>
           </Entrance>
+
+          {/* next task widget */}
+          {nextTask ? (
+            <Entrance delay={280}>
+              <GlassCard
+                style={[styles.nextTask, glass.surface]}
+                onPress={() => navigation.navigate('Tasks' as never)}
+              >
+                <View style={[styles.nextTaskIcon, nextTask.important && styles.nextTaskIconHi]}>
+                  <Ionicons name={nextTask.important ? 'star' : 'list'} size={15} color={colors.white} />
+                </View>
+                <View style={styles.nextTaskMid}>
+                  <Text style={styles.nextTaskLabel}>Next up</Text>
+                  <Text style={styles.nextTaskTitle} numberOfLines={1}>
+                    {nextTask.title}
+                  </Text>
+                </View>
+                <Text style={styles.nextTaskCount}>{tasks.openCount} open</Text>
+                <Ionicons name="chevron-forward" size={15} color={colors.faint} />
+              </GlassCard>
+            </Entrance>
+          ) : null}
 
           {/* recent */}
           <Entrance delay={300}>
@@ -174,7 +218,7 @@ export function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.bg },
+  root: { flex: 1, backgroundColor: 'transparent' },
   monthRow: { flexDirection: 'row', alignItems: 'center', marginTop: spacing.lg },
   monthBtn: { padding: 6 },
   monthText: { color: colors.white, fontSize: 15, fontWeight: '700', marginHorizontal: spacing.sm },
@@ -189,14 +233,17 @@ const styles = StyleSheet.create({
   splitValue: { color: colors.white, fontSize: 16, fontWeight: '800' },
   body: { paddingHorizontal: spacing.xl, paddingTop: spacing.lg },
   statsRow: { flexDirection: 'row', gap: spacing.md },
-  statCard: { flex: 1, backgroundColor: colors.card, borderRadius: radius.md, padding: spacing.lg },
+  statCard: {
+    flex: 1,
+    borderRadius: radius.md,
+    padding: spacing.lg,
+  },
   statLabel: { color: colors.subtext, fontSize: 12, marginBottom: 4 },
   statValue: { color: colors.text, fontSize: 18, fontWeight: '800' },
   statAction: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   actionRow: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.md },
-  addBtn: {
-    flex: 1,
-    backgroundColor: colors.ocean600,
+  actionBtn: { flex: 1, borderRadius: radius.md, ...shadow.card },
+  actionGradient: {
     borderRadius: radius.md,
     flexDirection: 'row',
     alignItems: 'center',
@@ -205,6 +252,27 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   addText: { color: colors.white, fontWeight: '800', fontSize: 14 },
+  nextTask: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: spacing.md,
+    paddingVertical: 12,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.md,
+  },
+  nextTaskIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: colors.ocean600,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  nextTaskIconHi: { backgroundColor: colors.warn },
+  nextTaskMid: { flex: 1, marginHorizontal: spacing.md },
+  nextTaskLabel: { color: colors.subtext, fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.6 },
+  nextTaskTitle: { color: colors.text, fontSize: 14.5, fontWeight: '800', marginTop: 1 },
+  nextTaskCount: { color: colors.ocean600, fontSize: 12, fontWeight: '800', marginRight: 4 },
   recentHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: spacing.xl, marginBottom: spacing.md },
   recentTitle: { color: colors.text, fontSize: 17, fontWeight: '800' },
   seeAll: { color: colors.ocean600, fontWeight: '700', fontSize: 13 },

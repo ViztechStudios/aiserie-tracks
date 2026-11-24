@@ -314,7 +314,7 @@ const styles = StyleSheet.create({
   backdrop: { flex: 1, backgroundColor: 'rgba(6, 38, 64, 0.45)', justifyContent: 'flex-end' },
   pressAway: { flex: 1 },
   sheet: {
-    backgroundColor: colors.card,
+    backgroundColor: 'rgba(255,255,255,0.96)',
     borderTopLeftRadius: radius.lg + 8,
     borderTopRightRadius: radius.lg + 8,
     paddingHorizontal: spacing.xl,

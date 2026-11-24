@@ -2,7 +2,7 @@
   "expo": {
     "name": "Aiserie Tracks",
     "slug": "aiserie-tracks",
-    "version": "1.2.0",
+    "version": "1.3.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -16,6 +16,7 @@
     },
     "android": {
       "package": "com.aiserie.tracks",
+      "versionCode": 2,
       "adaptiveIcon": {
         "backgroundColor": "#0EA5E9",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -58,7 +59,15 @@
           "recordAudioAndroid": false
         }
       ],
-      "expo-font"
+      "expo-font",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "minSdkVersion": 33
+          }
+        }
+      ]
     ],
     "extra": {
       "eas": {

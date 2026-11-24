@@ -1,14 +1,16 @@
 import React, { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { GradientHeader, GlassCard } from '../components/GradientHeader';
+import { GradientHeader } from '../components/GradientHeader';
+import { GlassCard } from '../components/GlassCard';
+import { AuroraBackground } from '../components/AuroraBackground';
 import { InsightCard } from '../components/InsightCard';
 import { DonutChart } from '../components/DonutChart';
 import { BarChart } from '../components/BarChart';
 import { Entrance } from '../components/Entrance';
 import { PressableScale } from '../components/PressableScale';
 import { useFinance } from '../store/FinanceContext';
-import { colors, radius, spacing } from '../theme';
+import { colors, radius, shadow, spacing } from '../theme';
 import { buildAdvisorReport, currentMonthKey, monthLabel, shiftMonth } from '../utils/stats';
 import { formatMoney } from '../utils/money';
 import { useResponsive } from '../hooks/useResponsive';
@@ -27,6 +29,7 @@ export function AdvisorScreen() {
 
   return (
     <View style={styles.root}>
+      <AuroraBackground />
       <ScrollView
         showsVerticalScrollIndicator={false}
         bounces={false}
@@ -125,7 +128,7 @@ export function AdvisorScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.bg },
+  root: { flex: 1, backgroundColor: 'transparent' },
   monthRow: { flexDirection: 'row', alignItems: 'center', marginTop: spacing.lg },
   monthBtn: { padding: 6 },
   monthText: { color: colors.white, fontSize: 15, fontWeight: '700', marginHorizontal: spacing.sm },
@@ -137,9 +140,12 @@ const styles = StyleSheet.create({
   body: { paddingHorizontal: spacing.xl, paddingTop: spacing.lg },
   rateCard: {
     backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.glassBorderSoft,
     borderRadius: radius.lg,
     paddingVertical: spacing.lg,
     paddingHorizontal: spacing.md,
+    ...shadow.card,
   },
   rateRow: { flexDirection: 'row' },
   rateItem: { flex: 1, alignItems: 'center' },

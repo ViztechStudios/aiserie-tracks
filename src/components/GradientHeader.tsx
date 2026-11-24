@@ -3,6 +3,9 @@ import { StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, gradients, radius, spacing } from '../theme';
+import { ViewStyle } from 'react-native';
+
+const ABS_FILL: ViewStyle = { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 };
 
 interface Props {
   title: string;
@@ -10,53 +13,80 @@ interface Props {
   children?: React.ReactNode;
 }
 
-/** Ocean-gradient page header with rounded bottom edge. */
+/** Deep-ocean page header with a light sheen, depth blobs and rounded bottom edge. */
 export function GradientHeader({ title, subtitle, children }: Props) {
   const insets = useSafeAreaInsets();
   return (
     <LinearGradient
       colors={gradients.header}
       start={{ x: 0, y: 0 }}
-      end={{ x: 1.2, y: 1 }}
+      end={{ x: 1.25, y: 1.1 }}
       style={[styles.wrap, { paddingTop: insets.top + spacing.md }]}
     >
-      <Text style={styles.title}>{title}</Text>
-      {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
-      {children}
+      {/* decorative depth blobs */}
+      <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+        <View style={styles.blobA} />
+        <View style={styles.blobB} />
+      </View>
+      {/* light sheen across the top */}
+      <LinearGradient
+        colors={gradients.sheen}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.sheen}
+        pointerEvents="none"
+      />
+      <View style={styles.content}>
+        <Text style={styles.title}>{title}</Text>
+        {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+        {children}
+      </View>
     </LinearGradient>
   );
 }
 
-/** Glassy card that floats on top of the gradient header. */
-export function GlassCard({ children, style }: { children: React.ReactNode; style?: object }) {
-  return <View style={[styles.glass, style]}>{children}</View>;
-}
+// Re-exported so existing `import { GradientHeader, GlassCard }` call sites keep working.
+export { GlassCard } from './GlassCard';
 
 const styles = StyleSheet.create({
   wrap: {
     backgroundColor: colors.ocean600,
     paddingHorizontal: spacing.xl,
-    paddingBottom: spacing.xl,
-    borderBottomLeftRadius: radius.lg + 6,
-    borderBottomRightRadius: radius.lg + 6,
+    paddingBottom: spacing.xl + 6,
+    borderBottomLeftRadius: radius.lg + 8,
+    borderBottomRightRadius: radius.lg + 8,
+    overflow: 'hidden',
   },
+  blobA: {
+    position: 'absolute',
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+    backgroundColor: 'rgba(103,232,249,0.20)',
+    top: -70,
+    right: -60,
+  },
+  blobB: {
+    position: 'absolute',
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    backgroundColor: 'rgba(7,47,82,0.28)',
+    bottom: -60,
+    left: -50,
+  },
+  sheen: { ...ABS_FILL },
+  content: { zIndex: 1 },
   title: {
     color: colors.white,
-    fontSize: 26,
+    fontSize: 27,
     fontWeight: '800',
-    letterSpacing: 0.3,
+    letterSpacing: 0.2,
   },
   subtitle: {
-    color: 'rgba(255,255,255,0.85)',
-    fontSize: 14,
-    marginTop: 2,
-  },
-  glass: {
-    backgroundColor: 'rgba(255,255,255,0.16)',
-    borderColor: 'rgba(255,255,255,0.28)',
-    borderWidth: 1,
-    borderRadius: radius.lg,
-    padding: spacing.lg,
-    marginTop: spacing.lg,
+    color: 'rgba(255,255,255,0.86)',
+    fontSize: 13.5,
+    marginTop: 3,
+    letterSpacing: 0.1,
   },
 });
