@@ -75,7 +75,7 @@ open the site in **Safari** → **Share** □↑ → **Add to Home Screen** → 
 
 ### 2. Android as a downloadable APK
 
-**✅ v1.2.0 APK is live:** [Releases → v1.2.0](https://github.com/ViztechStudios/aiserie-tracks/releases/tag/v1.2.0) → download `AiserieTracks-v1.2.0.apk` → allow *"install unknown apps"* for the browser when Android asks → install. The in-app Settings → **Get the Android app (APK)** row (visible on the PWA) links to `releases/latest` directly.
+**✅ v1.3.0 APK is live:** [Releases → v1.3.0](https://github.com/ViztechStudios/aiserie-tracks/releases/tag/v1.3.0) → download `AiserieTracks-v1.3.0.apk` → allow *"install unknown apps"* for the browser when Android asks → install. v1.3.0 adds the Tasks (things-to-do) tab, the glass UI overhaul and app-wide animations; **Android 13+ only** (minSdk 33). Updating from v1.2.0 keeps all data. The in-app Settings → **Get the Android app (APK)** row (visible on the PWA) links to `releases/latest` directly.
 
 How it was built, and how future versions get built (Expo free tier, 30 builds/month):
 
