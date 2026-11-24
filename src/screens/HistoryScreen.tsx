@@ -183,7 +183,7 @@ const styles = StyleSheet.create({
   },
   chipOn: { backgroundColor: '#FFFFFF', borderColor: '#FFFFFF' },
   chipText: { color: 'rgba(255,255,255,0.92)', fontSize: 13, fontWeight: '700' },
-  chipTextOn: { color: '#0B4F8A' },
+  chipTextOn: { color: '#0A5C8C' },
   catStrip: {
     borderBottomWidth: 1,
   },
@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     borderWidth: 1.5,
   },
-  catChipOn: { backgroundColor: '#0EA5E9', borderColor: '#0EA5E9' },
+  catChipOn: { backgroundColor: '#0A5C8C', borderColor: '#0A5C8C' },
   catChipText: { fontSize: 12, fontWeight: '600' },
   catChipTextOn: { color: '#FFFFFF' },
   list: { paddingHorizontal: spacing.xl, paddingBottom: 120 },

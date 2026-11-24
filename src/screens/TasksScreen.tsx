@@ -157,7 +157,7 @@ export function TasksScreen() {
           subtitle={total === 0 ? 'Little money chores, big peace of mind' : `${store.openCount} open · ${store.doneCount} done`}
         >
           <Entrance delay={60}>
-            <GlassCard hi>
+            <GlassCard hi tint="#FFFDF8">
               <View style={styles.progressHead}>
                 <Text style={styles.progressLabel}>Progress</Text>
                 <Text style={styles.progressValue}>{Math.round(ratio * 100)}%</Text>
@@ -304,21 +304,21 @@ export function TasksScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1 },
   progressHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  progressLabel: { color: 'rgba(255,255,255,0.82)', fontSize: 13, fontWeight: '700' },
-  progressValue: { color: '#FFFFFF', fontSize: 16, fontWeight: '900' },
+  progressLabel: { color: '#A0762B', fontSize: 13, fontWeight: '700', letterSpacing: 0.2 },
+  progressValue: { color: '#1D2D3E', fontSize: 16, fontWeight: '900' },
   track: {
     height: 9,
     borderRadius: radius.pill,
-    backgroundColor: 'rgba(255,255,255,0.22)',
+    backgroundColor: 'rgba(30,44,60,0.12)',
     marginTop: spacing.md,
     overflow: 'hidden',
   },
   trackFill: {
     height: '100%',
     borderRadius: radius.pill,
-    backgroundColor: '#7DF3D3',
+    backgroundColor: '#177E71',
   },
-  progressHint: { color: 'rgba(255,255,255,0.88)', fontSize: 12, lineHeight: 17, marginTop: spacing.md },
+  progressHint: { color: '#5C6C7B', fontSize: 12, lineHeight: 17, marginTop: spacing.md },
   body: { paddingHorizontal: spacing.xl, paddingTop: spacing.lg },
   composer: {
     flexDirection: 'row',

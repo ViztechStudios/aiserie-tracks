@@ -6,6 +6,7 @@ import { DarkTheme, DefaultTheme, NavigationContainer } from '@react-navigation/
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { useFonts, Manrope_500Medium, Manrope_700Bold, Manrope_800ExtraBold } from '@expo-google-fonts/manrope';
+import { Lora_600SemiBold, Lora_700Bold } from '@expo-google-fonts/lora';
 import { FinanceProvider, useFinance } from './src/store/FinanceContext';
 import { TasksProvider } from './src/store/TasksContext';
 import { UIProvider, useUI } from './src/store/UIContext';
@@ -27,7 +28,7 @@ function Shell() {
   const finance = useFinance();
   const { t } = useTheme();
   const ui = useUI();
-  const [fontsLoaded] = useFonts({ Manrope_500Medium, Manrope_700Bold, Manrope_800ExtraBold });
+  const [fontsLoaded] = useFonts({ Manrope_500Medium, Manrope_700Bold, Manrope_800ExtraBold, Lora_600SemiBold, Lora_700Bold });
   const [booting, setBooting] = useState(true);
   const startedAt = useRef(Date.now());
   const updateChecked = useRef(false);

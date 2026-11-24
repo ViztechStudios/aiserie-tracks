@@ -1,9 +1,10 @@
 import React, { useEffect, useRef } from 'react';
-import { Animated, Easing, StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { Animated, Easing, Image, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as SplashScreen from 'expo-splash-screen';
+import { font } from '../theme';
 
-const BOOT_BG: readonly [string, string, string] = ['#04101F', '#0A2A4A', '#0E3A5F'];
+const BOOT_BG: readonly [string, string, string] = ['#050D18', '#0B2138', '#12304C'];
 
 interface Props {
   /** Data hydration flag — the curtain dissolves once ready AND the intro has played. */
@@ -62,7 +63,14 @@ export function LoadingScreen({ ready, onDone }: Props) {
   return (
     <Animated.View style={[StyleSheet.absoluteFill, { opacity: out, zIndex: 99, elevation: 99 }]}>
       <LinearGradient colors={BOOT_BG} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1.15 }} style={StyleSheet.absoluteFill} />
-      {/* soft glow behind the wave */}
+      {/* the weave, barely there */}
+      <Image
+        source={require('../../assets/textures/banig.png')}
+        resizeMode="cover"
+        pointerEvents="none"
+        style={[StyleSheet.absoluteFill, { opacity: 0.05, tintColor: '#E9C46A' }]}
+      />
+      {/* soft glow behind the mark */}
       <View style={styles.glowWrap} pointerEvents="none">
         <View style={styles.glow} />
       </View>
@@ -77,7 +85,7 @@ export function LoadingScreen({ ready, onDone }: Props) {
           }}
         >
           <LinearGradient
-            colors={['rgba(56,189,248,0.45)', 'rgba(103,232,249,0.10)']}
+            colors={['rgba(233,196,106,0.30)', 'rgba(233,196,106,0.06)']}
             start={{ x: 0.5, y: 0 }}
             end={{ x: 0.5, y: 1 }}
             style={styles.halo}
@@ -111,7 +119,7 @@ export function LoadingScreen({ ready, onDone }: Props) {
           <Text style={styles.credit}>MADE BY VIZTECH STUDIOS</Text>
           <View style={styles.creditDot} />
         </View>
-        <Text style={styles.version}>v2.0.0 · Ocean Glass</Text>
+        <Text style={styles.version}>v2.0.2 · Manila Gold</Text>
       </View>
     </Animated.View>
   );
@@ -125,7 +133,7 @@ const styles = StyleSheet.create({
     width: 320,
     height: 320,
     borderRadius: 160,
-    backgroundColor: 'rgba(14,165,233,0.16)',
+    backgroundColor: 'rgba(233,196,106,0.10)',
     transform: [{ scaleY: 0.82 }],
   },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 48 },
@@ -136,23 +144,35 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(125,211,252,0.28)',
+    borderColor: 'rgba(233,196,106,0.32)',
   },
   logo: { width: 96, height: 96 },
-  title: { color: '#FFFFFF', fontSize: 25, fontWeight: '900', letterSpacing: 0.6, marginTop: 26, textAlign: 'center' },
-  tagline: { color: 'rgba(186,230,253,0.85)', fontSize: 13, letterSpacing: 0.4, marginTop: 7, textAlign: 'center' },
+  title: { color: '#FFFFFF', fontFamily: font.displayBold, fontSize: 26, letterSpacing: 0.3, marginTop: 26, textAlign: 'center' },
+  tagline: {
+    color: 'rgba(233,196,106,0.85)',
+    fontFamily: font.medium,
+    fontSize: 13,
+    letterSpacing: 0.4,
+    marginTop: 7,
+    textAlign: 'center',
+  },
   track: {
     marginTop: 34,
     width: 168,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: 'rgba(125,211,252,0.18)',
+    height: 3,
+    borderRadius: 1.5,
+    backgroundColor: 'rgba(233,196,106,0.16)',
     overflow: 'hidden',
   },
-  fill: { height: '100%', borderRadius: 2, backgroundColor: '#7DD3FC' },
+  fill: { height: '100%', borderRadius: 1.5, backgroundColor: '#E9C46A' },
   footer: { position: 'absolute', left: 0, right: 0, bottom: 44, alignItems: 'center' },
   creditRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  creditDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: 'rgba(125,211,252,0.55)' },
-  credit: { color: 'rgba(224,242,254,0.92)', fontSize: 11, fontWeight: '800', letterSpacing: 2.4 },
-  version: { color: 'rgba(125,191,251,0.55)', fontSize: 10.5, letterSpacing: 0.8, marginTop: 8 },
+  creditDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: 'rgba(233,196,106,0.6)' },
+  credit: {
+    color: 'rgba(242,227,196,0.92)',
+    fontFamily: font.bold,
+    fontSize: 11,
+    letterSpacing: 2.4,
+  },
+  version: { color: 'rgba(233,196,106,0.5)', fontFamily: font.medium, fontSize: 10.5, letterSpacing: 0.8, marginTop: 8 },
 });

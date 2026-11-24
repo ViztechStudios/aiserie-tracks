@@ -42,7 +42,7 @@ export function AccountsStrip() {
           );
         })}
         <PressableScale onPress={() => ui.openWallets()} style={[styles.card, styles.addCard]}>
-          <Ionicons name="wallet-outline" size={20} color="rgba(255,255,255,0.9)" />
+          <Ionicons name="add" size={20} color="#E9C46A" />
           <Text style={styles.addText}>Add wallet</Text>
         </PressableScale>
       </ScrollView>
@@ -55,8 +55,8 @@ const styles = StyleSheet.create({
   content: { paddingHorizontal: spacing.xl, gap: spacing.md },
   card: {
     width: 148,
-    backgroundColor: 'rgba(255,255,255,0.14)',
-    borderColor: 'rgba(255,255,255,0.26)',
+    backgroundColor: 'rgba(6,20,34,0.34)',
+    borderColor: 'rgba(255,255,255,0.18)',
     borderWidth: 1,
     borderRadius: radius.md,
     padding: spacing.md,
@@ -66,14 +66,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    backgroundColor: 'rgba(255,255,255,0.10)',
-    borderStyle: 'dashed',
+    backgroundColor: 'rgba(233,196,106,0.10)',
+    borderColor: 'rgba(233,196,106,0.45)',
   },
   topRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   tile: { width: 24, height: 24, borderRadius: 6 },
   emoji: { fontSize: 15 },
-  name: { color: 'rgba(255,255,255,0.9)', fontSize: 12, fontWeight: '700', flexShrink: 1 },
+  name: { color: 'rgba(255,255,255,0.92)', fontSize: 12, fontWeight: '700', flexShrink: 1 },
   balance: { color: '#FFFFFF', fontSize: 15, fontWeight: '900', marginTop: 6 },
   accent: { position: 'absolute', top: 0, left: 0, right: 0, height: 3 },
-  addText: { color: 'rgba(255,255,255,0.9)', fontSize: 12, fontWeight: '700' },
+  addText: { color: '#E9C46A', fontSize: 12, fontWeight: '700' },
 });

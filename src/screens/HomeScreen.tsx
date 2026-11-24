@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { GradientHeader } from '../components/GradientHeader';
@@ -27,7 +26,7 @@ export function HomeScreen() {
   const tasks = useTasks();
   const ui = useUI();
   const navigation = useNavigation();
-  const { t, gradients } = useTheme();
+  const { t } = useTheme();
   const { contentWidth } = useResponsive();
   const [ym, setYm] = useState(currentMonthKey());
 
@@ -47,7 +46,7 @@ export function HomeScreen() {
     <View style={styles.root}>
       <AuroraBackground />
       <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
-        <GradientHeader title={`Hi, ${finance.settings.userName} 👋`} subtitle="Aiserie Tracks · your money at a glance">
+        <GradientHeader title={`Hi, ${finance.settings.userName}`} subtitle="Your money, at a glance">
           {/* month switcher */}
           <Entrance delay={0}>
             <View style={styles.monthRow}>
@@ -70,19 +69,19 @@ export function HomeScreen() {
             </View>
           </Entrance>
 
-          {/* balance glass card */}
+          {/* balance card — warm paper laid over the dusk header */}
           <Entrance delay={60}>
-            <GlassCard hi>
+            <GlassCard hi tint="#FFFDF8">
               <Text style={styles.glassLabel}>Net this month</Text>
               <AnimatedNumber
                 value={totals.net}
                 format={(n) => formatMoney(n, finance.settings.currency)}
-                style={[styles.net, { color: totals.net >= 0 ? '#D9FBF3' : '#FFD9DD' }]}
+                style={[styles.net, { color: totals.net >= 0 ? '#177E71' : '#C24D53' }]}
               />
               <View style={styles.splitRow}>
                 <View style={styles.split}>
                   <View style={styles.dotRow}>
-                    <View style={[styles.dot, { backgroundColor: '#5CEBC0' }]} />
+                    <View style={[styles.dot, { backgroundColor: '#177E71' }]} />
                     <Text style={styles.splitLabel}>Income</Text>
                   </View>
                   <Text style={styles.splitValue}>{formatMoney(totals.income, finance.settings.currency)}</Text>
@@ -90,7 +89,7 @@ export function HomeScreen() {
                 <View style={styles.divider} />
                 <View style={styles.split}>
                   <View style={styles.dotRow}>
-                    <View style={[styles.dot, { backgroundColor: '#FF9AA5' }]} />
+                    <View style={[styles.dot, { backgroundColor: '#C24D53' }]} />
                     <Text style={styles.splitLabel}>Spent</Text>
                   </View>
                   <Text style={styles.splitValue}>{formatMoney(totals.expense, finance.settings.currency)}</Text>
@@ -117,7 +116,7 @@ export function HomeScreen() {
                 <GlassCard style={styles.statCard} onPress={() => navigation.navigate('Advisor' as never)}>
                   <Text style={[styles.statLabel, { color: t.subtext }]}>Advisor</Text>
                   <View style={styles.statAction}>
-                    <Ionicons name="sparkles" size={16} color={t.ocean600} />
+                    <Ionicons name="bulb-outline" size={16} color={t.ocean600} />
                     <Text style={[styles.statValue, { color: t.ocean600, fontSize: 14 }]}>Get tips</Text>
                   </View>
                 </GlassCard>
@@ -129,15 +128,10 @@ export function HomeScreen() {
             <View style={styles.actionRow}>
               <View style={styles.actionWrap}>
                 <PressableScale style={styles.actionBtn} onPress={() => ui.openAdd()} haptic="light">
-                  <LinearGradient
-                    colors={gradients.fab}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={styles.actionGradient}
-                  >
+                  <View style={[styles.actionAdd, shadow.card]}>
                     <Ionicons name="add-circle" size={22} color={t.white} />
                     <Text style={styles.addText}>Add</Text>
-                  </LinearGradient>
+                  </View>
                 </PressableScale>
               </View>
               <View style={styles.actionWrap}>
@@ -146,15 +140,10 @@ export function HomeScreen() {
                   onPress={() => navigation.navigate('Scan' as never)}
                   haptic="light"
                 >
-                  <LinearGradient
-                    colors={['#0AA4C4', '#22D3EE'] as const}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={styles.actionGradient}
-                  >
-                    <Ionicons name="scan-outline" size={22} color={t.white} />
-                    <Text style={styles.addText}>Scan receipt</Text>
-                  </LinearGradient>
+                  <View style={[styles.actionScan, shadow.card]}>
+                    <Ionicons name="scan-outline" size={22} color="#1D2D3E" />
+                    <Text style={[styles.addText, { color: '#1D2D3E' }]}>Scan receipt</Text>
+                  </View>
                 </PressableScale>
               </View>
             </View>
@@ -230,15 +219,15 @@ const styles = StyleSheet.create({
   monthRow: { flexDirection: 'row', alignItems: 'center', marginTop: spacing.lg },
   monthBtn: { padding: 6 },
   monthText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700', marginHorizontal: spacing.sm },
-  glassLabel: { color: 'rgba(255,255,255,0.8)', fontSize: 13, marginBottom: 2 },
-  net: { fontSize: 32, fontWeight: '900' },
+  glassLabel: { color: '#A0762B', fontSize: 12.5, marginBottom: 2, fontWeight: '700', letterSpacing: 0.2 },
+  net: { fontSize: 32, fontWeight: '900', fontFamily: undefined },
   splitRow: { flexDirection: 'row', marginTop: spacing.md },
   split: { flex: 1 },
-  divider: { width: 1, backgroundColor: 'rgba(255,255,255,0.25)', marginHorizontal: spacing.md },
+  divider: { width: 1, backgroundColor: 'rgba(30,44,60,0.14)', marginHorizontal: spacing.md },
   dotRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 2 },
   dot: { width: 8, height: 8, borderRadius: 4, marginRight: 6 },
-  splitLabel: { color: 'rgba(255,255,255,0.8)', fontSize: 12 },
-  splitValue: { color: '#FFFFFF', fontSize: 16, fontWeight: '800' },
+  splitLabel: { color: '#5C6C7B', fontSize: 12 },
+  splitValue: { color: '#1D2D3E', fontSize: 16, fontWeight: '800' },
   body: { paddingHorizontal: spacing.xl, paddingTop: spacing.lg },
   statsRow: { flexDirection: 'row', gap: spacing.md },
   statsWrap: { flex: 1 },
@@ -252,14 +241,24 @@ const styles = StyleSheet.create({
   statAction: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   actionRow: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.md },
   actionWrap: { flex: 1 },
-  actionBtn: { flex: 1, borderRadius: radius.md, ...shadow.card },
-  actionGradient: {
+  actionBtn: { flex: 1, borderRadius: radius.md },
+  actionAdd: {
     borderRadius: radius.md,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 13,
     gap: 8,
+    backgroundColor: '#0A5C8C',
+  },
+  actionScan: {
+    borderRadius: radius.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 13,
+    gap: 8,
+    backgroundColor: '#E9C46A',
   },
   addText: { color: '#FFFFFF', fontWeight: '800', fontSize: 14 },
   nextTask: {
@@ -274,11 +273,11 @@ const styles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 17,
-    backgroundColor: '#0EA5E9',
+    backgroundColor: '#0A5C8C',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  nextTaskIconHi: { backgroundColor: '#F5A524' },
+  nextTaskIconHi: { backgroundColor: '#C98A2C' },
   nextTaskMid: { flex: 1, marginHorizontal: spacing.md },
   nextTaskLabel: { fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.6 },
   nextTaskTitle: { fontSize: 14.5, fontWeight: '800', marginTop: 1 },

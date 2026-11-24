@@ -112,7 +112,7 @@ export function SettingsScreen() {
             <Text style={[styles.section, { color: t.subtext }]}>Appearance</Text>
             <AppearanceSwitch />
             <Text style={[styles.hint, { color: t.faint }]}>
-              {isDark ? 'Midnight Ocean is on — deep navy glass, glowing sky accents.' : 'Daylight Ocean is on — bright, airy glass.'}
+              {isDark ? 'Midnight Manila is on — deep navy with golden-hour accents.' : 'Capiz morning is on — warm paper and deep sea.'}
             </Text>
           </Entrance>
 
@@ -258,7 +258,7 @@ export function SettingsScreen() {
               <View style={{ flex: 1 }}>
                 <Text style={[styles.rowTitle, { color: t.text }]}>Aiserie Tracks v{APP_VERSION}</Text>
                 <Text style={[styles.rowSub, { color: t.subtext }]}>
-                  Ocean Glass, now in Midnight: dark mode with animated switching, official bank logos, things-to-do, an
+                  Manila Gold: warm capiz-paper surfaces, animated dark mode, official bank logos, things-to-do, an
                   animated boot screen and update nudges from GitHub. Made with 💙 by Viztech Studios for Aiserie.
                 </Text>
               </View>
@@ -340,7 +340,7 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     borderRadius: radius.md - 4,
-    backgroundColor: '#0EA5E9',
+    backgroundColor: '#0A5C8C',
     borderWidth: 0,
   },
   segLabel: { fontWeight: '800', fontSize: 13.5 },

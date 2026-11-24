@@ -11,20 +11,19 @@ interface Props {
   /** Adds gentle press feedback and calls onPress. */
   onPress?: () => void;
   onLongPress?: () => void;
-  /** Hero treatment: stronger shadow + brighter border + capiz edge. */
+  /** Hero treatment: stronger shadow + capiz-shell edge. */
   hi?: boolean;
-  /** Overrides the frosted fill (e.g. tinted glass). */
+  /** Overrides the paper fill (e.g. tinted surfaces). */
   tint?: string;
   /** Text styles helper: themed primary text color for labels inside the card. */
   textStyle?: TextStyle;
 }
 
 /**
- * The one glass surface used across the app: frosted fill, a hairline
- * highlight border and a large soft ocean shadow. Over the aurora wash this
- * reads as real frosted glass; inside the gradient header it reads as glass
- * laid over the ocean. Hero cards get a capiz-shell iridescent top edge —
- * the little detail that makes it feel crafted, not generated.
+ * The one paper surface used across the app: a solid warm fill, a hairline
+ * border and a small directional shadow. Paper, not glass — the depth is in
+ * the typography and the capiz-shell iridescent edge that hero cards carry
+ * along their top, like light through a windowpane.
  */
 export function GlassCard({ children, style, onPress, onLongPress, hi, tint }: Props) {
   const { progress, isDark, shadow } = useTheme();
@@ -48,7 +47,13 @@ export function GlassCard({ children, style, onPress, onLongPress, hi, tint }: P
       {hi ? (
         <View pointerEvents="none" style={styles.capizWrap}>
           <LinearGradient
-            colors={['rgba(125,211,252,0.95)', 'rgba(103,232,249,0.80)', 'rgba(246,194,115,0.85)', 'rgba(240,171,252,0.75)']}
+            colors={[
+              'rgba(124,195,220,0.85)',
+              'rgba(168,214,224,0.70)',
+              'rgba(233,196,106,0.85)',
+              'rgba(224,164,78,0.70)',
+              'rgba(168,214,224,0.65)',
+            ]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={styles.capiz}
@@ -82,5 +87,5 @@ const styles = StyleSheet.create({
     right: 0,
     height: 2,
   },
-  capiz: { flex: 1, opacity: 0.55 },
+  capiz: { flex: 1, opacity: 0.6 },
 });

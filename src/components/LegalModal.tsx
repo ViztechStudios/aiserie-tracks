@@ -40,7 +40,7 @@ export function LegalModal() {
       <View style={styles.screen}>
         <AuroraBackground />
         <LinearGradient
-          colors={isDark ? ['#030B18', '#0A2440', '#114A6E'] : ['#072F52', '#0B4F8A', '#0EA5E9']}
+          colors={isDark ? ['#040B14', '#0A1F30', '#123049'] : ['#0C2E44', '#12486C', '#155B8A']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1.2, y: 1 }}
           style={styles.header}

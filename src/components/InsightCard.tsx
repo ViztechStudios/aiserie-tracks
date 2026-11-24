@@ -21,16 +21,16 @@ export function InsightCard({ insight }: { insight: Insight }) {
 
 const TONE = {
   light: {
-    good: { bg: '#E8F8F0', border: '#12B76A' },
-    warn: { bg: '#FEF5E6', border: '#F5A524' },
+    good: { bg: '#E7F2EF', border: '#177E71' },
+    warn: { bg: '#F9EFDC', border: '#C98A2C' },
     risk: { bg: '#FDECEC', border: '#EF4444' },
-    info: { bg: '#E7F4FE', border: '#0EA5E9' },
+    info: { bg: '#EAF2F8', border: '#147BB0' },
   },
   dark: {
-    good: { bg: 'rgba(52,211,153,0.12)', border: '#34D399' },
-    warn: { bg: 'rgba(251,191,36,0.12)', border: '#FBBF24' },
+    good: { bg: 'rgba(69,179,164,0.12)', border: '#45B3A4' },
+    warn: { bg: 'rgba(224,164,78,0.12)', border: '#E0A44E' },
     risk: { bg: 'rgba(248,113,113,0.12)', border: '#F87171' },
-    info: { bg: 'rgba(56,189,248,0.12)', border: '#38BDF8' },
+    info: { bg: 'rgba(124,195,220,0.12)', border: '#7BC0E3' },
   },
 } as const;
 

@@ -2,11 +2,11 @@
   "expo": {
     "name": "Aiserie Tracks",
     "slug": "aiserie-tracks",
-    "version": "2.0.1",
+    "version": "2.0.2",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
-    "backgroundColor": "#F2F9FE",
+    "backgroundColor": "#F6F1E6",
     "ios": {
       "bundleIdentifier": "com.aiserie.tracks",
       "supportsTablet": true,
@@ -16,7 +16,7 @@
     },
     "android": {
       "package": "com.aiserie.tracks",
-      "versionCode": 4,
+      "versionCode": 5,
       "adaptiveIcon": {
         "backgroundColor": "#07172B",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -34,8 +34,8 @@
       "name": "Aiserie Tracks",
       "shortName": "Aiserie",
       "lang": "en",
-      "themeColor": "#0EA5E9",
-      "backgroundColor": "#F2F9FE",
+      "themeColor": "#0D3B5C",
+      "backgroundColor": "#F6F1E6",
       "description": "Personal finance tracker — budgets, wallets and receipts, all on your device."
     },
     "experiments": {

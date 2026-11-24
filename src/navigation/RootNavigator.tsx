@@ -1,11 +1,10 @@
 import React, { useEffect, useRef } from 'react';
-import { Animated, Easing, Platform, StyleSheet, Text, View, ViewStyle } from 'react-native';
-import { BlurView } from 'expo-blur';
+import { Animated, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import { BottomTabBarProps, createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { darkColors, font, lightColors, mix, spacing } from '../theme';
+import { darkColors, font, gradientsDark, gradientsLight, lightColors, mix } from '../theme';
 import { useTheme } from '../store/ThemeContext';
 import { PressableScale } from '../components/PressableScale';
 import { HomeScreen } from '../screens/HomeScreen';
@@ -27,7 +26,7 @@ export type RootTabParamList = {
 const TAB_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
   Home: 'home',
   History: 'receipt-outline',
-  Advisor: 'sparkles',
+  Advisor: 'compass',
   Tasks: 'checkmark-done-outline',
   Settings: 'settings-outline',
 };
@@ -39,7 +38,7 @@ function TabIcon({ name, focused, size }: { name: keyof typeof Ionicons.glyphMap
 
   useEffect(() => {
     Animated.spring(scale, {
-      toValue: focused ? 1.12 : 1,
+      toValue: focused ? 1.08 : 1,
       speed: 30,
       bounciness: 7,
       useNativeDriver: true,
@@ -54,38 +53,46 @@ function TabIcon({ name, focused, size }: { name: keyof typeof Ionicons.glyphMap
   );
 }
 
-/** Soft halo behind the FAB — a warm sunset ring over the ocean glass. */
-function FabGlow() {
-  const { progress } = useTheme();
-  const glow = useRef(new Animated.Value(0)).current;
+/**
+ * A tiny eight-ray sun — the system's active-tab mark. It rises into place
+ * when a tab is focused: quiet, warm, and unmistakably ours.
+ */
+function SunMark({ visible }: { visible: boolean }) {
+  const { isDark } = useTheme();
+  const rise = useRef(new Animated.Value(visible ? 1 : 0)).current;
 
   useEffect(() => {
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(glow, { toValue: 1, duration: 1600, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
-        Animated.timing(glow, { toValue: 0, duration: 1600, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
-      ])
-    );
-    loop.start();
-    return () => loop.stop();
-  }, [glow]);
+    Animated.spring(rise, {
+      toValue: visible ? 1 : 0,
+      speed: 30,
+      bounciness: 5,
+      useNativeDriver: true,
+    }).start();
+  }, [visible, rise]);
 
+  const core = isDark ? darkColors.sun500 : lightColors.sun500;
+  const ray = isDark ? 'rgba(224,164,78,0.75)' : 'rgba(201,138,44,0.75)';
   return (
     <Animated.View
       pointerEvents="none"
       style={[
-        styles.fabGlow,
+        styles.sunWrap,
         {
-          backgroundColor: mix(progress, 'rgba(246,194,115,0.5)', 'rgba(242,169,59,0.34)'),
-          opacity: glow.interpolate({ inputRange: [0, 1], outputRange: [0.5, 0.12] }),
-          transform: [{ scale: glow.interpolate({ inputRange: [0, 1], outputRange: [1, 1.45] }) }],
+          opacity: rise,
+          transform: [{ scale: rise.interpolate({ inputRange: [0, 1], outputRange: [0.4, 1] }) }],
         },
       ]}
-    />
+    >
+      <View style={[styles.ray, styles.rayN, { backgroundColor: ray }]} />
+      <View style={[styles.ray, styles.rayS, { backgroundColor: ray }]} />
+      <View style={[styles.ray, styles.rayW, { backgroundColor: ray }]} />
+      <View style={[styles.ray, styles.rayE, { backgroundColor: ray }]} />
+      <View style={[styles.sunCore, { backgroundColor: core }]} />
+    </Animated.View>
   );
 }
 
-/** One regular tab slot: capiz-tinted active pill + springy icon + uppercase label. */
+/** One regular tab slot: icon + rising sun mark + label. */
 function TabSlot({
   routeKey,
   icon,
@@ -99,33 +106,17 @@ function TabSlot({
   focused: boolean;
   onPress: () => void;
 }) {
-  const { progress, t, isDark } = useTheme();
-  const pill = useRef(new Animated.Value(focused ? 1 : 0)).current;
-
-  useEffect(() => {
-    Animated.spring(pill, { toValue: focused ? 1 : 0, speed: 28, bounciness: 6, useNativeDriver: true }).start();
-  }, [focused, pill]);
-
+  const { progress, t } = useTheme();
   return (
     <View key={routeKey} style={styles.slotWrap}>
-      <PressableScale style={styles.tab} scaleTo={0.9} onPress={onPress}>
-        <Animated.View
-          pointerEvents="none"
-          style={[
-            styles.tabPill,
-            {
-              opacity: pill.interpolate({ inputRange: [0, 1], outputRange: [0, 1] }),
-              backgroundColor: mix(progress, 'rgba(14,165,233,0.13)', 'rgba(56,189,248,0.20)'),
-              transform: [{ scale: pill.interpolate({ inputRange: [0, 1], outputRange: [0.7, 1] }) }],
-            },
-          ]}
-        />
+      <PressableScale style={styles.tab} scaleTo={0.88} onPress={onPress}>
+        <SunMark visible={focused} />
         <TabIcon name={icon} focused={focused} size={21} />
         <Animated.Text
           style={[
             styles.tabLabel,
-            { color: focused ? t.ocean600 : mix(progress, lightColors.faint, darkColors.faint) },
-            focused && { fontWeight: '800' },
+            { color: focused ? t.text : mix(progress, lightColors.faint, darkColors.faint) },
+            focused ? styles.tabLabelOn : null,
           ]}
         >
           {label}
@@ -135,26 +126,21 @@ function TabSlot({
   );
 }
 
-/** Floating frosted-glass tab bar with a raised ocean-gradient FAB in the middle (Scan). */
+/**
+ * Bottom bar — solid, structured, honest. Full width, anchored to the edge,
+ * one hairline across the top, and the Scan action sitting inside the rhythm
+ * of the bar instead of floating above it. No blur, no pill, no glow.
+ */
 function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const { progress, isDark, shadow } = useTheme();
   const insets = useSafeAreaInsets();
-  const tintBg = mix(progress, 'rgba(255,255,255,0.40)', 'rgba(10,26,48,0.52)');
-  const borderColor = mix(progress, lightColors.glassBorder, darkColors.glassBorder);
-  const bottomPad = Math.max(Platform.OS === 'ios' ? 10 : 12, insets.bottom + 6);
+  const barBg = mix(progress, lightColors.card, '#0E1E2E');
+  const borderColor = mix(progress, lightColors.line, darkColors.line);
+  const ringColor = mix(progress, lightColors.card, '#0E1E2E');
 
   return (
-    <View style={[styles.barWrap, { paddingBottom: bottomPad }]} pointerEvents="box-none">
-      <Animated.View style={[styles.barShell, { borderColor }, shadow.cardHi]}>
-        <View style={styles.blurWrap} pointerEvents="none">
-          <BlurView
-            intensity={44}
-            tint={isDark ? 'dark' : 'light'}
-            experimentalBlurMethod={Platform.OS === 'web' ? undefined : 'dimezisBlurView'}
-            style={StyleSheet.absoluteFill}
-          />
-          <Animated.View style={[StyleSheet.absoluteFill, tintBg]} />
-        </View>
+    <View style={styles.barWrap} pointerEvents="box-none">
+      <Animated.View style={[styles.barShell, { backgroundColor: barBg, borderTopColor: borderColor }]}>
         <View style={styles.bar}>
           {state.routes.map((route, index) => {
             const focused = state.index === index;
@@ -169,18 +155,17 @@ function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
                     scaleTo={0.9}
                     haptic="medium"
                   >
-                    <FabGlow />
-                    <LinearGradient
-                      colors={isDark ? ['#0C4A6E', '#0EA5E9', '#7DD3FC'] : ['#072F52', '#0EA5E9', '#67E8F9']}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                      style={[styles.fab, { borderColor: isDark ? 'rgba(10,30,55,0.92)' : 'rgba(255,255,255,0.94)' }, shadow.fab]}
-                    >
-                      <Ionicons name="camera" size={24} color={lightColors.white} />
-                    </LinearGradient>
-                    <Animated.Text style={[styles.fabLabel, { color: mix(progress, lightColors.faint, darkColors.faint) }]}>
-                      Scan
-                    </Animated.Text>
+                    <Animated.View style={[styles.fabRing, { backgroundColor: ringColor }]}>
+                      <Animated.View style={[styles.fab, shadow.fab]}>
+                        <LinearGradient
+                          colors={isDark ? [gradientsDark.fab[0], gradientsDark.fab[2]] : [gradientsLight.fab[0], gradientsLight.fab[2]]}
+                          start={{ x: 0, y: 0 }}
+                          end={{ x: 1, y: 1 }}
+                          style={StyleSheet.absoluteFill}
+                        />
+                        <Ionicons name="camera" size={21} color={lightColors.white} />
+                      </Animated.View>
+                    </Animated.View>
                   </PressableScale>
                 </View>
               );
@@ -203,6 +188,8 @@ function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
           })}
         </View>
       </Animated.View>
+      {/* extends the bar surface under the home indicator / gesture area */}
+      <Animated.View style={[styles.safeAreaExtend, { backgroundColor: barBg, height: Math.max(insets.bottom, 8) }]} />
     </View>
   );
 }
@@ -230,9 +217,7 @@ export function RootNavigator() {
   );
 }
 
-/** Floating pill: bar height + the gap it floats above the screen edge. */
-const BAR_HEIGHT = 62;
-const ABS_FILL: ViewStyle = { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 };
+const BAR_HEIGHT = 60;
 
 const styles = StyleSheet.create({
   barWrap: {
@@ -240,68 +225,73 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    paddingHorizontal: spacing.md,
     backgroundColor: 'transparent',
   },
   barShell: {
     height: BAR_HEIGHT,
-    borderRadius: BAR_HEIGHT / 2 + 3,
-    borderWidth: 1,
+    borderTopWidth: 1,
   },
-  blurWrap: {
-    ...ABS_FILL,
-    borderRadius: BAR_HEIGHT / 2 + 3,
-    overflow: 'hidden',
-  },
+  safeAreaExtend: {},
   bar: {
     flex: 1,
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'stretch',
+    paddingTop: 6,
   },
-  slotWrap: { flex: 1, alignSelf: 'stretch' },
+  slotWrap: { flex: 1 },
   tab: {
     flex: 1,
     alignSelf: 'stretch',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 3,
+    justifyContent: 'flex-start',
+    gap: 2,
   },
-  tabPill: {
-    position: 'absolute',
-    top: BAR_HEIGHT / 2 - 26,
-    width: 44,
-    height: 28,
-    borderRadius: 14,
-  },
-  tabLabel: {
-    fontFamily: font.bold,
-    fontSize: 9.5,
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
-  },
-  fabSlot: { flex: 1, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'flex-end', height: BAR_HEIGHT },
-  fabGlow: {
-    position: 'absolute',
-    top: -26,
-    width: 62,
-    height: 62,
-    borderRadius: 31,
-  },
-  fab: {
-    position: 'absolute',
-    top: -26,
-    width: 62,
-    height: 62,
-    borderRadius: 31,
+  sunWrap: {
+    height: 10,
+    width: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 4,
   },
-  fabLabel: {
+  sunCore: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+  },
+  ray: {
+    position: 'absolute',
+    borderRadius: 1,
+  },
+  rayN: { width: 1.5, height: 3, top: -1 },
+  rayS: { width: 1.5, height: 3, bottom: -1 },
+  rayW: { width: 3, height: 1.5, left: -1 },
+  rayE: { width: 3, height: 1.5, right: -1 },
+  tabLabel: {
+    fontFamily: font.medium,
+    fontSize: 10,
+    letterSpacing: 0.1,
+  },
+  tabLabelOn: {
     fontFamily: font.bold,
-    fontSize: 9.5,
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
-    marginTop: 34,
+  },
+  fabSlot: {
+    flex: 1,
+    alignSelf: 'stretch',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  fabRing: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  fab: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
   },
 });

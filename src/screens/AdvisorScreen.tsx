@@ -57,8 +57,8 @@ export function AdvisorScreen() {
             </PressableScale>
           </View>
 
-          {/* hero: safe to spend */}
-          <GlassCard>
+          {/* hero: safe to spend — paper over dusk */}
+          <GlassCard hi tint="#FFFDF8">
             {ym === currentMonthKey() && report.safeToSpendPerDay !== null ? (
               <>
                 <Text style={styles.heroLabel}>Safe to spend per day</Text>
@@ -134,11 +134,11 @@ const styles = StyleSheet.create({
   monthRow: { flexDirection: 'row', alignItems: 'center', marginTop: spacing.lg },
   monthBtn: { padding: 6 },
   monthText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700', marginHorizontal: spacing.sm },
-  heroLabel: { color: 'rgba(255,255,255,0.82)', fontSize: 13, marginBottom: 2 },
-  heroValue: { color: '#FFFFFF', fontSize: 30, fontWeight: '900' },
-  heroSub: { color: 'rgba(255,255,255,0.85)', fontSize: 13, marginTop: 4 },
-  heroSub2: { color: 'rgba(255,255,255,0.9)', fontSize: 12.5, lineHeight: 18 },
-  heroDivider: { height: 1, backgroundColor: 'rgba(255,255,255,0.25)', marginVertical: spacing.md },
+  heroLabel: { color: '#A0762B', fontSize: 12.5, marginBottom: 2, fontWeight: '700', letterSpacing: 0.2 },
+  heroValue: { color: '#1D2D3E', fontSize: 30, fontWeight: '900' },
+  heroSub: { color: '#5C6C7B', fontSize: 13, marginTop: 4 },
+  heroSub2: { color: '#3C4C5C', fontSize: 12.5, lineHeight: 18 },
+  heroDivider: { height: 1, backgroundColor: 'rgba(30,44,60,0.14)', marginVertical: spacing.md },
   body: { paddingHorizontal: spacing.xl, paddingTop: spacing.lg },
   rateCard: {
     borderWidth: 1,
