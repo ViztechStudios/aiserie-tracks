@@ -1,8 +1,9 @@
 {
   "name": "aiserie-tracks",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "main": "index.ts",
   "dependencies": {
+    "@expo-google-fonts/manrope": "^0.4.3",
     "@expo/metro-runtime": "~58.0.17",
     "@expo/vector-icons": "^15.0.2",
     "@react-native-async-storage/async-storage": "2.2.0",

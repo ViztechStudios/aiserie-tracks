@@ -4,7 +4,7 @@
  * Dark: midnight navy glass with glowing sky-blue accents.
  * ThemeContext drives a 0->1 progress value so every surface cross-fades.
  */
-import { Animated } from 'react-native';
+import { Animated, Platform } from 'react-native';
 
 export interface ThemeColors {
   // brand
@@ -132,6 +132,8 @@ export const auroraLight = {
   sky: '#7DD3FC',
   aqua: '#A5F3FC',
   lagoon: '#6EE7D8',
+  /** Warm dusk accent — the Manila-Bay sunset glow on the horizon. */
+  glow: '#F6C273',
   base: '#EFF7FD',
 } as const;
 
@@ -139,6 +141,7 @@ export const auroraDark = {
   sky: '#0E7DB8',
   aqua: '#0E7490',
   lagoon: '#0F6E68',
+  glow: '#C77E3A',
   base: '#071528',
 } as const;
 
@@ -149,6 +152,16 @@ export function gradientsFor(isDark: boolean): Palette {
 export function auroraFor(isDark: boolean) {
   return isDark ? auroraDark : auroraLight;
 }
+
+/** Type ramp — Manrope gives the app a designed, human voice. */
+export const font = {
+  /** Headings & hero numbers */
+  display: 'Manrope_800ExtraBold',
+  /** Emphasised labels & buttons */
+  bold: 'Manrope_700Bold',
+  /** Quiet emphasis */
+  medium: 'Manrope_500Medium',
+} as const;
 
 export const radius = {
   sm: 12,
@@ -221,13 +234,46 @@ const shadowDark = {
   fab: { ...shadowLight.fab, shadowColor: '#000000', shadowOpacity: 0.55, elevation: 12 },
 } as const;
 
+/**
+ * Real shadows on web/iOS PWA: react-native-web ignores the iOS shadow props,
+ * so without `boxShadow` every card renders flat (the generic "AI look").
+ * Native platforms keep the classic shadow props and ignore boxShadow.
+ */
+const webShadowsLight = {
+  card: { boxShadow: '0 10px 30px rgba(7,47,82,0.13), 0 2px 6px rgba(7,47,82,0.07)' },
+  cardHi: { boxShadow: '0 18px 44px rgba(7,47,82,0.20), 0 4px 10px rgba(7,47,82,0.10)' },
+  fab: { boxShadow: '0 12px 28px rgba(7,47,82,0.34)' },
+} as const;
+
+const webShadowsDark = {
+  card: { boxShadow: '0 10px 30px rgba(0,0,0,0.42), 0 2px 6px rgba(0,0,0,0.24)' },
+  cardHi: { boxShadow: '0 18px 44px rgba(0,0,0,0.52), 0 4px 10px rgba(0,0,0,0.28)' },
+  fab: { boxShadow: '0 12px 28px rgba(0,0,0,0.55)' },
+} as const;
+
+function withWeb<T extends object>(native: T, web: object): T {
+  if (Platform.OS === 'web') {
+    return { ...native, ...web } as T;
+  }
+  return native;
+}
+
 export function shadowFor(isDark: boolean) {
-  return isDark ? shadowDark : shadowLight;
+  const native = isDark ? shadowDark : shadowLight;
+  const web = isDark ? webShadowsDark : webShadowsLight;
+  return {
+    card: withWeb(native.card, web.card),
+    cardHi: withWeb(native.cardHi, web.cardHi),
+    fab: withWeb(native.fab, web.fab),
+  };
 }
 
 /** Legacy static (light-scheme) shadows for module-level StyleSheets.
  *  Prefer `useTheme().shadow` inside components for theme-aware shadows. */
-export const shadow = shadowLight;
+export const shadow = {
+  ...shadowLight,
+  ...(Platform.OS === 'web' ? webShadowsLight : {}),
+};
 
 /**
  * Animated two-way color helper driven by the theme progress value

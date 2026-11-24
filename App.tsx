@@ -5,6 +5,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { DarkTheme, DefaultTheme, NavigationContainer } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
+import { useFonts, Manrope_500Medium, Manrope_700Bold, Manrope_800ExtraBold } from '@expo-google-fonts/manrope';
 import { FinanceProvider, useFinance } from './src/store/FinanceContext';
 import { TasksProvider } from './src/store/TasksContext';
 import { UIProvider, useUI } from './src/store/UIContext';
@@ -26,6 +27,7 @@ function Shell() {
   const finance = useFinance();
   const { t } = useTheme();
   const ui = useUI();
+  const [fontsLoaded] = useFonts({ Manrope_500Medium, Manrope_700Bold, Manrope_800ExtraBold });
   const [booting, setBooting] = useState(true);
   const startedAt = useRef(Date.now());
   const updateChecked = useRef(false);
@@ -75,7 +77,7 @@ function Shell() {
       <WalletsModal />
       <LegalModal />
       <UpdateModal />
-      <LoadingScreen ready={finance.ready} onDone={() => setBooting(false)} />
+      <LoadingScreen ready={finance.ready && fontsLoaded} onDone={() => setBooting(false)} />
     </NavigationContainer>
   );
 }

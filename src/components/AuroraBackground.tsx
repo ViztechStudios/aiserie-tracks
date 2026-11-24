@@ -1,5 +1,5 @@
 import React from 'react';
-import { Animated, Platform, StyleSheet, View, ViewStyle } from 'react-native';
+import { Animated, Image, Platform, StyleSheet, View, ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../store/ThemeContext';
 
@@ -49,13 +49,14 @@ function Blob({
 
 /**
  * Fixed decorative colour wash that sits behind every screen. Light and dark
- * washes are stacked and cross-faded by the theme progress value, so switching
- * themes melts from daylight ocean into midnight navy instead of snapping.
+ * washes are stacked and cross-faded by the theme progress value, and a faint
+ * banig weave texture sits on top so the backdrop feels woven, not painted.
  */
 export function AuroraBackground({ intensity = 1 }: Props) {
   const { progress, aurora } = useTheme();
   const lightOpacity = progress.interpolate({ inputRange: [0, 1], outputRange: [1, 0] });
   const darkOpacity = progress.interpolate({ inputRange: [0, 1], outputRange: [0, 1] });
+  const weaveOpacity = progress.interpolate({ inputRange: [0, 1], outputRange: [0.05, 0.055] });
   const style: ViewStyle = { ...ABS_FILL, overflow: 'hidden' };
   return (
     <View pointerEvents="none" style={style}>
@@ -73,6 +74,13 @@ export function AuroraBackground({ intensity = 1 }: Props) {
         <Blob color={aurora.lagoon} size={320} bottom={-40} right={-80} opacity={0.34 * intensity} />
         <Blob color={aurora.sky} size={240} bottom={140} left={-90} opacity={0.26 * intensity} />
       </Animated.View>
+      {/* banig weave — tinted to stay quiet on both washes */}
+      <Animated.Image
+        source={require('../../assets/textures/banig.png')}
+        resizeMode="cover"
+        pointerEvents="none"
+        style={[StyleSheet.absoluteFill, { opacity: weaveOpacity, tintColor: '#8FB8D9' }]}
+      />
       {/* keeps Android overflow clipping happy without extra layers */}
       {Platform.OS === 'android' ? <View style={styles.spacer} /> : null}
     </View>

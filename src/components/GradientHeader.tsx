@@ -1,8 +1,8 @@
 import React from 'react';
-import { Animated, StyleSheet, Text, View } from 'react-native';
+import { Animated, Image, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { gradientsDark, gradientsLight, lightColors, radius, spacing } from '../theme';
+import { font, gradientsDark, gradientsLight, lightColors, radius, spacing } from '../theme';
 import { useTheme } from '../store/ThemeContext';
 import { ViewStyle } from 'react-native';
 
@@ -14,12 +14,17 @@ interface Props {
   children?: React.ReactNode;
 }
 
-/** Deep-ocean (or midnight) page header with a light sheen, depth blobs and rounded bottom edge. */
+/**
+ * Page header — "dusk over the bay": deep ocean (light) or midnight (dark)
+ * gradient, a woven banig texture, a warm sunset glow on the horizon, depth
+ * blobs and a capiz-like light sheen. Round-wrapped glass content sits inside.
+ */
 export function GradientHeader({ title, subtitle, children }: Props) {
   const insets = useSafeAreaInsets();
-  const { progress, gradients } = useTheme();
+  const { progress, gradients, aurora } = useTheme();
   const lightOpacity = progress.interpolate({ inputRange: [0, 1], outputRange: [1, 0] });
   const darkOpacity = progress.interpolate({ inputRange: [0, 1], outputRange: [0, 1] });
+  const glowOpacity = progress.interpolate({ inputRange: [0, 1], outputRange: [0.34, 0.26] });
   const fallback = progress.interpolate({
     inputRange: [0, 1],
     outputRange: [gradientsLight.header[1], gradientsDark.header[1]],
@@ -34,12 +39,35 @@ export function GradientHeader({ title, subtitle, children }: Props) {
       <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { opacity: darkOpacity }]}>
         <LinearGradient colors={gradientsDark.header} start={{ x: 0, y: 0 }} end={{ x: 1.25, y: 1.1 }} style={StyleSheet.absoluteFill} />
       </Animated.View>
+      {/* woven banig texture — the hand-crafted layer */}
+      <Animated.Image
+        source={require('../../assets/textures/banig.png')}
+        resizeMode="cover"
+        pointerEvents="none"
+        style={[StyleSheet.absoluteFill, { opacity: 0.07, tintColor: '#FFFFFF' }]}
+      />
+      {/* sunset glow on the horizon */}
+      <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { opacity: glowOpacity }]}>
+        <LinearGradient
+          colors={[aurora.glow, 'rgba(255,255,255,0)']}
+          start={{ x: 0.5, y: 0.5 }}
+          end={{ x: 0.5, y: 1 }}
+          style={{
+            position: 'absolute',
+            width: 300,
+            height: 300,
+            borderRadius: 150,
+            bottom: -150,
+            right: -60,
+          }}
+        />
+      </Animated.View>
       {/* decorative depth blobs */}
       <View pointerEvents="none" style={StyleSheet.absoluteFill}>
         <View style={styles.blobA} />
         <View style={styles.blobB} />
       </View>
-      {/* light sheen across the top */}
+      {/* capiz light sheen across the top */}
       <LinearGradient
         colors={gradients.sheen}
         start={{ x: 0, y: 0 }}
@@ -72,7 +100,7 @@ const styles = StyleSheet.create({
     width: 220,
     height: 220,
     borderRadius: 110,
-    backgroundColor: 'rgba(103,232,249,0.20)',
+    backgroundColor: 'rgba(103,232,249,0.18)',
     top: -70,
     right: -60,
   },
@@ -89,12 +117,13 @@ const styles = StyleSheet.create({
   content: { zIndex: 1 },
   title: {
     color: lightColors.white,
-    fontSize: 27,
-    fontWeight: '800',
-    letterSpacing: 0.2,
+    fontFamily: font.display,
+    fontSize: 26,
+    letterSpacing: -0.2,
   },
   subtitle: {
     color: 'rgba(255,255,255,0.86)',
+    fontFamily: font.medium,
     fontSize: 13.5,
     marginTop: 3,
     letterSpacing: 0.1,
