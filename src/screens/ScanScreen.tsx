@@ -46,7 +46,7 @@ export function ScanScreen() {
   const ui = useUI();
   const { t, isDark, gradients } = useTheme();
   const { contentWidth } = useResponsive();
-  const heroInk = isDark ? t.text : '#1A2B3C';
+  const heroInk = isDark ? t.text : '#16382A';
   const cameraRef = useRef<CameraView>(null);
   const [permission, requestPermission] = useCameraPermissions();
   const [torch, setTorch] = useState(false);
@@ -135,7 +135,7 @@ export function ScanScreen() {
     return (
       <View style={styles.root}>
         <AuroraBackground />
-        <GradientHeader title="Scan receipt" subtitle="Point your camera at a grocery receipt" />
+        <GradientHeader title="Scan receipt" subtitle="Point your camera at a grocery receipt" tone="deep" />
         <View style={styles.permissionBox}>
           <View style={[styles.permissionBadge, { backgroundColor: t.ice50, borderColor: t.line }]}>
             <Ionicons name="camera-outline" size={26} color={t.subtext} />
@@ -158,7 +158,7 @@ export function ScanScreen() {
   return (
     <View style={styles.root}>
       <AuroraBackground />
-      <GradientHeader title="Scan receipt" subtitle="Point at the receipt, hold steady, tap capture">
+      <GradientHeader title="Scan receipt" subtitle="Point at the receipt, hold steady, tap capture" tone="deep">
         <GlassCard>
           <Text style={[styles.tipText, { color: heroInk }]}>
             Works best on flat, well-lit receipts. The total is read on-device and saved straight to your log.

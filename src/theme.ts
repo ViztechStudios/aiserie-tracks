@@ -1,34 +1,38 @@
 /**
- * Aiserie Tracks v2.1.0 — "Capiz & Ink" design system.
+ * Aiserie Tracks v2.3.0 — "Fern & Bark" design system.
  *
- * One idea carries the whole app: a hand-kept ledger on capiz-paper, bound
- * in sea ink, ruled in gold. Everything else is restraint:
+ * One idea carries the whole app: a friendly ledger kept in a fern house —
+ * deep jungle green, paper-white cards, and two small companions (a pup and
+ * a tabby) who greet you on every page. Restraint does the rest:
  *
- *  - Paper surfaces are white and quiet; depth comes from hairlines and
- *    small, directional shadows — never from glow or sheen.
- *  - Sea ink (#0C2E44) is the only "brand surface": page headers and the
- *    primary action. One gold accent (#C08A32) marks focus, craft edges
- *    and the active tab. Nothing else competes for attention.
+ *  - Cards are white and quiet; depth comes from hairlines and small,
+ *    directional shadows — never from glow or sheen.
+ *  - Fern ink (#0D3B27) is the only "brand surface": page headers and the
+ *    primary action. One mango-gold accent (#D9A13B) marks focus, craft
+ *    edges and the active tab. Nothing else competes for attention.
  *  - Type has a fixed voice: Lora (serif) for page titles only, Manrope
  *    everywhere else — Medium for body, Bold for labels and amounts,
  *    ExtraBold reserved for the single hero number on a screen.
- *  - The woven-paper texture is present but almost subliminal, so surfaces
- *    read as material rather than decoration.
+ *  - The woven texture stays almost subliminal, so surfaces read as
+ *    material rather than decoration.
  *
- * Light: capiz paper / sea ink. Dark: midnight ink / warm gold.
+ * Light: fern paper / pine ink. Dark: jungle night / warm gold.
  * ThemeContext drives a 0->1 progress value so every surface cross-fades.
  */
 import { Animated, Platform } from 'react-native';
 
 export interface ThemeColors {
-  // brand — sea + sun
+  // brand — fern + sun
+  /** Deep pine — page headers, primary ink surfaces. */
   ocean900: string;
   ocean800: string;
+  /** Primary action green — buttons, links, active marks. */
   ocean600: string;
   ocean500: string;
+  /** Fresh leaf accents (chips, soft highlights). */
   aqua400: string;
   aqua300: string;
-  /** Golden-hour accent — active tab mark, craft edges, warm highlights. */
+  /** Mango-gold accent — active tab mark, craft edges, warm highlights. */
   sun500: string;
   sun300: string;
   /** Soft gold wash for tonal (secondary) buttons. */
@@ -62,72 +66,74 @@ export interface ThemeColors {
 }
 
 export const lightColors: ThemeColors = {
-  ocean900: '#0C2E44',
-  ocean800: '#10496F',
-  ocean600: '#0B5C8A',
-  ocean500: '#2A7FAD',
-  aqua400: '#4AA3C4',
-  aqua300: '#8FC6DB',
-  sun500: '#C08A32',
-  sun300: '#E5C87E',
-  goldWash: '#F6ECD7',
-  ice50: '#EFF5F8',
-  ice100: '#E1EDF4',
+  ocean900: '#0D3B27',
+  ocean800: '#14503A',
+  ocean600: '#1E7A50',
+  ocean500: '#2E9B63',
+  aqua400: '#58B98A',
+  aqua300: '#9BD9B8',
+  sun500: '#D9A13B',
+  sun300: '#F0D492',
+  goldWash: '#FBF3DF',
+  ice50: '#F0F7F2',
+  ice100: '#E3F0E7',
 
-  bg: '#F7F3EA',
+  bg: '#F4F8F1',
   card: '#FFFFFF',
   cardSolid: '#FFFFFF',
-  glassBorder: 'rgba(26,43,60,0.14)',
-  glassBorderSoft: 'rgba(26,43,60,0.08)',
-  line: 'rgba(26,43,60,0.10)',
-  text: '#1A2B3C',
-  subtext: '#5D6E7D',
-  faint: '#93A3B1',
+  glassBorder: 'rgba(19,54,36,0.14)',
+  glassBorderSoft: 'rgba(19,54,36,0.08)',
+  line: 'rgba(19,54,36,0.10)',
+  text: '#16382A',
+  subtext: '#5E7A6A',
+  faint: '#93AFA0',
 
-  expense: '#B94A52',
-  income: '#1E7A6C',
-  warn: '#C08A32',
-  risk: '#B94A52',
-  good: '#1E7A6C',
+  expense: '#C14B55',
+  income: '#1E8A5B',
+  warn: '#D9A13B',
+  risk: '#C14B55',
+  good: '#1E8A5B',
 
   white: '#FFFFFF',
 };
 
 /**
- * Solid brand-blue for filled buttons with white content — constant across
+ * Solid brand-green for filled buttons with white content — constant across
  * themes. The themed t.ocean600 flips light in dark mode for text/icons;
  * backgrounds need this fixed ink so white labels stay readable.
  */
-export const brandOcean = '#0B5C8A';
+export const brandFern = '#1E7A50';
+/** Back-compat alias for older call sites. */
+export const brandOcean = brandFern;
 
 export const darkColors: ThemeColors = {
-  ocean900: '#050E18',
-  ocean800: '#0A2135',
-  ocean600: '#6FB5DB',
-  ocean500: '#8FC6DB',
-  aqua400: '#3E90B5',
-  aqua300: '#79B9D2',
-  sun500: '#E0A94E',
-  sun300: '#EFCB83',
-  goldWash: 'rgba(224,169,78,0.12)',
-  ice50: 'rgba(233,239,244,0.06)',
-  ice100: 'rgba(233,239,244,0.10)',
+  ocean900: '#05130C',
+  ocean800: '#0A2418',
+  ocean600: '#6FCB97',
+  ocean500: '#8FD9AE',
+  aqua400: '#3F9B6C',
+  aqua300: '#79B993',
+  sun500: '#E5B95C',
+  sun300: '#EFD492',
+  goldWash: 'rgba(229,185,92,0.12)',
+  ice50: 'rgba(240,247,242,0.06)',
+  ice100: 'rgba(240,247,242,0.10)',
 
-  bg: '#0B1520',
-  card: '#13222F',
-  cardSolid: '#13222F',
-  glassBorder: 'rgba(151,183,214,0.16)',
-  glassBorderSoft: 'rgba(151,183,214,0.10)',
-  line: 'rgba(151,183,214,0.10)',
-  text: '#E7EDF3',
-  subtext: '#9BB0BF',
-  faint: '#65798B',
+  bg: '#0A1912',
+  card: '#112719',
+  cardSolid: '#112719',
+  glassBorder: 'rgba(157,196,175,0.16)',
+  glassBorderSoft: 'rgba(157,196,175,0.10)',
+  line: 'rgba(157,196,175,0.10)',
+  text: '#E9F3EB',
+  subtext: '#9DB8A7',
+  faint: '#6B8577',
 
-  expense: '#E2878D',
-  income: '#4CB4A3',
-  warn: '#E0A94E',
-  risk: '#E2878D',
-  good: '#4CB4A3',
+  expense: '#E8929C',
+  income: '#57C98F',
+  warn: '#E5B95C',
+  risk: '#E8929C',
+  good: '#57C98F',
 
   white: '#FFFFFF',
 };
@@ -135,7 +141,7 @@ export const darkColors: ThemeColors = {
 export interface Palette {
   header: readonly [string, string, string];
   headerSoft: readonly [string, string, string];
-  /** Dawn-over-the-bay hero: sky top -> warm gold horizon bottom. */
+  /** Fern-house hero: soft mint top -> warm gold horizon bottom. */
   hero: readonly [string, string, string, string];
   fab: readonly [string, string];
   income: readonly [string, string];
@@ -144,40 +150,40 @@ export interface Palette {
 }
 
 export const gradientsLight: Palette = {
-  header: ['#0C2E44', '#114A70', '#175F8C'],
-  headerSoft: ['#10496F', '#175F8C', '#1E709F'],
-  hero: ['#C9E6F2', '#DFEAE4', '#F6DFB9', '#F2C98E'],
-  fab: ['#0C2E44', '#0B5C8A'],
-  income: ['#1E7A6C', '#3BA693'],
-  expense: ['#B94A52', '#D96A70'],
+  header: ['#0D3B27', '#14503A', '#1E7A50'],
+  headerSoft: ['#14503A', '#1E7A50', '#2E9B63'],
+  hero: ['#CFE9D6', '#E4F1E2', '#FBF3DF', '#F2DFAE'],
+  fab: ['#0D3B27', '#1E7A50'],
+  income: ['#1E8A5B', '#43AD7F'],
+  expense: ['#C14B55', '#DB6E76'],
   sheen: ['rgba(255,255,255,0.08)', 'rgba(255,255,255,0.01)'],
 };
 
 export const gradientsDark: Palette = {
-  header: ['#040C16', '#0A1F30', '#0F2D44'],
-  headerSoft: ['#0A1F30', '#0F2D44', '#173E59'],
-  hero: ['#08131F', '#0B1C2C', '#10293C', '#153349'],
-  fab: ['#0A1F30', '#2A7FAD'],
-  income: ['#1E7A6C', '#3BA693'],
-  expense: ['#B94A52', '#D96A70'],
+  header: ['#03100A', '#082017', '#0D3222'],
+  headerSoft: ['#082017', '#0D3222', '#144731'],
+  hero: ['#071710', '#0A2016', '#0F2E1E', '#153D29'],
+  fab: ['#082017', '#1E7A50'],
+  income: ['#1E8A5B', '#43AD7F'],
+  expense: ['#C14B55', '#DB6E76'],
   sheen: ['rgba(255,255,255,0.05)', 'rgba(255,255,255,0.01)'],
 };
 
 /** Backdrop spec used by <AuroraBackground /> — quiet paper + fine weave. */
 export const auroraLight = {
-  base: '#F7F3EA',
+  base: '#F4F8F1',
   /** Tint applied to the woven-paper texture. */
-  weave: '#B29B72',
+  weave: '#7FA98B',
   weaveOpacity: 0.07,
-  /** Warm top light — the Manila-Bay golden hour, kept faint. */
-  glow: 'rgba(229,200,126,0.20)',
+  /** Soft leaf-light at the top edge, kept faint. */
+  glow: 'rgba(151,199,168,0.18)',
 } as const;
 
 export const auroraDark = {
-  base: '#0B1520',
-  weave: '#31506B',
+  base: '#0A1912',
+  weave: '#2E5240',
   weaveOpacity: 0.10,
-  glow: 'rgba(224,169,78,0.06)',
+  glow: 'rgba(229,185,92,0.06)',
 } as const;
 
 export function gradientsFor(isDark: boolean): Palette {
@@ -247,23 +253,23 @@ export interface ShadowPalette {
 const shadowLight = {
   /** Resting paper card: close, directional, quiet. */
   card: {
-    shadowColor: '#1C2936',
-    shadowOpacity: 0.07,
+    shadowColor: '#173B2A',
+    shadowOpacity: 0.08,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 3 },
     elevation: 2,
   },
   /** Hero cards (balance, safe-to-spend). */
   cardHi: {
-    shadowColor: '#0C2E44',
-    shadowOpacity: 0.12,
+    shadowColor: '#0D3B27',
+    shadowOpacity: 0.14,
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 6 },
     elevation: 5,
   },
   fab: {
-    shadowColor: '#0A2D44',
-    shadowOpacity: 0.24,
+    shadowColor: '#07291B',
+    shadowOpacity: 0.26,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 4 },
     elevation: 6,
@@ -282,9 +288,9 @@ const shadowDark = {
  * classic shadow props and ignore boxShadow.
  */
 const webShadowsLight = {
-  card: { boxShadow: '0 2px 8px rgba(28,41,54,0.08)' },
-  cardHi: { boxShadow: '0 6px 18px rgba(12,46,68,0.12)' },
-  fab: { boxShadow: '0 4px 12px rgba(10,45,68,0.26)' },
+  card: { boxShadow: '0 2px 8px rgba(23,59,42,0.09)' },
+  cardHi: { boxShadow: '0 6px 18px rgba(13,59,39,0.14)' },
+  fab: { boxShadow: '0 4px 12px rgba(7,41,27,0.28)' },
 } as const;
 
 const webShadowsDark = {
@@ -311,7 +317,8 @@ export function shadowFor(isDark: boolean) {
 }
 
 /** Legacy static (light-scheme) shadows for module-level StyleSheets.
- *  Prefer `useTheme().shadow` inside components for theme-aware shadows. */
+ *  Prefer `useTheme().shadow` inside components for theme-aware shadows.
+ *  (Kept with token names for zero-churn call sites.) */
 export const shadow = {
   ...shadowLight,
   ...(Platform.OS === 'web' ? webShadowsLight : {}),

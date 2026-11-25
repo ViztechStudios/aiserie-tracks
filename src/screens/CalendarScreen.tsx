@@ -47,9 +47,9 @@ export function CalendarScreen() {
         bounces={false}
         contentContainerStyle={contentWidth ? { alignSelf: 'center', width: '100%', maxWidth: contentWidth } : null}
       >
-        <GradientHeader title="Calendar" subtitle="Every peso, day by day">
+        <GradientHeader title="Calendar" subtitle="Every peso, day by day" tone="deep">
           <View style={styles.chipsWrap}>
-            <MonthChips ym={ym} onChange={(v) => { setYm(v); setDay(null); }} />
+            <MonthChips ym={ym} onChange={(v) => { setYm(v); setDay(null); }} variant="onGreen" />
           </View>
           <MonthSummary income={totals.income} expense={totals.expense} currency={finance.settings.currency} />
         </GradientHeader>

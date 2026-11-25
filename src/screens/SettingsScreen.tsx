@@ -116,14 +116,14 @@ export function SettingsScreen() {
         showsVerticalScrollIndicator={false}
         bounces={false}
       >
-        <GradientHeader title="Settings" subtitle="Make Aiserie Tracks yours" />
+        <GradientHeader title="Settings" subtitle="Make Aiserie Tracks yours" tone="deep" />
 
         <View style={styles.body}>
           <Entrance delay={0}>
             <Text style={[styles.section, { color: t.subtext }]}>Appearance</Text>
             <AppearanceSwitch />
             <Text style={[styles.hint, { color: t.faint }]}>
-              {isDark ? 'Midnight ink is on — deep navy with warm gold accents.' : 'Capiz paper is on — warm cream with sea-ink text.'}
+              {isDark ? 'Jungle night is on — deep green with warm gold accents.' : 'Fern paper is on — soft mint with pine-ink text.'}
             </Text>
           </Entrance>
 
@@ -273,8 +273,9 @@ export function SettingsScreen() {
               <View style={{ flex: 1 }}>
                 <Text style={[styles.rowTitle, { color: t.text }]}>Aiserie Tracks v{APP_VERSION}</Text>
                 <Text style={[styles.rowSub, { color: t.subtext }]}>
-                  Golden Hour: dawn-sky pages, a month calendar with a day-by-day ledger, wallet balances with official
-                  bank logos, tasks, animated dark mode, and update nudges from GitHub. Made by Viztech Studios for Aiserie.
+                  Fern &amp; Bark: a greener home for your money with the pup-and-tabby duo, deep fern pages, wallet
+                  balances with official bank logos, calendar ledger, tasks, animated dark mode, and update nudges from
+                  GitHub. Made by Viztech Studios for Aiserie.
                 </Text>
               </View>
             </View>
@@ -352,7 +353,7 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     borderRadius: radius.md - 4,
-    backgroundColor: '#0B5C8A',
+    backgroundColor: '#1E7A50',
     borderWidth: 0,
   },
   segLabel: { fontFamily: font.bold, fontSize: 13.5 },
@@ -376,7 +377,7 @@ const styles = StyleSheet.create({
   rowTitle: { fontFamily: font.bold, fontSize: 15 },
   rowSub: { fontFamily: font.medium, fontSize: 12.5, lineHeight: 18, marginTop: 2 },
   nameInput: { fontFamily: font.bold, fontSize: 16, paddingVertical: 6, paddingHorizontal: 0 },
-  hint: { fontFamily: font.medium, fontSize: 11.5, marginTop: -spacing.md, marginBottom: spacing.md },
+  hint: { fontFamily: font.medium, fontSize: 11.5, marginTop: spacing.sm, marginBottom: spacing.md },
   pickerBackdrop: { flex: 1 },
   pickerSheet: {
     borderTopLeftRadius: radius.lg + 8,

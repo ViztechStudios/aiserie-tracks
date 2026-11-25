@@ -97,7 +97,7 @@ export function WalletsModal() {
         name: finalName,
         type,
         emoji: brand ? '🏦' : '👛',
-        color: brand?.color ?? '#0A5C8C',
+        color: brand?.color ?? '#1E7A50',
         logoId,
         openingBalance: amount,
       });
@@ -137,7 +137,7 @@ export function WalletsModal() {
         <AuroraBackground />
         {/* header */}
         <LinearGradient
-          colors={isDark ? ['#040B14', '#0A1F30', '#123049'] : ['#0C2E44', '#12486C', '#155B8A']}
+          colors={isDark ? ['#03100A', '#082017', '#0D3222'] : ['#0D3B27', '#14503A', '#1E7A50']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1.2, y: 1 }}
           style={styles.header}
@@ -195,7 +195,7 @@ export function WalletsModal() {
               </Text>
               <PressableScale onPress={() => setStep('brand')} haptic="light" style={styles.ctaWrap}>
                 <LinearGradient
-                  colors={isDark ? ['#0A1F30', '#1B5D86', '#2B7CA8'] : ['#0C2E44', '#0F5C86', '#147BB0']}
+                  colors={isDark ? ['#082017', '#14503A', '#1E7A50'] : ['#14503A', '#1E7A50', '#2E9B63']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                   style={styles.cta}
@@ -237,7 +237,7 @@ export function WalletsModal() {
           {step === 'list' && finance.accounts.length > 0 && (
             <PressableScale onPress={() => setStep('brand')} haptic="light" style={styles.ctaWrap}>
               <LinearGradient
-                colors={isDark ? ['#0A1F30', '#1B5D86', '#2B7CA8'] : ['#0C2E44', '#0F5C86', '#147BB0']}
+                colors={isDark ? ['#082017', '#14503A', '#1E7A50'] : ['#14503A', '#1E7A50', '#2E9B63']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.cta}
@@ -374,7 +374,7 @@ export function WalletsModal() {
                 </Pressable>
                 <Pressable style={{ flex: 1 }} onPress={saveAccount}>
                   <LinearGradient
-                    colors={isDark ? ['#0A1F30', '#1B5D86', '#2B7CA8'] : ['#0C2E44', '#0F5C86', '#147BB0']}
+                    colors={isDark ? ['#082017', '#14503A', '#1E7A50'] : ['#14503A', '#1E7A50', '#2E9B63']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                     style={styles.saveBtn}
@@ -410,7 +410,7 @@ export function WalletsModal() {
               {pasteResult ? <Text style={[styles.pasteError, { color: t.risk }]}>{pasteResult}</Text> : null}
               <Pressable onPress={detectFromText} disabled={!pasteText.trim()}>
                 <LinearGradient
-                  colors={isDark ? ['#0A1F30', '#1B5D86', '#2B7CA8'] : ['#0C2E44', '#0F5C86', '#147BB0']}
+                  colors={isDark ? ['#082017', '#14503A', '#1E7A50'] : ['#14503A', '#1E7A50', '#2E9B63']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                   style={[styles.saveBtn, !pasteText.trim() && { opacity: 0.5 }]}

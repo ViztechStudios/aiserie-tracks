@@ -157,6 +157,7 @@ export function TasksScreen() {
         <GradientHeader
           title="Things to do"
           subtitle={total === 0 ? 'Little money chores, big peace of mind' : `${store.openCount} open · ${store.doneCount} done`}
+          tone="deep"
         >
           <Entrance delay={60}>
             <GlassCard hi tint={t.card}>
@@ -253,11 +254,12 @@ export function TasksScreen() {
               icon="list"
               title="Nothing to do yet"
               body="Money chores live here: pay a bill, move savings, cancel a subscription, check a receipt. Tap the star to pin the important ones."
+              mascot
             />
           ) : (
             <>
               {showOpen && open.length === 0 && showDone ? (
-                <EmptyState icon="checkmark-done" title="Everything is done" body="Enjoy it — or add something new above." />
+                <EmptyState icon="checkmark-done" title="Everything is done" body="Enjoy it — or add something new above." mascot />
               ) : null}
               {showOpen && open.length > 0 ? (
                 <View>
@@ -317,7 +319,7 @@ const styles = StyleSheet.create({
   trackFill: {
     height: '100%',
     borderRadius: radius.pill,
-    backgroundColor: '#177E71',
+    backgroundColor: '#1E7A50',
   },
   progressHint: { fontFamily: font.medium, fontSize: 12, lineHeight: 17, marginTop: spacing.md },
   body: { paddingHorizontal: spacing.xl, paddingTop: spacing.lg },

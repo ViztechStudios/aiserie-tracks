@@ -4,7 +4,7 @@ import { BottomTabBarProps, createBottomTabNavigator } from '@react-navigation/b
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { brandOcean, font, gradientsFor, lightColors } from '../theme';
+import { brandFern, font, gradientsFor, lightColors } from '../theme';
 import { useTheme } from '../store/ThemeContext';
 import { useUI } from '../store/UIContext';
 import { PressableScale } from '../components/PressableScale';
@@ -81,10 +81,10 @@ function TabSlot({
 }
 
 /**
- * The bottom rail — three quiet slots (Goals · Calendar · Balance) on a solid
- * paper surface, with a floating + button at the right that opens the add-
- * transaction sheet. Anchored insets keep everything clear of the home
- * indicator on notched iPhones.
+ * The bottom rail — three quiet slots (Goals · Calendar · [+ add] · Balance)
+ * on a solid paper surface. The big green + lives in the rail itself, so no
+ * floating button ever covers the page content. Anchored insets keep
+ * everything clear of the home indicator on notched iPhones.
  */
 function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const { t, isDark, shadow } = useTheme();
@@ -95,18 +95,6 @@ function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 
   return (
     <View style={styles.railWrap} pointerEvents="box-none">
-      {/* floating + button — opens the add-transaction sheet */}
-      <PressableScale
-        onPress={() => ui.openAdd()}
-        scaleTo={0.88}
-        haptic="medium"
-        style={[styles.fab, { bottom: bottomInset + 66 }]}
-      >
-        <LinearGradient colors={gradients.fab} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.fabInner}>
-          <Ionicons name="add" size={24} color={lightColors.white} />
-        </LinearGradient>
-      </PressableScale>
-
       <View
         style={[
           styles.rail,
@@ -124,7 +112,7 @@ function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
           if (!TAB_ICONS[route.name]) return null; // hidden routes: Scan, Advisor, Settings
 
           const icon = TAB_ICONS[route.name];
-          return (
+          const slot = (
             <TabSlot
               key={route.key}
               routeKey={route.key}
@@ -137,6 +125,24 @@ function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
               }}
             />
           );
+          // after the second slot, lay the big green + button into the rail
+          return index === 2
+            ? [
+                slot,
+                <View key="add-slot" style={styles.slot}>
+                  <PressableScale onPress={() => ui.openAdd()} scaleTo={0.88} haptic="medium" style={styles.slotPress}>
+                    <LinearGradient
+                      colors={gradients.fab}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={styles.addBtn}
+                    >
+                      <Ionicons name="add" size={26} color={lightColors.white} />
+                    </LinearGradient>
+                  </PressableScale>
+                </View>,
+              ]
+            : [slot];
         })}
       </View>
     </View>
@@ -167,7 +173,7 @@ export function RootNavigator() {
   );
 }
 
-const RAIL_HEIGHT = 58;
+const RAIL_HEIGHT = 62;
 
 const styles = StyleSheet.create({
   railWrap: {
@@ -177,19 +183,13 @@ const styles = StyleSheet.create({
     bottom: 0,
     backgroundColor: 'transparent',
   },
-  fab: {
-    position: 'absolute',
-    right: 18,
-    width: 54,
-    height: 54,
-    borderRadius: 27,
-  },
-  fabInner: {
-    flex: 1,
-    borderRadius: 27,
+  addBtn: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: brandOcean,
+    backgroundColor: brandFern,
   },
   rail: {
     flexDirection: 'row',

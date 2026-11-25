@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { GradientHeader } from '../components/GradientHeader';
@@ -21,9 +21,11 @@ import { formatMoney } from '../utils/money';
 import { useResponsive } from '../hooks/useResponsive';
 
 /**
- * Balance — the main page. Dawn-sky hero with the month balance, the month
- * chip strip, income/expenses summary cards, the wallet strip, then the
- * day-by-day ledger for the selected month.
+ * Balance — the main page. A deep fern header greets you with the two small
+ * companions (a waving tabby by your name), the month balance in ink-white,
+ * the wallet pill, month chips and the income/expense pair. Below, the
+ * wallet strip, the day-by-day ledger, and the Advisor card with the coach
+ * duo. Every block stacks vertically — nothing floats over anything else.
  */
 export function HomeScreen() {
   const finance = useFinance();
@@ -42,24 +44,37 @@ export function HomeScreen() {
     () => finance.accounts.reduce((sum, a) => sum + accountBalance(a, finance.transactions), 0),
     [finance.accounts, finance.transactions]
   );
-  const initial = (finance.settings.userName || 'A').trim().charAt(0).toUpperCase() || 'A';
-  const heroInk = isDark ? '#F2F6FA' : '#1A2B3C';
-  const heroSub = isDark ? 'rgba(226,236,244,0.75)' : 'rgba(26,43,60,0.62)';
-  const actionBg = isDark ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.62)';
+
+  const greeting = useMemo(() => {
+    const h = new Date().getHours();
+    if (h < 5) return 'Good night,';
+    if (h < 12) return 'Good morning,';
+    if (h < 18) return 'Good afternoon,';
+    return 'Good evening,';
+  }, []);
+
+  const heroInk = '#FFFFFF';
+  const heroSub = 'rgba(240,248,243,0.72)';
+  const actionBg = 'rgba(255,255,255,0.14)';
+  const balanceTone = totals.net >= 0 ? heroInk : '#FFC9CD';
 
   return (
     <View style={styles.root}>
       <AuroraBackground />
       <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
-        <GradientHeader bare>
-          {/* identity row + quick actions */}
+        <GradientHeader bare tone="deep">
+          {/* greeting row — avatar, name, quick actions */}
           <View style={styles.topRow}>
-            <View style={[styles.avatar, { backgroundColor: isDark ? 'rgba(233,200,126,0.18)' : 'rgba(255,255,255,0.72)' }]}>
-              <Text style={[styles.avatarText, { color: isDark ? t.sun300 : '#8A5A16' }]}>{initial}</Text>
+            <View style={styles.mascotBubble}>
+              <Image source={require('../../assets/mascot-wave.png')} style={styles.mascotImg} resizeMode="cover" />
             </View>
             <View style={styles.topMid}>
-              <Text style={[styles.hello, { color: heroSub }]}>Good day,</Text>
-              <Text style={[styles.userName, { color: heroInk }]}>{finance.settings.userName}</Text>
+              <Text style={[styles.hello, { color: heroSub }]} numberOfLines={1}>
+                {greeting}
+              </Text>
+              <Text style={[styles.userName, { color: heroInk }]} numberOfLines={1}>
+                {finance.settings.userName || 'Friend'}
+              </Text>
             </View>
             <View style={styles.actions}>
               <PressableScale
@@ -79,30 +94,38 @@ export function HomeScreen() {
             </View>
           </View>
 
-          {/* month balance */}
-          <View style={styles.balanceRow}>
-            <View style={styles.balanceLeft}>
-              <Text style={[styles.balanceLabel, { color: heroSub }]}>
-                {monthLabel(ym, false).toUpperCase()} BALANCE
-              </Text>
-              <Text style={[styles.balanceValue, { color: totals.net >= 0 ? heroInk : t.expense }]} numberOfLines={1}>
-                {totals.net >= 0 ? '+' : '−'}
-                {formatMoney(Math.abs(totals.net), finance.settings.currency)}
-              </Text>
-            </View>
-            <View style={styles.balanceRight}>
-              <Text style={[styles.walletsLabel, { color: heroSub }]}>WALLETS BALANCE</Text>
-              <PressableScale onPress={() => ui.openWallets()} scaleTo={0.95}>
-                <Text style={[styles.walletsValue, { color: heroInk }]} numberOfLines={1}>
-                  {formatMoney(walletsTotal, finance.settings.currency)}
-                </Text>
-              </PressableScale>
-            </View>
+          {/* month balance — single column, never collides */}
+          <View style={styles.balanceBlock}>
+            <Text style={[styles.balanceLabel, { color: '#F0D492' }]}>
+              {monthLabel(ym, false).toUpperCase()} NET BALANCE
+            </Text>
+            <Text
+              style={[styles.balanceValue, { color: balanceTone }]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.55}
+            >
+              {totals.net >= 0 ? '+' : '−'}
+              {formatMoney(Math.abs(totals.net), finance.settings.currency)}
+            </Text>
           </View>
+
+          {/* wallets pill — one full-width row */}
+          <PressableScale onPress={() => ui.openWallets()} scaleTo={0.97} style={styles.walletsPill}>
+            <View style={[styles.walletsIcon, { backgroundColor: 'rgba(255,255,255,0.16)' }]}>
+              <Ionicons name="wallet-outline" size={15} color={heroInk} />
+            </View>
+            <Text style={[styles.walletsLabel, { color: heroInk }]}>All wallets</Text>
+            <View style={styles.walletsSpacer} />
+            <Text style={[styles.walletsValue, { color: heroInk }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>
+              {formatMoney(walletsTotal, finance.settings.currency)}
+            </Text>
+            <Ionicons name="chevron-forward" size={14} color={heroSub} />
+          </PressableScale>
 
           {/* month chips */}
           <View style={styles.chipsWrap}>
-            <MonthChips ym={ym} onChange={setYm} />
+            <MonthChips ym={ym} onChange={setYm} variant="onGreen" />
           </View>
 
           {/* income / expenses summary */}
@@ -125,11 +148,11 @@ export function HomeScreen() {
             </View>
           </Entrance>
 
-          {/* advisor teaser */}
+          {/* advisor teaser with the coach duo */}
           <Entrance delay={240}>
             <GlassCard style={styles.advisorRow} onPress={() => navigation.navigate('Advisor' as never)}>
-              <View style={[styles.advisorIcon, { backgroundColor: 'rgba(192,138,50,0.14)' }]}>
-                <Ionicons name="bulb-outline" size={17} color={t.sun500} />
+              <View style={[styles.advisorIcon, { backgroundColor: 'rgba(30,122,80,0.12)' }]}>
+                <Ionicons name="bulb-outline" size={17} color={t.ocean600} />
               </View>
               <View style={styles.advisorMid}>
                 <Text style={[styles.advisorTitle, { color: t.text }]}>Advisor</Text>
@@ -137,6 +160,7 @@ export function HomeScreen() {
                   Coaching and safe-to-spend, from your own numbers.
                 </Text>
               </View>
+              <Image source={require('../../assets/mascot-advisor.png')} style={styles.advisorMascot} resizeMode="contain" />
               <Ionicons name="chevron-forward" size={15} color={t.faint} />
             </GlassCard>
           </Entrance>
@@ -149,17 +173,21 @@ export function HomeScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: 'transparent' },
   topRow: { flexDirection: 'row', alignItems: 'center' },
-  avatar: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+  mascotBubble: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: '#FFFFFF',
+    overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.55)',
   },
-  avatarText: { fontFamily: font.displayBold, fontSize: 18 },
-  topMid: { flex: 1, marginLeft: spacing.md },
-  hello: { fontFamily: font.medium, fontSize: 12 },
-  userName: { fontFamily: font.display, fontSize: 19, marginTop: 1 },
+  mascotImg: { width: '100%', height: '100%' },
+  topMid: { flex: 1, marginLeft: spacing.md, marginRight: spacing.sm },
+  hello: { fontFamily: font.medium, fontSize: 12.5 },
+  userName: { fontFamily: font.display, fontSize: 20, marginTop: 1 },
   actions: { flexDirection: 'row', gap: spacing.sm },
   actionCircle: {
     width: 38,
@@ -168,18 +196,40 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  balanceRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    marginTop: spacing.xl,
+  balanceBlock: { marginTop: spacing.xl },
+  balanceLabel: { fontFamily: font.bold, fontSize: 10, letterSpacing: 1.4 },
+  balanceValue: {
+    fontFamily: font.heavy,
+    fontSize: 36,
+    marginTop: 6,
+    letterSpacing: 0.2,
+    flexShrink: 1,
+    alignSelf: 'flex-start',
+    maxWidth: '100%',
   },
-  balanceLeft: { flex: 1 },
-  balanceLabel: { fontFamily: font.bold, fontSize: 10, letterSpacing: 1.2 },
-  balanceValue: { fontFamily: font.heavy, fontSize: 34, marginTop: 4, letterSpacing: 0.2 },
-  balanceRight: { alignItems: 'flex-end', marginLeft: spacing.md },
-  walletsLabel: { fontFamily: font.bold, fontSize: 9.5, letterSpacing: 1.2 },
-  walletsValue: { fontFamily: font.bold, fontSize: 15, marginTop: 4 },
-  chipsWrap: { marginTop: spacing.lg },
+  walletsPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: spacing.lg,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.16)',
+  },
+  walletsIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.sm,
+  },
+  walletsLabel: { fontFamily: font.bold, fontSize: 12.5, flexShrink: 1 },
+  walletsSpacer: { flex: 1, width: 8 },
+  walletsValue: { fontFamily: font.heavy, fontSize: 13.5, marginRight: 6, maxWidth: '55%' },
+  chipsWrap: { marginTop: spacing.md },
   body: { paddingHorizontal: spacing.xl, paddingTop: spacing.md, paddingBottom: 120 },
   ledger: { marginTop: spacing.sm },
   advisorRow: {
@@ -187,7 +237,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     paddingHorizontal: spacing.md,
-    borderRadius: 14,
+    borderRadius: 16,
     marginTop: spacing.lg,
   },
   advisorIcon: {
@@ -200,4 +250,5 @@ const styles = StyleSheet.create({
   advisorMid: { flex: 1, marginHorizontal: spacing.md },
   advisorTitle: { fontFamily: font.bold, fontSize: 14.5 },
   advisorSub: { fontFamily: font.medium, fontSize: 12, marginTop: 1 },
+  advisorMascot: { width: 54, height: 40, marginLeft: spacing.sm },
 });

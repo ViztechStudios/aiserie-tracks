@@ -2,7 +2,7 @@ import React from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { font, gradientsDark, gradientsLight, spacing } from '../theme';
+import { font, gradientsDark, gradientsLight, gradientsFor, spacing } from '../theme';
 import { useTheme } from '../store/ThemeContext';
 
 interface Props {
@@ -11,23 +11,42 @@ interface Props {
   children?: React.ReactNode;
   /** Hides the built-in title block (for hero layouts that roll their own). */
   bare?: boolean;
+  /**
+   * 'hero' (default) — soft mint-to-gold dawn gradient with dark ink text.
+   * 'deep' — full fern-ink gradient with white text (Tarsi-style green page top).
+   */
+  tone?: 'hero' | 'deep';
 }
 
 /**
- * Page header — dawn over the bay. A soft sky-to-gold gradient, a whisper of
- * woven paper, and a low sun disc. Filipino golden hour, kept quiet: the
- * color does the work, no ornaments.
+ * Page header — morning in the fern house. Two moods: the soft mint "hero"
+ * for inner pages, and the deep pine "green room" for the home top. A
+ * whisper of woven paper and a pale sun disc keep it warm; the color does
+ * the work, no ornaments.
  */
-export function GradientHeader({ title, subtitle, children, bare }: Props) {
+export function GradientHeader({ title, subtitle, children, bare, tone = 'hero' }: Props) {
   const insets = useSafeAreaInsets();
   const { isDark } = useTheme();
-  const hero = isDark ? gradientsDark.hero : gradientsLight.hero;
-  const titleColor = isDark ? '#F2F6FA' : '#1A2B3C';
-  const eyebrowColor = isDark ? '#E9C87E' : '#A3691F';
+  const deep = tone === 'deep';
+  const colors = deep
+    ? isDark
+      ? gradientsFor(true).header
+      : gradientsLight.header
+    : isDark
+      ? gradientsDark.hero
+      : gradientsLight.hero;
+  const titleColor = deep ? '#FFFFFF' : isDark ? '#F2F8F3' : '#16382A';
+  const eyebrowColor = deep
+    ? isDark
+      ? '#EFD492'
+      : '#F0D492'
+    : isDark
+      ? '#EFD492'
+      : '#3E7A57';
 
   return (
-    <View style={[styles.wrap, { paddingTop: insets.top + spacing.lg, backgroundColor: hero[0] }]}>
-      <LinearGradient colors={hero} start={{ x: 0, y: 0 }} end={{ x: 0.25, y: 1 }} style={StyleSheet.absoluteFill} />
+    <View style={[styles.wrap, { paddingTop: insets.top + spacing.lg, backgroundColor: colors[0] }]}>
+      <LinearGradient colors={colors} start={{ x: 0, y: 0 }} end={{ x: 0.25, y: 1 }} style={StyleSheet.absoluteFill} />
       <Image
         source={
           isDark
@@ -36,10 +55,22 @@ export function GradientHeader({ title, subtitle, children, bare }: Props) {
         }
         resizeMode="cover"
         pointerEvents="none"
-        style={[StyleSheet.absoluteFill, { opacity: isDark ? 0.10 : 0.14 }]}
+        style={[StyleSheet.absoluteFill, { opacity: isDark ? 0.10 : deep ? 0.10 : 0.14 }]}
       />
-      {/* low sun over the water */}
-      <View pointerEvents="none" style={[styles.sun, { backgroundColor: isDark ? 'rgba(233,200,126,0.10)' : 'rgba(255,255,255,0.45)' }]} />
+      {/* pale sun through the leaves */}
+      <View
+        pointerEvents="none"
+        style={[
+          styles.sun,
+          {
+            backgroundColor: deep
+              ? 'rgba(255,255,255,0.10)'
+              : isDark
+                ? 'rgba(239,212,146,0.08)'
+                : 'rgba(255,255,255,0.45)',
+          },
+        ]}
+      />
       <View style={styles.content}>
         {!bare && subtitle ? (
           <Text style={[styles.subtitle, { color: eyebrowColor }]}>{subtitle.toUpperCase()}</Text>

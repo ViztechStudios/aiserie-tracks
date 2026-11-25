@@ -80,7 +80,7 @@ export function MonthGrid({ ym, transactions, selectedDay, onSelectDay }: Props)
                 <View
                   style={[
                     styles.dayNum,
-                    selected && { backgroundColor: isDark ? t.sun500 : '#1A2B3C' },
+                    selected && { backgroundColor: isDark ? t.sun500 : '#0D3B27' },
                     today && !selected && { borderWidth: 1.5, borderColor: t.sun500 },
                   ]}
                 >
@@ -90,7 +90,7 @@ export function MonthGrid({ ym, transactions, selectedDay, onSelectDay }: Props)
                       {
                         color: selected
                           ? isDark
-                            ? '#0B1520'
+                            ? '#05130C'
                             : '#FFFFFF'
                           : today
                             ? t.text

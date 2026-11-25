@@ -108,7 +108,7 @@ export function MonthTxList({
       ) : null}
 
       {groups.length === 0 ? (
-        <EmptyState icon={emptyIcon} title={emptyTitle} body={emptyBody} />
+        <EmptyState icon={emptyIcon} title={emptyTitle} body={emptyBody} mascot={!dayFilter} />
       ) : (
         groups.map((g, gi) => {
           const showWeek = gi === 0 || weekStart(g.date) !== weekStart(groups[gi - 1].date);

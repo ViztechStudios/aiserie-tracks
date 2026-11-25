@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { GradientHeader } from '../components/GradientHeader';
 import { GlassCard } from '../components/GlassCard';
@@ -21,7 +21,7 @@ export function AdvisorScreen() {
   const { t, isDark } = useTheme();
   const { contentWidth } = useResponsive();
   const [ym, setYm] = useState(currentMonthKey());
-  const heroInk = isDark ? t.text : '#1A2B3C';
+  const heroInk = '#FFFFFF';
 
   const report = useMemo(
     () => buildAdvisorReport(finance.transactions, ym, finance.settings.currency),
@@ -38,7 +38,7 @@ export function AdvisorScreen() {
         bounces={false}
         contentContainerStyle={contentWidth ? { alignSelf: 'center', width: '100%', maxWidth: contentWidth } : null}
       >
-        <GradientHeader title="Finance Advisor" subtitle="Personal coaching from your own data">
+        <GradientHeader title="Finance Advisor" subtitle="Personal coaching from your own data" tone="deep">
           <View style={styles.monthRow}>
             <PressableScale onPress={() => setYm(shiftMonth(ym, -1))} style={styles.monthBtn} scaleTo={0.88}>
               <Ionicons name="chevron-back" size={18} color={heroInk} />
@@ -58,8 +58,10 @@ export function AdvisorScreen() {
             </PressableScale>
           </View>
 
-          {/* hero: safe to spend — paper set into the ink panel */}
+          {/* hero: safe to spend — paper set into the ink panel, coach duo beside it */}
           <GlassCard hi tint={t.card}>
+            <View style={styles.heroRow}>
+              <View style={styles.heroCol}>
             {ym === currentMonthKey() && report.safeToSpendPerDay !== null ? (
               <>
                 <Text style={[styles.heroLabel, { color: t.sun500 }]}>Safe to spend per day</Text>
@@ -84,6 +86,9 @@ export function AdvisorScreen() {
                 </Text>
               </>
             )}
+              </View>
+              <Image source={require('../../assets/mascot-advisor.png')} style={styles.heroMascot} resizeMode="contain" />
+            </View>
           </GlassCard>
         </GradientHeader>
 
@@ -139,7 +144,10 @@ const styles = StyleSheet.create({
   heroValue: { fontFamily: font.heavy, fontSize: 30 },
   heroSub: { fontFamily: font.medium, fontSize: 13, marginTop: 4 },
   heroSub2: { fontFamily: font.medium, fontSize: 12.5, lineHeight: 18 },
-  heroDivider: { height: 1, backgroundColor: 'rgba(30,44,60,0.14)', marginVertical: spacing.md },
+  heroDivider: { height: 1, backgroundColor: 'rgba(19,54,36,0.14)', marginVertical: spacing.md },
+  heroRow: { flexDirection: 'row', alignItems: 'center' },
+  heroCol: { flex: 1, flexShrink: 1 },
+  heroMascot: { width: 96, height: 66, marginLeft: spacing.md },
   body: { paddingHorizontal: spacing.xl, paddingTop: spacing.lg },
   rateCard: {
     borderWidth: 1,
@@ -151,5 +159,5 @@ const styles = StyleSheet.create({
   rateItem: { flex: 1, alignItems: 'center' },
   rateNum: { fontFamily: font.heavy, fontSize: 17 },
   rateLabel: { fontFamily: font.medium, fontSize: 11, marginTop: 3 },
-  sectionTitle: { fontFamily: font.display, fontSize: 19, color: '#1A2B3C', marginVertical: spacing.lg },
+  sectionTitle: { fontFamily: font.display, fontSize: 19, marginVertical: spacing.lg },
 });

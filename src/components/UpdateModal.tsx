@@ -67,7 +67,7 @@ export function UpdateModal() {
             {info?.notes ? <Text style={[styles.notes, { color: t.subtext }]} numberOfLines={2}>{info.notes}</Text> : null}
             <PressableScale onPress={() => { close(); openReleases(); }} haptic="medium" style={styles.ctaWrap}>
               <LinearGradient
-                colors={[brandOcean, '#2A7FAD']}
+                colors={[brandOcean, '#2E9B63']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.cta}

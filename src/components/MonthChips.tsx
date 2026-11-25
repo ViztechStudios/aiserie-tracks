@@ -28,9 +28,19 @@ export function buildMonthOptions(current: string, back = 2, forward = 15): Mont
   return options;
 }
 
-export function MonthChips({ ym, onChange }: { ym: string; onChange: (ym: string) => void }) {
+export function MonthChips({
+  ym,
+  onChange,
+  variant = 'default',
+}: {
+  ym: string;
+  onChange: (ym: string) => void;
+  /** 'onGreen' renders for the deep fern header (white pills, green ink). */
+  variant?: 'default' | 'onGreen';
+}) {
   const { t, isDark } = useTheme();
   const options = useMemo(() => buildMonthOptions(currentMonth()), []);
+  const onGreen = variant === 'onGreen';
 
   return (
     <ScrollView
@@ -52,10 +62,14 @@ export function MonthChips({ ym, onChange }: { ym: string; onChange: (ym: string
                 backgroundColor: on
                   ? isDark
                     ? t.sun500
-                    : '#1A2B3C'
+                    : onGreen
+                      ? '#FFFFFF'
+                      : '#0D3B27'
                   : isDark
                     ? 'rgba(255,255,255,0.10)'
-                    : 'rgba(26,43,60,0.08)',
+                    : onGreen
+                      ? 'rgba(255,255,255,0.16)'
+                      : 'rgba(19,54,36,0.08)',
               },
             ]}
           >
@@ -65,11 +79,15 @@ export function MonthChips({ ym, onChange }: { ym: string; onChange: (ym: string
                 {
                   color: on
                     ? isDark
-                      ? '#0B1520'
-                      : '#FFFFFF'
+                      ? '#05130C'
+                      : onGreen
+                        ? '#0D3B27'
+                        : '#FFFFFF'
                     : isDark
                       ? t.subtext
-                      : '#3E5568',
+                      : onGreen
+                        ? 'rgba(255,255,255,0.85)'
+                        : '#4E6A5B',
                 },
               ]}
             >

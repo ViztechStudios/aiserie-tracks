@@ -5,7 +5,7 @@ import Constants from 'expo-constants';
 import * as SplashScreen from 'expo-splash-screen';
 import { font } from '../theme';
 
-const BOOT_BG: readonly [string, string, string] = ['#050D18', '#0B2138', '#12304C'];
+const BOOT_BG: readonly [string, string, string] = ['#05130C', '#0C2E1D', '#123E28'];
 
 interface Props {
   /** Data hydration flag — the curtain dissolves once ready AND the intro has played. */
@@ -70,7 +70,7 @@ export function LoadingScreen({ ready, onDone }: Props) {
         source={require('../../assets/textures/weave.png')}
         resizeMode="cover"
         pointerEvents="none"
-        style={[StyleSheet.absoluteFill, { opacity: 0.05, tintColor: '#E9C46A' }]}
+        style={[StyleSheet.absoluteFill, { opacity: 0.06, tintColor: '#9BD9B8' }]}
       />
       {/* soft glow behind the mark */}
       <View style={styles.glowWrap} pointerEvents="none">
@@ -148,7 +148,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(233,196,106,0.32)',
   },
-  logo: { width: 96, height: 96 },
+  logo: { width: 96, height: 96, borderRadius: 48, overflow: 'hidden' },
   title: { color: '#FFFFFF', fontFamily: font.displayBold, fontSize: 26, letterSpacing: 0.3, marginTop: 26, textAlign: 'center' },
   tagline: {
     color: 'rgba(233,196,106,0.85)',
