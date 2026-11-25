@@ -55,7 +55,7 @@ export function GradientHeader({ title, subtitle, children, bare, tone = 'hero' 
         }
         resizeMode="cover"
         pointerEvents="none"
-        style={[StyleSheet.absoluteFill, { opacity: isDark ? 0.10 : deep ? 0.10 : 0.14 }]}
+        style={[styles.weaveFill, { opacity: isDark ? 0.10 : deep ? 0.10 : 0.14 }]}
       />
       {/* pale sun through the leaves */}
       <View
@@ -92,6 +92,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
     paddingBottom: spacing.xl,
     overflow: 'hidden',
+  },
+  // Web note: react-native-web sizes an Image with only absoluteFill insets at
+  // its intrinsic pixel size, so a 480px texture left a visible seam down the
+  // middle of wide (tablet) screens. Explicit 100% width/height stretches the
+  // weave edge-to-edge on every platform.
+  weaveFill: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
   },
   content: {},
   sun: {

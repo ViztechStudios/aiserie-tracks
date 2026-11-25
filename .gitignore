@@ -42,3 +42,4 @@ yarn-error.*
 
 eas-submit.json
 eas-submit-stderr.log
+dist-web/

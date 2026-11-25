@@ -27,7 +27,7 @@ export function AuroraBackground({ intensity = 1 }: Props) {
         <Animated.Image
           source={require('../../assets/textures/weave-light.png')}
           resizeMode="cover"
-          style={[StyleSheet.absoluteFill, { opacity: aurora.weaveOpacity }]}
+          style={[styles.weaveFill, { opacity: aurora.weaveOpacity }]}
         />
         <LinearGradient
           colors={[aurora.glow, 'rgba(0,0,0,0)']}
@@ -40,7 +40,7 @@ export function AuroraBackground({ intensity = 1 }: Props) {
         <Animated.Image
           source={require('../../assets/textures/weave-dark.png')}
           resizeMode="cover"
-          style={[StyleSheet.absoluteFill, { opacity: aurora.weaveOpacity }]}
+          style={[styles.weaveFill, { opacity: aurora.weaveOpacity }]}
         />
       </Animated.View>
       {/* keeps Android overflow clipping happy without extra layers */}
@@ -51,4 +51,14 @@ export function AuroraBackground({ intensity = 1 }: Props) {
 
 const styles = StyleSheet.create({
   spacer: { width: 1, height: 1 },
+  // Web note: with bare absoluteFill insets, react-native-web keeps the Image
+  // at its intrinsic 480px size, which split wide screens with a seam. Percent
+  // sizing stretches the texture to the real viewport on web and native alike.
+  weaveFill: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+  },
 });
