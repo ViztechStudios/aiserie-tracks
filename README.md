@@ -1,6 +1,6 @@
 # Aiserie Tracks 🐾
 
-A jungle-green, hand-drawn **personal finance tracker** that runs as a **native Android app (APK)**, an **iPhone/iPad app**, and an **installable PWA** — built with [Expo](https://expo.dev), React Native and TypeScript. v3.0.0 "Piggy banks & polish" is the biggest update yet: **animated money counters** everywhere, **savings goals**, **search & filters**, an **optional PIN app lock**, a **storage meter with reclaim**, and a **40 % smaller APK** — on top of the v2.7.0 reliability work (backup & restore, CSV/PDF reports, recurring transactions, budget alerts) and the v2.6.0 hand-drawn Fern & Bark rebrand.
+A jungle-green, hand-drawn **personal finance tracker** that runs as a **native Android app (APK)**, an **iPhone/iPad app**, and an **installable PWA** — built with [Expo](https://expo.dev), React Native and TypeScript. v3.0.1 "Recovery & resilience" fixes the v3.0.0 launch crash (a recurring rule with missing dates could white-screen the app) and adds two safety nets: a **branded recovery screen** for any render bug and a **boot watchdog** on the loading curtain — on top of v3.0.0 "Piggy banks & polish" (**animated money counters**, **savings goals**, **search & filters**, **optional PIN app lock**, **storage meter with reclaim**, **40 % smaller APK**) and the v2.7.0 reliability work (backup & restore, CSV/PDF reports, recurring transactions, budget alerts).
 
 ![stack](https://img.shields.io/badge/Expo-SDK%2058-0EA5E9) ![platform](https://img.shields.io/badge/Android%20%7C%20iOS%20%7C%20Web-Expo%20EAS%20%2B%20PWA-22D3EE) ![cost](https://img.shields.io/badge/distribution-%240-success)
 
@@ -26,6 +26,7 @@ A jungle-green, hand-drawn **personal finance tracker** that runs as a **native 
 - **📊 Reports (CSV & PDF)** — income, expenses, category breakdown, wallet balances and every transaction for any period: this/last month, last 3 months, year, all time or custom range. CSV opens in Excel/Sheets; the PDF is branded and readable
 - **🔁 Recurring transactions** — schedule salary, rent or subscriptions daily/weekly/monthly/yearly; Aiserie logs them automatically with **deterministic ids so re-runs and restores never duplicate money**. Pause, edit or delete any time; a 90-day backfill horizon keeps old schedules from flooding the ledger
 - **🔔 Budget alerts** — envelopes notify once when spending reaches 50 / 75 / 90 / 100% (configurable per budget), reset each month, and a month summary shows caps vs actual spending
+- **🛡️ Crash-proof by design** — malformed records (a recurring rule missing dates, a wallet row missing its balance) are **repaired at load** or paused, never fatal; a root **error boundary** swaps any render bug for a branded recovery screen with *Try again* / *Reset app data*, and the boot curtain gets a *Continue anyway* escape if opening ever stalls
 
 ## Project structure
 
