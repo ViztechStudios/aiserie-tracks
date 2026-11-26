@@ -56,6 +56,8 @@ interface FinanceContextValue {
   replaceTransactions: (txs: Transaction[]) => void;
   setCurrency: (code: string) => void;
   setUserName: (name: string) => void;
+  /** Toggle the privacy shield (hide balances when the app is backgrounded). */
+  setPrivacyShield: (enabled: boolean) => void;
   clearAllData: () => Promise<void>;
   loadSampleData: () => void;
 }
@@ -90,6 +92,8 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
           setSettings({
             currency: typeof parsed.currency === 'string' ? parsed.currency : DEFAULT_CURRENCY,
             userName: typeof parsed.userName === 'string' && parsed.userName.trim() ? parsed.userName : 'Aiserie',
+            // v4.0.0 privacy shield — undefined in old settings counts as ON
+            privacyShield: parsed.privacyShield !== false,
           });
         }
       } catch (e) {
@@ -190,6 +194,10 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     setSettings((s) => ({ ...s, userName: name.trim() || 'Aiserie' }));
   }, []);
 
+  const setPrivacyShield = useCallback((enabled: boolean) => {
+    setSettings((s) => ({ ...s, privacyShield: enabled }));
+  }, []);
+
   const clearAllData = useCallback(async () => {
     setTransactions([]);
     setAccounts([]);
@@ -197,7 +205,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     // wallets, settings, tasks, budgets and bills — so "Erase all data"
     // really erases everything (transactions/wallets are also reset in state).
     await AsyncStorage.multiRemove(ALL_STORAGE_KEYS).catch(() => {});
-    setSettings({ currency: DEFAULT_CURRENCY, userName: 'Aiserie' });
+    setSettings({ currency: DEFAULT_CURRENCY, userName: 'Aiserie', privacyShield: true });
   }, []);
 
   const loadSampleData = useCallback(() => {
@@ -223,6 +231,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       replaceTransactions,
       setCurrency,
       setUserName,
+      setPrivacyShield,
       clearAllData,
       loadSampleData,
     }),
@@ -242,6 +251,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       replaceTransactions,
       setCurrency,
       setUserName,
+      setPrivacyShield,
       clearAllData,
       loadSampleData,
     ]

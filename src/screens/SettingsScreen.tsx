@@ -359,6 +359,22 @@ export function SettingsScreen() {
 
           <Entrance delay={200}>
             <Text style={[styles.section, { color: t.subtext }]}>Privacy & storage</Text>
+            <PressableScale
+              onPress={() => finance.setPrivacyShield(!(finance.settings.privacyShield !== false))}
+              style={[styles.row, { backgroundColor: t.card, borderColor: t.glassBorderSoft }]}
+              haptic="light"
+            >
+              <RowIcon name="eye-off-outline" tint={t.ocean600} />
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.rowTitle, { color: t.text }]}>Privacy shield</Text>
+                <Text style={[styles.rowSub, { color: t.subtext }]}>
+                  {finance.settings.privacyShield !== false
+                    ? 'On — balances hide behind a branded curtain whenever you leave the app. Tap to turn off.'
+                    : 'Off — tap to cover balances whenever you switch apps or lock your phone.'}
+                </Text>
+              </View>
+              <Ionicons name={finance.settings.privacyShield !== false ? 'checkmark-circle' : 'ellipse-outline'} size={18} color={finance.settings.privacyShield !== false ? t.ocean600 : t.faint} />
+            </PressableScale>
             <PressableScale onPress={openLockSheet} style={[styles.row, { backgroundColor: t.card, borderColor: t.glassBorderSoft }]} haptic="light">
               <RowIcon name="finger-print-outline" tint={t.ocean600} />
               <View style={{ flex: 1 }}>

@@ -96,8 +96,15 @@ export interface Recurring {
 }
 
 export interface Settings {
-  currency: string; // ISO 4217 code, default PHP
+  currency: string; // ISO 4217, default PHP
   userName: string; // default "Aiserie"
+  /**
+   * Privacy shield (v4.0.0): cover balances with a branded curtain whenever
+   * the app leaves the foreground (task switcher, another app, locked phone).
+   * Optional for backward compatibility with stored settings from v3.x —
+   * `undefined` counts as ON, the privacy-first default.
+   */
+  privacyShield?: boolean;
 }
 
 export interface MonthTotals {

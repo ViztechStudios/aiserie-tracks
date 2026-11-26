@@ -26,6 +26,7 @@ import { ReportsModal } from './src/components/ReportsModal';
 import { BackupRestoreModal } from './src/components/BackupRestoreModal';
 import { BudgetAlertsHost } from './src/components/BudgetAlertsHost';
 import { AppLockGate } from './src/components/AppLockGate';
+import { PrivacyShield } from './src/components/PrivacyShield';
 import { ConfirmSheet } from './src/components/ConfirmSheet';
 import { ToastHost } from './src/components/ToastHost';
 import { LoadingScreen } from './src/components/LoadingScreen';
@@ -133,6 +134,8 @@ function Shell() {
       <BudgetAlertsHost />
       <ConfirmSheet />
       <ToastHost />
+      {/* privacy curtain over all content, under the pin gate and boot curtain */}
+      <PrivacyShield />
       <AppLockGate />
       <LoadingScreen ready={finance.ready && fontsLoaded} onDone={() => setBooting(false)} />
     </NavigationContainer>

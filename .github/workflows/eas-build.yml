@@ -82,3 +82,25 @@ jobs:
         env:
           EAS_BUILD_NO_EXPO_GO_WARNING: 'true'
         run: eas build --platform ${{ github.event.inputs.platform || 'android' }} --profile ${{ github.event.inputs.profile || 'preview' }} --non-interactive
+
+      - name: Publish GitHub release with APK
+        if: ${{ (github.event.inputs.platform || 'android') == 'android' && (github.event.inputs.profile || 'preview') == 'preview' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_NOTES: |
+            Aiserie Tracks v4.0.0 — "Privacy & peace of mind"
+
+            Fixes the crash when adding a balance (animated money counters used
+            two animation drivers on the same view — the exact cause of the
+            "Aiserie hit a snag" screen).
+
+            New: privacy shield — balances hide behind a branded curtain whenever
+            you leave the app (Settings -> Privacy & storage to toggle). Works
+            together with the optional 4-digit pin lock.
+
+            Everything from v3.0.x stays: backup & restore, CSV/PDF reports,
+            recurring transactions, budget alerts, savings goals, storage meter,
+            receipt scanning, purchase detection, dark mode.
+
+            Your data carries over automatically — nothing is reset.
+        run: node scripts/attach-release.mjs

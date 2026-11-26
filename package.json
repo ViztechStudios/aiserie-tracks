@@ -1,6 +1,6 @@
 {
   "name": "aiserie-tracks",
-  "version": "3.0.1",
+  "version": "4.0.0",
   "main": "index.ts",
   "dependencies": {
     "@expo-google-fonts/lora": "^0.4.2",
