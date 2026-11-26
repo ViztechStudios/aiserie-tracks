@@ -13,7 +13,7 @@ import { Account, Budget, Recurring, Transaction } from '../src/types';
 import { accountBalance, accountNet } from '../src/utils/accounts';
 import { categoryTotals, totalsForMonth, lastMonths } from '../src/utils/stats';
 import { formatMoney, parseAmount } from '../src/utils/money';
-import { generateDue, nextAfter, upcomingFor, REC_TX_ID_PREFIX } from '../src/utils/recurring';
+import { generateDue, nextAfter, upcomingFor, sanitizeRules, REC_TX_ID_PREFIX } from '../src/utils/recurring';
 import { buildBackup, validateBackup, planRestore, BACKUP_SCHEMA } from '../src/services/backup';
 import { buildReportCSV, buildReportHTML, inRange, rangeThisMonth } from '../src/services/report';
 import { activeLevels, crossingLevel, alertMessage, alertKey } from '../src/utils/budgetAlerts';
@@ -424,6 +424,47 @@ test('byteSize and formatBytes speak honest file sizes', () => {
   assert.equal(formatBytes(1024), '1.0 KB');
   assert.equal(formatBytes(2048 * 1024), '2.0 MB');
   assert.equal(formatBytes(50), '50 B');
+});
+
+/* --------------------- crash-proof recurring rules -------------------- */
+
+test('upcomingFor survives rules with missing dates (the v3.0.0 crash)', () => {
+  const broken: any = { id: 'r9', name: 'Old rule', amount: 100, categoryId: 'bills', freq: 'monthly' };
+  const nexts = upcomingFor(broken, 2); // used to throw: undefined.split()
+  assert.equal(nexts.length, 2);
+  for (const n of nexts) assert.match(n, /^\d{4}-\d{2}-\d{2}$/);
+  assert.match(nextAfter('monthly', undefined as any), /^\d{4}-\d{2}-\d{2}$/);
+});
+
+test('upcomingFor falls back to startDate when nextRun is missing', () => {
+  const rule: any = { id: 'r2', name: 'Rent', amount: 1, categoryId: 'rent', freq: 'monthly', startDate: '2026-01-10' };
+  const nexts = upcomingFor(rule, 1);
+  assert.equal(nexts[0], '2026-01-10');
+});
+
+test('sanitizeRules repairs broken rules and drops unusable ones', () => {
+  const repaired = sanitizeRules([
+    { id: 'a', name: 'Salary', amount: 5000, categoryId: 'salary', startDate: '2026-06-01' }, // no nextRun, no freq, no type
+    { id: 'b', name: 'Weird', amount: 0, categoryId: 'food', freq: 'weekly', startDate: '2026-06-02' }, // unusable amount
+    { id: 'c', name: 'Dup', amount: 9, categoryId: 'food', freq: 'daily', startDate: '2026-06-03' },
+    { id: 'c', name: 'Dup', amount: 9, categoryId: 'food', freq: 'daily', startDate: '2026-06-03' }, // duplicate
+    'garbage', // non-object row
+    { noId: true }, // cannot be addressed
+  ]);
+  assert.equal(repaired.length, 3);
+  const a = repaired.find((r) => r.id === 'a')!;
+  assert.equal(a.nextRun, '2026-06-01'); // filled from startDate
+  assert.equal(a.freq, 'monthly'); // defaulted
+  assert.equal(a.type, 'expense'); // defaulted
+  assert.equal(repaired.find((r) => r.id === 'b')!.paused, true); // paused, not dropped
+  assert.ok(repaired.every((r) => /^\d{4}-\d{2}-\d{2}$/.test(r.nextRun)));
+});
+
+test('accountBalance treats a missing openingBalance as zero, never NaN', () => {
+  const acc = { id: 'w', openingBalance: undefined as any } as any as Account;
+  const bal = accountBalance(acc, []);
+  assert.equal(Number.isFinite(bal), true);
+  assert.equal(bal, 0);
 });
 
 /* ------------------------------ summary ------------------------------- */

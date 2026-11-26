@@ -28,9 +28,13 @@ const FREQ_HINT: Record<RecurFreq, string> = {
   yearly: 'logs once a year, same date',
 };
 
-function fmtDate(iso: string): string {
+function fmtDate(iso: string | undefined | null): string {
+  if (typeof iso !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return '—';
   const [y, m, d] = iso.split('-').map(Number);
-  return new Date(y, m - 1, d).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' });
+  if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return '—';
+  const date = new Date(y, m - 1, d);
+  if (Number.isNaN(date.getTime())) return '—';
+  return date.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 /**

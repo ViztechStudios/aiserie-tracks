@@ -29,6 +29,7 @@ import { AppLockGate } from './src/components/AppLockGate';
 import { ConfirmSheet } from './src/components/ConfirmSheet';
 import { ToastHost } from './src/components/ToastHost';
 import { LoadingScreen } from './src/components/LoadingScreen';
+import { ErrorBoundary } from './src/components/ErrorBoundary';
 import { installStorageFlushHooks } from './src/store/storage';
 import { checkForUpdate } from './src/services/updateCheck';
 
@@ -142,6 +143,9 @@ export default function App() {
   const initialMetrics = useMemo(webInitialMetrics, []);
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
+      {/* everything renders inside this boundary — a render bug can never
+          leave the user on a blank screen; they always get a way back in */}
+      <ErrorBoundary>
       <SafeAreaProvider initialMetrics={initialMetrics}>
         <ThemeProvider>
           <FinanceProvider>
@@ -163,6 +167,7 @@ export default function App() {
           </FinanceProvider>
         </ThemeProvider>
       </SafeAreaProvider>
+      </ErrorBoundary>
     </GestureHandlerRootView>
   );
 }

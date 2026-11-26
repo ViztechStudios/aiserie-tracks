@@ -16,7 +16,9 @@ export function accountNet(accountId: string, txs: Transaction[]): number {
 
 /** Current balance = declared balance + net of linked transactions. */
 export function accountBalance(account: Account, txs: Transaction[]): number {
-  return Math.round((account.openingBalance + accountNet(account.id, txs)) * 100) / 100;
+  // older rows may miss openingBalance — treat it as zero, never NaN
+  const opening = Number.isFinite(account?.openingBalance) ? account.openingBalance : 0;
+  return Math.round((opening + accountNet(account?.id, txs)) * 100) / 100;
 }
 
 /**

@@ -5,7 +5,7 @@ import { persistDebounced } from './storage';
 import { Recurring, RecurFreq } from '../types';
 import { makeId } from '../data/sampleData';
 import { useFinance } from './FinanceContext';
-import { generateDue, isISODate } from '../utils/recurring';
+import { generateDue, isISODate, sanitizeRules } from '../utils/recurring';
 import { todayISO } from '../utils/stats';
 
 const RECUR_KEY = 'aiserie.v1.recurring';
@@ -41,8 +41,10 @@ export function RecurringProvider({ children }: { children: React.ReactNode }) {
       try {
         const raw = await AsyncStorage.getItem(RECUR_KEY);
         if (raw) {
-          const parsed = JSON.parse(raw) as Recurring[];
-          if (Array.isArray(parsed)) setRecurrings(parsed.filter((r) => r && typeof r.id === 'string'));
+          // repair-in-place: rules from older versions or interrupted writes
+          // are completed so the engine and cards can trust every field
+          const repaired = sanitizeRules(JSON.parse(raw));
+          setRecurrings(repaired);
         }
       } catch {
         // corrupted storage: start fresh

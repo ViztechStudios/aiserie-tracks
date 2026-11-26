@@ -32,7 +32,7 @@ const DOWN = '#C4554D';
  * interpolated digits render identically on Android, iOS and web.
  */
 export function AnimatedNumber({
-  value,
+  value: rawValue,
   format,
   style,
   flash = 'none',
@@ -41,6 +41,9 @@ export function AnimatedNumber({
   flashDownColor = DOWN,
   duration = 650,
 }: Props) {
+  // NaN/Infinity (e.g. a wallet row missing openingBalance) must never paint
+  // "NaN" or feed the tween — settle on zero instead.
+  const value = Number.isFinite(rawValue) ? rawValue : 0;
   const [display, setDisplay] = useState(value);
   const prev = useRef(value);
   const anim = useRef(new Animated.Value(1)).current;

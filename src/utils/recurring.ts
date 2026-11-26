@@ -41,10 +41,14 @@ function toISO(d: Date): string {
 
 /** Next calendar date strictly after `dateISO`, matching the frequency. */
 export function nextAfter(freq: RecurFreq, dateISO: string): string {
+  // Defensive stop: a malformed/missing date (old data, hand-edited backup)
+  // must never crash a render — restart from today instead of throwing.
+  if (!isISODate(dateISO)) return toISO(new Date());
+  const known: RecurFreq = FREQS.includes(freq) ? freq : 'monthly';
   const [y, m, d] = dateISO.split('-').map(Number);
-  if (freq === 'daily') return addDaysISO(dateISO, 1);
-  if (freq === 'weekly') return addDaysISO(dateISO, 7);
-  if (freq === 'monthly') {
+  if (known === 'daily') return addDaysISO(dateISO, 1);
+  if (known === 'weekly') return addDaysISO(dateISO, 7);
+  if (known === 'monthly') {
     const nd = new Date(y, m - 1 + 1, 1); // first of next month
     const dim = new Date(nd.getFullYear(), nd.getMonth() + 1, 0).getDate();
     nd.setDate(Math.min(d, dim));
@@ -54,6 +58,8 @@ export function nextAfter(freq: RecurFreq, dateISO: string): string {
   const dim = new Date(y + 1, m, 0).getDate();
   return toISO(new Date(y + 1, m - 1, Math.min(d, dim)));
 }
+
+const FREQS: RecurFreq[] = ['daily', 'weekly', 'monthly', 'yearly'];
 
 /** First occurrence on/after `startDate` (i.e. the schedule anchor). */
 export function firstOccurrence(freq: RecurFreq, startDate: string, anchorDay?: number): string {
@@ -97,6 +103,9 @@ export function generateDue(rules: Recurring[], existingTxIds: Set<string>, toda
 
   for (const rule of rules) {
     if (rule.paused) continue;
+    // a rule without a usable amount must not inject ₱0 rows — the user fixes
+    // the amount first (the card is paused and prompts them to edit)
+    if (!(typeof rule.amount === 'number' && Number.isFinite(rule.amount) && rule.amount > 0)) continue;
     if (!isISODate(rule.startDate) || !isISODate(rule.nextRun)) continue;
     let cursor = rule.nextRun;
     let lastRun = rule.lastRun;
@@ -137,13 +146,21 @@ export function generateDue(rules: Recurring[], existingTxIds: Set<string>, toda
   return { created, updates };
 }
 
-/** Next `count` upcoming occurrences of a rule (for the "upcoming" list). */
+/**
+ * Next `count` upcoming occurrences of a rule (for the "upcoming" list).
+ * Never throws: rules from older app versions or hand-edited backups can be
+ * missing `nextRun`/`startDate`/`freq` — the list falls back gracefully.
+ */
 export function upcomingFor(rule: Recurring, count: number = 3): string[] {
   const out: string[] = [];
-  let cursor = rule.nextRun;
+  let cursor = isISODate(rule?.nextRun)
+    ? rule.nextRun
+    : isISODate(rule?.startDate)
+      ? rule.startDate
+      : toISO(new Date());
   while (out.length < count) {
     out.push(cursor);
-    cursor = nextAfter(rule.freq, cursor);
+    cursor = nextAfter(rule?.freq ?? 'monthly', cursor);
   }
   return out;
 }
@@ -156,5 +173,51 @@ export const FREQ_LABEL: Record<RecurFreq, string> = {
 };
 
 export function freqLabel(rule: Pick<Recurring, 'freq'>): string {
-  return FREQ_LABEL[rule.freq];
+  return FREQ_LABEL[rule?.freq as RecurFreq] ?? 'Every month';
+}
+
+/**
+ * Repair a recurring rule loaded from storage so every consumer (engine,
+ * cards, toasts) can trust it. Keeps user rules intact — only fills gaps:
+ * freq/type from known values, dates from startDate/today, amount coercion.
+ * Rows without a usable id are dropped (they cannot be addressed at all).
+ */
+export function sanitizeRule(raw: unknown): Recurring | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const r = raw as Partial<Recurring> & Record<string, unknown>;
+  if (typeof r.id !== 'string' || !r.id) return null;
+  const amount = typeof r.amount === 'number' && Number.isFinite(r.amount) && r.amount > 0 ? r.amount : 0;
+  const startDate = isISODate(r.startDate) ? r.startDate : toISO(new Date());
+  const nextRun = isISODate(r.nextRun) ? r.nextRun : startDate;
+  const lastRun = isISODate(r.lastRun) ? r.lastRun : undefined;
+  const freq: RecurFreq = FREQS.includes(r.freq as RecurFreq) ? (r.freq as RecurFreq) : 'monthly';
+  const type = r.type === 'income' ? 'income' : 'expense';
+  return {
+    id: r.id,
+    name: typeof r.name === 'string' && r.name.trim() ? r.name : 'Scheduled transaction',
+    type,
+    amount,
+    categoryId: typeof r.categoryId === 'string' && r.categoryId ? r.categoryId : 'other-exp',
+    accountId: typeof r.accountId === 'string' && r.accountId ? r.accountId : undefined,
+    freq,
+    startDate,
+    nextRun,
+    lastRun,
+    // an unusable amount cannot be scheduled safely — pause instead of drop
+    paused: r.paused === true || amount === 0,
+    createdAt: typeof r.createdAt === 'number' ? r.createdAt : Date.now(),
+  };
+}
+
+export function sanitizeRules(list: unknown): Recurring[] {
+  if (!Array.isArray(list)) return [];
+  const seen = new Set<string>();
+  const out: Recurring[] = [];
+  for (const row of list) {
+    const rule = sanitizeRule(row);
+    if (!rule || seen.has(rule.id)) continue;
+    seen.add(rule.id);
+    out.push(rule);
+  }
+  return out;
 }
