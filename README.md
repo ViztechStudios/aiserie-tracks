@@ -1,13 +1,14 @@
-# Aiserie Tracks 🌊
+# Aiserie Tracks 🐾
 
-A light-blue, ocean-gradient **personal finance tracker** that runs as a **native Android app (APK)**, an **iPhone/iPad app**, and an **installable PWA** — built with [Expo](https://expo.dev), React Native and TypeScript. v2.0.0 "Midnight Ocean" adds a full **dark mode with animated switching**, a new **wave logo**, an **official animated boot screen**, and **one-tap wallet setup with official Philippine bank & e-wallet logos**.
+A jungle-green, hand-drawn **personal finance tracker** that runs as a **native Android app (APK)**, an **iPhone/iPad app**, and an **installable PWA** — built with [Expo](https://expo.dev), React Native and TypeScript. v2.6.0 "Fern & Bark, unified" completes the rebrand: the **hand-drawn pup + tabby badge** is now the single logo across the iOS app icon, Android adaptive icons, native splash, PWA icons, favicon and the redesigned iOS launch screens — plus a polished professional boot curtain.
 
 ![stack](https://img.shields.io/badge/Expo-SDK%2058-0EA5E9) ![platform](https://img.shields.io/badge/Android%20%7C%20iOS%20%7C%20Web-Expo%20EAS%20%2B%20PWA-22D3EE) ![cost](https://img.shields.io/badge/distribution-%240-success)
 
 ## Features
 
 - **🌙 Dark mode, done properly** — System / Light / Dark switch in Settings; dark is a deep **midnight navy glass** with glowing sky accents, and every surface (aurora wash, headers, glass cards, tab bar, modals) **cross-fades live** when you flip the switch
-- **🌊 New professional identity** — custom wave logo across the app icon, adaptive Android icons (with monochrome), splash, favicon and PWA icons; boot curtain with progress shimmer and the *Made by Viztech Studios* credit
+- **🐾 One brand, everywhere** — hand-drawn *Fern & Bark* badge (pup, tabby and a peso-coin) across the **iOS app icon**, Android adaptive icons (with monochrome layer), native splash, favicon, PWA manifest icons and per-device iOS launch screens; boot curtain with a gold badge plate, floating motion, sheen sweep and the *Made by Viztech Studios* credit
+- **🔁 Logo changes are one command** — `python3 scripts/brand_sync.py` redraws the master logo and regenerates **every** icon and splash (iOS included) from it, so the app icon can never drift out of sync again
 - **Income & expense log** — categories, wallets, dates, notes; tap to edit, long-press to delete
 - **👛 Wallets & balances, one tap each** — pick from **22 official brand tiles**: GCash, Maya, Coins.ph, GrabPay, ShopeePay, BPI, BDO, Metrobank, AUB, UnionBank, Security Bank, Landbank, RCBC, PNB, China Bank, EastWest, PSBank, Maribank, GoTyme, CIMB, Tonik and Cash. The logo, name and color fill in automatically — just type the balance. Balances adjust as you log transactions; reconcile in one tap. Custom wallets still supported.
 - **🔔 Purchase detection** — paste any e-wallet/bank SMS or notification text and Aiserie reads the amount + direction on-device, then pre-fills a transaction. No message access, no monitoring.
@@ -79,7 +80,7 @@ open the site in **Safari** → **Share** □↑ → **Add to Home Screen** → 
 
 ### 2. Android as a downloadable APK
 
-**✅ v2.5.0 APK is live:** [Releases → v2.5.0](https://github.com/ViztechStudios/aiserie-tracks/releases/latest) → download `AiserieTracks-v2.5.0.apk` → allow *"install unknown apps"* for the browser when Android asks → install. v2.5.0 ("Fern & Bark, hand-drawn") redraws every mascot as clean flat-vector art — the tabby and pup no longer carry AI-render backgrounds, so they fit their circles and cards perfectly — and brings the UI to life: springy entrances with a soft bounce, mascots that breathe and tilt while you browse, donut and bar charts that sweep in, juicier button feedback, and a springy active-tab pop. The Settings About section now tells the real story (built as a gift for Aiserie, cared for by Viztech Studios), and the Privacy Policy and Terms were refreshed to name the publisher and disclose the update check. The remove-data flow was re-verified end to end. Updating keeps all data; existing installs show the in-app update nudge automatically.
+**✅ v2.6.0 APK is live:** [Releases → v2.6.0](https://github.com/ViztechStudios/aiserie-tracks/releases/latest) → download `AiserieTracks-v2.6.0.apk` → allow *"install unknown apps"* for the browser when Android asks → install. v2.6.0 ("Fern & Bark, unified") replaces the leftover wave-era PWA icon and painterly app icon with the hand-drawn badge everywhere — iOS/Android app icons, PWA icons, favicon, native splash and all 14 iOS launch screens — and gives the boot curtain a cleaner, more professional motion. Updating keeps all data; existing installs show the in-app update nudge automatically.
 
 How it was built, and how future versions get built (Expo free tier, 30 builds/month):
 
@@ -116,6 +117,16 @@ npx wrangler pages deploy dist
 
 Nothing needs to be rebuilt: the same codebase produces store artifacts whenever you want them — `production` profile already outputs an **AAB** with `autoIncrement` for Play, and `eas build -p ios --profile production` produces the App Store **IPA**. Bundle IDs (`com.aiserie.tracks`) are already configured for both.
 
+## Brand assets — one logo, every surface
+
+The logo is drawn as a parametric SVG in the same flat style as the in-app mascots and rendered to PNG. `scripts/brand_sync.py` regenerates the entire brand set from that single master, so a future logo update is always synced to the app icons (iOS included):
+
+```bash
+python3 scripts/brand_sync.py   # redraws + rewrites everything below
+```
+
+Regenerated outputs: `assets/icon.png` (1024 — this is what EAS uses for the **iOS app icon** and Android legacy icon), `assets/favicon.png`, `assets/splash-icon.png` (native splash + boot curtain), `assets/android-icon-{foreground,background,monochrome}.png`, `public/icons/icon-{192,512,maskable-512}.png`, `public/apple-touch-icon.png` (iOS home-screen web icon) and all 14 `public/splash/startup-*.png` iOS launch screens.
+
 ## Receipt scanning notes
 
 - OCR uses [`@react-native-ml-kit/text-recognition`](https://github.com/AugmentedMode/react-native-ml-kit) (Google ML Kit), fully **on-device**; the module is loaded lazily and never bundled into the web build.
@@ -131,4 +142,4 @@ The GitHub token and any Expo access token used during setup were shared in chat
 
 ---
 
-Made with 🌊 by ViztechStudios · MIT licensed
+Made with 🐾 by ViztechStudios · MIT licensed
