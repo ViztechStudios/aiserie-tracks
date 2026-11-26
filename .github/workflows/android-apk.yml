@@ -6,14 +6,15 @@ name: Android APK (runner build)
 # keystore every release has been signed with) are downloaded from Expo so
 # existing installs keep upgrading cleanly.
 #
-# The APK is uploaded as a workflow artifact; attach it to a GitHub Release
-# with `gh release upload` or the Releases API afterwards.
+# The APK is uploaded as a workflow artifact AND attached straight to the
+# matching GitHub Release (v<version from app.json>), which is what the
+# app's built-in update nudge points users to.
 
 on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   apk:
@@ -49,6 +50,7 @@ jobs:
             --non-interactive \
             --output "AiserieTracks-v${VERSION}.apk"
           echo "APK_NAME=AiserieTracks-v${VERSION}.apk" >> "$GITHUB_ENV"
+          echo "APP_VERSION=${VERSION}" >> "$GITHUB_ENV"
           ls -la "AiserieTracks-v${VERSION}.apk"
 
       - name: Upload APK artifact
@@ -58,3 +60,28 @@ jobs:
           path: ${{ env.APK_NAME }}
           if-no-files-found: error
           retention-days: 14
+
+      - name: Publish GitHub release with APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_NOTES: |
+            Aiserie Tracks v4.0.0 — "Privacy & peace of mind"
+
+            Fixes the crash when adding a balance (animated money counters used
+            two animation drivers on the same view — the exact cause of the
+            "Aiserie hit a snag" screen).
+
+            New: privacy shield — balances hide behind a branded curtain whenever
+            you leave the app (Settings -> Privacy & storage to toggle). Works
+            together with the optional 4-digit pin lock.
+
+            Everything from v3.0.x stays: backup & restore, CSV/PDF reports,
+            recurring transactions, budget alerts, savings goals, storage meter,
+            receipt scanning, purchase detection, dark mode.
+
+            Your data carries over automatically — nothing is reset.
+        run: |
+          gh release view "v${APP_VERSION}" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 || \
+            gh release create "v${APP_VERSION}" --repo "$GITHUB_REPOSITORY" --title "Aiserie Tracks v${APP_VERSION}" --notes "$RELEASE_NOTES"
+          gh release upload "v${APP_VERSION}" "$APK_NAME" --repo "$GITHUB_REPOSITORY" --clobber
+          echo "Release v${APP_VERSION} updated with $APK_NAME"
