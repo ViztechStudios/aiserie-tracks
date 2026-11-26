@@ -1,5 +1,5 @@
-import React, { Suspense } from 'react';
-import { Platform, StyleSheet, Text, View } from 'react-native';
+import React, { Suspense, useEffect, useRef } from 'react';
+import { Animated, Platform, StyleSheet, Text, View } from 'react-native';
 import { BottomTabBarProps, createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -68,13 +68,26 @@ function TabSlot({
   onPress: () => void;
 }) {
   const { t } = useTheme();
+  // the active icon pops in with a spring — tabs feel alive, not static
+  const pop = useRef(new Animated.Value(focused ? 1 : 0.92)).current;
+  useEffect(() => {
+    if (!focused) return;
+    pop.setValue(0.68);
+    Animated.spring(pop, { toValue: 1, friction: 4.2, tension: 240, useNativeDriver: true }).start();
+  }, [focused, pop]);
   return (
     <View style={styles.slot}>
       <PressableScale onPress={onPress} scaleTo={0.9} style={styles.slotPress} haptic={focused ? false : 'light'}>
-        <View style={[styles.plate, focused && { backgroundColor: t.ice100 }]}>
+        <Animated.View
+          style={[
+            styles.plate,
+            focused && { backgroundColor: t.ice100 },
+            { transform: [{ scale: pop }] },
+          ]}
+        >
           <Ionicons name={focused ? icon : (`${icon}-outline` as keyof typeof Ionicons.glyphMap)} size={20} color={focused ? t.ocean600 : t.faint} />
           {focused ? <View style={[styles.plateMark, { backgroundColor: t.sun500 }]} /> : null}
-        </View>
+        </Animated.View>
         <Text numberOfLines={1} style={[styles.label, { color: focused ? t.text : t.faint }, focused && styles.labelOn]}>
           {label}
         </Text>

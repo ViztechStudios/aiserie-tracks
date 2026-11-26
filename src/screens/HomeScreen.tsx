@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { GradientHeader } from '../components/GradientHeader';
 import { AuroraBackground } from '../components/AuroraBackground';
 import { Entrance } from '../components/Entrance';
+import { MascotWiggle } from '../components/MascotWiggle';
 import { MonthChips } from '../components/MonthChips';
 import { MonthSummary } from '../components/MonthSummary';
 import { MonthTxList } from '../components/MonthTxList';
@@ -67,7 +68,9 @@ export function HomeScreen() {
           {/* greeting row — avatar, name, quick actions */}
           <View style={styles.topRow}>
             <View style={styles.mascotBubble}>
-              <Image source={require('../../assets/mascot-wave.png')} style={styles.mascotImg} resizeMode="cover" />
+              <MascotWiggle bob={2.5} tilt={2.6} duration={1900}>
+                <Image source={require('../../assets/mascot-wave.png')} style={styles.mascotImg} resizeMode="contain" />
+              </MascotWiggle>
             </View>
             <View style={styles.topMid}>
               <Text style={[styles.hello, { color: heroSub }]} numberOfLines={1}>
@@ -186,13 +189,12 @@ const styles = StyleSheet.create({
     height: 52,
     borderRadius: 26,
     backgroundColor: '#FFFFFF',
-    overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
     borderColor: 'rgba(255,255,255,0.55)',
   },
-  mascotImg: { width: '100%', height: '100%' },
+  mascotImg: { width: 46, height: 46, marginTop: 3 },
   topMid: { flex: 1, marginLeft: spacing.md, marginRight: spacing.sm },
   hello: { fontFamily: font.medium, fontSize: 12.5 },
   userName: { fontFamily: font.display, fontSize: 20, marginTop: 1 },
@@ -258,5 +260,5 @@ const styles = StyleSheet.create({
   advisorMid: { flex: 1, marginHorizontal: spacing.md },
   advisorTitle: { fontFamily: font.bold, fontSize: 14.5 },
   advisorSub: { fontFamily: font.medium, fontSize: 12, marginTop: 1 },
-  advisorMascot: { width: 54, height: 40, marginLeft: spacing.sm },
+  advisorMascot: { width: 58, height: 44, marginLeft: spacing.sm },
 });

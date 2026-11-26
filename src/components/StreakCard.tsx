@@ -2,6 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { MascotWiggle } from './MascotWiggle';
 import { useTheme } from '../store/ThemeContext';
 import { useFinance } from '../store/FinanceContext';
 import { computeStreak } from '../utils/streak';
@@ -39,7 +40,9 @@ export function StreakCard() {
     <View style={[styles.card, { backgroundColor: t.card, borderColor: t.glassBorderSoft, borderWidth: 1 }, shadow.card]}>
       <View style={styles.top}>
         <View style={[styles.avatar, { borderColor: t.aqua300 }]}>
-          <Image source={require('../../assets/mascot-wave.png')} style={styles.avatarImg} resizeMode="cover" />
+          <MascotWiggle bob={2} tilt={2.2} duration={2400}>
+            <Image source={require('../../assets/mascot-wave.png')} style={styles.avatarImg} resizeMode="contain" />
+          </MascotWiggle>
         </View>
         <View style={styles.topMid}>
           <Text style={[styles.count, { color: t.text }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>
@@ -133,9 +136,10 @@ const styles = StyleSheet.create({
     borderRadius: 26,
     backgroundColor: '#FFFFFF',
     borderWidth: 2,
-    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  avatarImg: { width: '100%', height: '100%' },
+  avatarImg: { width: 46, height: 46, marginTop: 3 },
   topMid: { flex: 1, marginLeft: spacing.md, marginRight: spacing.sm },
   count: { fontFamily: font.heavy, fontSize: 21 },
   headline: { fontFamily: font.medium, fontSize: 12.5, lineHeight: 17, marginTop: 2 },

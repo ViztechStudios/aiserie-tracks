@@ -9,20 +9,29 @@ import { font, radius, spacing } from '../theme';
  * Themed notice pill for validation messages and confirmations — replaces
  * Alert.alert(), which react-native-web implements as an empty function
  * (alerts were literally invisible on the PWA, making "dead button" bugs).
+ * Slides up with a spring and gently settles.
  */
 export function ToastHost() {
   const ui = useUI();
   const { t, isDark } = useTheme();
   const opacity = useRef(new Animated.Value(0)).current;
+  const rise = useRef(new Animated.Value(16)).current;
   const state = ui.toastState;
   const msg = state?.message;
 
   useEffect(() => {
     if (!msg) return;
     opacity.setValue(0);
-    Animated.timing(opacity, { toValue: 1, duration: 180, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
+    rise.setValue(16);
+    Animated.parallel([
+      Animated.timing(opacity, { toValue: 1, duration: 170, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+      Animated.spring(rise, { toValue: 0, friction: 6, tension: 190, useNativeDriver: true }),
+    ]).start();
     const timer = setTimeout(() => {
-      Animated.timing(opacity, { toValue: 0, duration: 220, useNativeDriver: true }).start();
+      Animated.parallel([
+        Animated.timing(opacity, { toValue: 0, duration: 220, useNativeDriver: true }),
+        Animated.timing(rise, { toValue: 10, duration: 220, useNativeDriver: true }),
+      ]).start();
     }, 2600);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -33,7 +42,7 @@ export function ToastHost() {
   return (
     <Animated.View
       pointerEvents="none"
-      style={[styles.wrap, { opacity }]}
+      style={[styles.wrap, { opacity, transform: [{ translateY: rise }] }]}
     >
       <View style={[styles.pill, { backgroundColor: isDark ? 'rgba(6,26,16,0.96)' : 'rgba(13,59,39,0.96)' }]}>
         <Ionicons name="information-circle" size={17} color={t.sun300 ?? '#F0D492'} />

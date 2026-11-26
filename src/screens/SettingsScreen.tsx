@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Linking, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Image, Linking, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 import { Animated, Easing } from 'react-native';
@@ -286,14 +286,21 @@ export function SettingsScreen() {
 
           <Entrance delay={280}>
             <Text style={[styles.section, { color: t.subtext }]}>About</Text>
-            <View style={[styles.row, { backgroundColor: t.card, borderColor: t.glassBorderSoft }]}>
-              <RowIcon name="water" tint={t.ocean600} />
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.rowTitle, { color: t.text }]}>Aiserie Tracks v{APP_VERSION}</Text>
-                <Text style={[styles.rowSub, { color: t.subtext }]}
-                  >Fern &amp; Bark: a greener home for your money with the pup-and-tabby duo, wallet cards you can swipe, plain-money insights with a day-by-day trail, a money plan with envelope budgets and bill reminders, transfers, streaks, dark mode and update nudges from GitHub. Made by Viztech Studios for Aiserie.
-                </Text>
-              </View>
+            <View style={[styles.aboutCard, { backgroundColor: t.card, borderColor: t.glassBorderSoft }]}>
+              <Image source={require('../../assets/mascot-duo.png')} style={styles.aboutMascot} resizeMode="contain" />
+              <Text style={[styles.aboutTitle, { color: t.text }]}>A gift, first. An app, second.</Text>
+              <Text style={[styles.aboutBody, { color: t.subtext }]}>
+                I built the first version of Aiserie Tracks for my girlfriend, Aiserie. She wanted one simple place to see
+                where her money goes — no bank logins, no spreadsheets, nothing intimidating. So it was made the way you
+                make a gift: carefully, and for one person first.
+              </Text>
+              <Text style={[styles.aboutBody, { color: t.subtext }]}>
+                The app is cared for by Viztech Studios, the little studio behind it. We think everyday tools can feel warm —
+                which is why a pup and a tabby keep your ledger company instead of dashboards and jargon.
+              </Text>
+              <Text style={[styles.aboutVersion, { color: t.faint }]}>
+                Aiserie Tracks v{APP_VERSION} · Fern &amp; Bark
+              </Text>
             </View>
           </Entrance>
         </View>
@@ -392,6 +399,23 @@ const styles = StyleSheet.create({
   rowFlag: { fontSize: 16 },
   rowTitle: { fontFamily: font.bold, fontSize: 15 },
   rowSub: { fontFamily: font.medium, fontSize: 12.5, lineHeight: 18, marginTop: 2 },
+  aboutCard: {
+    borderRadius: radius.md + 4,
+    borderWidth: 1,
+    padding: spacing.lg,
+    marginBottom: spacing.md,
+    alignItems: 'center',
+  },
+  aboutMascot: { width: 148, height: 111, marginBottom: spacing.md },
+  aboutTitle: { fontFamily: font.display, fontSize: 17, textAlign: 'center', marginBottom: spacing.sm },
+  aboutBody: {
+    fontFamily: font.medium,
+    fontSize: 12.5,
+    lineHeight: 19,
+    textAlign: 'center',
+    marginBottom: spacing.sm,
+  },
+  aboutVersion: { fontFamily: font.bold, fontSize: 11, letterSpacing: 0.6, marginTop: spacing.xs },
   nameInput: { fontFamily: font.bold, fontSize: 16, paddingVertical: 6, paddingHorizontal: 0 },
   hint: { fontFamily: font.medium, fontSize: 11.5, marginTop: spacing.sm, marginBottom: spacing.md },
   pickerBackdrop: { flex: 1 },

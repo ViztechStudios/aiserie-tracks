@@ -18,16 +18,17 @@ interface Props {
 }
 
 /**
- * Pressable with premium tactile feel: quick ease-in scale on touch,
- * springy release, optional light haptic tick.
+ * Pressable with a juicy tactile feel: quick sink on touch, springy
+ * overshoot on release (the button visibly bounces back), optional light
+ * haptic tick.
  */
-export function PressableScale({ onPress, onLongPress, style, containerStyle, children, scaleTo = 0.97, disabled, haptic }: Props) {
+export function PressableScale({ onPress, onLongPress, style, containerStyle, children, scaleTo = 0.95, disabled, haptic }: Props) {
   const scale = useRef(new Animated.Value(1)).current;
 
   const pressIn = () => {
     Animated.spring(scale, {
       toValue: scaleTo,
-      speed: 42,
+      speed: 46,
       bounciness: 0,
       useNativeDriver: true,
     }).start();
@@ -35,8 +36,8 @@ export function PressableScale({ onPress, onLongPress, style, containerStyle, ch
   const pressOut = () => {
     Animated.spring(scale, {
       toValue: 1,
-      speed: 26,
-      bounciness: 7,
+      speed: 22,
+      bounciness: 10,
       useNativeDriver: true,
     }).start();
   };

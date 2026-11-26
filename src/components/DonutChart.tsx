@@ -1,5 +1,5 @@
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { useTheme } from '../store/ThemeContext';
 import { font, radius, spacing } from '../theme';
@@ -16,17 +16,33 @@ const STROKE = 24;
 const R = (SIZE - STROKE) / 2;
 const C = 2 * Math.PI * R;
 
-/** Category-share donut built with react-native-svg. */
+/** Category-share donut built with react-native-svg — arcs sweep in on mount. */
 export function DonutChart({ data, currency }: Props) {
   const { t, shadow } = useTheme();
+  const [prog, setProg] = useState(0);
+  const sweep = useRef(new Animated.Value(0)).current;
   const total = data.reduce((s, d) => s + d.amount, 0);
   let offset = 0;
   const segments = data.slice(0, 6).map((d) => {
     const frac = total > 0 ? d.amount / total : 0;
-    const seg = { ...d, dash: frac * C, offset };
+    const seg = { ...d, dash: frac * C * prog, offset };
     offset += frac * C;
     return seg;
   });
+
+  // sweep the arcs in (JS-driven so the dasharray can react each frame)
+  useEffect(() => {
+    sweep.setValue(0);
+    setProg(0);
+    const id = sweep.addListener(({ value }) => setProg(value));
+    Animated.timing(sweep, {
+      toValue: 1,
+      duration: 900,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: false,
+    }).start();
+    return () => sweep.removeListener(id);
+  }, [sweep, total]);
 
   return (
     <View style={[styles.card, { backgroundColor: t.card, borderColor: t.glassBorderSoft, borderWidth: 1 }, shadow.card]}>

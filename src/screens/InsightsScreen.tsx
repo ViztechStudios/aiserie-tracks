@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { GradientHeader } from '../components/GradientHeader';
 import { AuroraBackground } from '../components/AuroraBackground';
 import { Entrance } from '../components/Entrance';
+import { MascotWiggle } from '../components/MascotWiggle';
 import { MonthChips } from '../components/MonthChips';
 import { TransactionRow } from '../components/TransactionRow';
 import { DonutChart } from '../components/DonutChart';
@@ -144,17 +145,18 @@ export function InsightsScreen() {
           {/* headline */}
           <Text style={[styles.headline, { color: heroInk }]}>{headline}</Text>
 
-          {/* IN / OUT / kept trio */}
+          {/* IN / OUT / kept trio — web can't auto-shrink text, so long
+              amounts step down a size instead of truncating */}
           <View style={styles.trio}>
             <View style={[styles.trioCard, { backgroundColor: 'rgba(255,255,255,0.10)', borderColor: 'rgba(255,255,255,0.16)' }]}>
               <Text style={[styles.trioLabel, { color: heroSub }]}>IN</Text>
-              <Text style={[styles.trioValue, { color: heroInk }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>
+              <Text style={[styles.trioValue, { color: heroInk }, formatMoney(totals.income, finance.settings.currency).length >= 9 && styles.trioValueLong]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>
                 {formatMoney(totals.income, finance.settings.currency)}
               </Text>
             </View>
             <View style={[styles.trioCard, { backgroundColor: 'rgba(255,255,255,0.10)', borderColor: 'rgba(255,255,255,0.16)' }]}>
               <Text style={[styles.trioLabel, { color: heroSub }]}>OUT</Text>
-              <Text style={[styles.trioValue, { color: heroInk }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>
+              <Text style={[styles.trioValue, { color: heroInk }, formatMoney(totals.expense, finance.settings.currency).length >= 9 && styles.trioValueLong]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>
                 {formatMoney(totals.expense, finance.settings.currency)}
               </Text>
             </View>
@@ -363,9 +365,13 @@ function mixExp(hex: string, frac: number): string {
   return `rgb(${mix(r)}, ${mix(g)}, ${mix(b)})`;
 }
 
-/** Coach duo mascot for the safe-to-spend card. */
+/** Coach duo mascot for the safe-to-spend card — with a gentle idle bob. */
 function Image2() {
-  return <Image source={require('../../assets/mascot-advisor.png')} style={styles.duoImg} resizeMode="contain" />;
+  return (
+    <MascotWiggle bob={3} tilt={1.6} duration={2800}>
+      <Image source={require('../../assets/mascot-advisor.png')} style={styles.duoImg} resizeMode="contain" />
+    </MascotWiggle>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -387,6 +393,7 @@ const styles = StyleSheet.create({
   },
   trioLabel: { fontFamily: font.bold, fontSize: 10, letterSpacing: 1.4 },
   trioValue: { fontFamily: font.heavy, fontSize: 17, marginTop: 5 },
+  trioValueLong: { fontSize: 13.5, letterSpacing: -0.2 },
   body: { paddingHorizontal: spacing.xl, paddingTop: spacing.md, paddingBottom: 120 },
   safeCard: { borderRadius: radius.lg, padding: spacing.lg },
   safeLabel: { fontFamily: font.bold, fontSize: 11, letterSpacing: 1.2 },
@@ -394,7 +401,7 @@ const styles = StyleSheet.create({
   safeBody: { fontFamily: font.medium, fontSize: 12.5, lineHeight: 18, marginTop: 6, maxWidth: '72%' },
   duoWrap: { position: 'absolute', right: spacing.lg, bottom: spacing.md, alignItems: 'flex-end' },
   duoCard: {},
-  duoImg: { width: 92, height: 66 },
+  duoImg: { width: 98, height: 74 },
   rhythmRow: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.lg },
   rhythmCard: {
     flex: 1,

@@ -2,6 +2,7 @@ import React from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import Constants from 'expo-constants';
 import { AuroraBackground } from './AuroraBackground';
 import { PRIVACY_POLICY, TERMS, LegalSection } from '../data/legal';
 import { useTheme } from '../store/ThemeContext';
@@ -23,7 +24,9 @@ function DocBody({ sections }: { sections: LegalSection[] }) {
           ))}
         </View>
       ))}
-      <Text style={[styles.footer, { color: t.faint }]}>Last updated: November 2026 · Aiserie Tracks v2.0.0</Text>
+      <Text style={[styles.footer, { color: t.faint }]}>
+        Last updated: November 2026 · Aiserie Tracks v{Constants.expoConfig?.version ?? ''}
+      </Text>
     </>
   );
 }

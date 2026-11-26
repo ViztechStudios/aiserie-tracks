@@ -1,5 +1,5 @@
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../store/ThemeContext';
 import { font, radius, spacing } from '../theme';
 import { MonthBar } from '../types';
@@ -8,6 +8,22 @@ import { formatCompact } from '../utils/money';
 interface Props {
   months: MonthBar[];
   currency: string;
+}
+
+/** One bar that grows from zero with a springy overshoot. */
+function GrowBar({ target, color, delay }: { target: number; color: string; delay: number }) {
+  const h = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    h.setValue(0);
+    Animated.timing(h, {
+      toValue: target,
+      delay,
+      duration: 620,
+      easing: Easing.out(Easing.back(1.5)),
+      useNativeDriver: false, // height is a layout prop
+    }).start();
+  }, [h, target, delay]);
+  return <Animated.View style={[styles.bar, { height: h, backgroundColor: color }]} />;
 }
 
 /** Income vs expense bars for the last 6 months (pure Views, no chart lib). */
@@ -26,23 +42,21 @@ export function BarChart({ months, currency }: Props) {
         </View>
       </View>
       <View style={styles.chart}>
-        {months.map((m) => (
+        {months.map((m, i) => (
           <View key={m.ym} style={styles.group}>
             <View style={styles.bars}>
               <View style={styles.barWrap}>
-                <View
-                  style={[
-                    styles.bar,
-                    { height: Math.max((m.income / max) * 110, m.income > 0 ? 4 : 0), backgroundColor: t.income },
-                  ]}
+                <GrowBar
+                  target={Math.max((m.income / max) * 110, m.income > 0 ? 4 : 0)}
+                  color={t.income}
+                  delay={80 + i * 70}
                 />
               </View>
               <View style={styles.barWrap}>
-                <View
-                  style={[
-                    styles.bar,
-                    { height: Math.max((m.expense / max) * 110, m.expense > 0 ? 4 : 0), backgroundColor: t.expense },
-                  ]}
+                <GrowBar
+                  target={Math.max((m.expense / max) * 110, m.expense > 0 ? 4 : 0)}
+                  color={t.expense}
+                  delay={115 + i * 70}
                 />
               </View>
             </View>

@@ -4,35 +4,35 @@ import { Animated, Easing, Platform, StyleProp, ViewStyle } from 'react-native';
 interface Props {
   delay?: number; // ms
   distance?: number; // px to travel up
-  pop?: boolean; // also scale 0.96 -> 1 (springy)
+  pop?: boolean; // also scale 0.92 -> 1 (springy overshoot)
   children: React.ReactNode;
   style?: StyleProp<ViewStyle>;
 }
 
 /**
- * Premium entrance: fades in, floats up and (optionally) springs in with a
- * gentle scale. One-shot on mount — safe to wrap any card or list row.
+ * Springy entrance: the card rises, fades in and lands with a soft
+ * overshoot (a real bounce, not a straight fade). One-shot on mount —
+ * safe to wrap any card or list row.
  *
- * On web the motion is reduced to a fast, transform-free fade: every
- * Animated transform forces a composited layer in react-native-web, which
- * is what made old iOS devices feel laggy during tab switches.
+ * On web the spring is slightly firmer than on native so tab switches
+ * stay crisp, but it keeps the same lively character.
  */
-export function Entrance({ delay = 0, distance = 18, pop = true, children, style }: Props) {
+export function Entrance({ delay = 0, distance = 22, pop = true, children, style }: Props) {
   const isWeb = Platform.OS === 'web';
   const progress = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    Animated.timing(progress, {
+    Animated.spring(progress, {
       toValue: 1,
       delay: isWeb ? 0 : delay,
-      duration: isWeb ? 130 : 520,
-      easing: Easing.out(Easing.cubic),
+      friction: isWeb ? 9 : 7,
+      tension: isWeb ? 110 : 80,
       useNativeDriver: true,
     }).start();
   }, [progress, delay, isWeb]);
 
-  const scale = pop && !isWeb
-    ? progress.interpolate({ inputRange: [0, 1], outputRange: [0.965, 1] })
+  const scale = pop
+    ? progress.interpolate({ inputRange: [0, 1], outputRange: [isWeb ? 0.96 : 0.92, 1] })
     : 1;
 
   return (
@@ -40,13 +40,11 @@ export function Entrance({ delay = 0, distance = 18, pop = true, children, style
       style={[
         style,
         {
-          opacity: progress,
-          transform: isWeb
-            ? undefined
-            : [
-                { translateY: progress.interpolate({ inputRange: [0, 1], outputRange: [distance, 0] }) },
-                { scale },
-              ],
+          opacity: progress.interpolate({ inputRange: [0, 0.6], outputRange: [0, 1], extrapolate: 'clamp' }),
+          transform: [
+            { translateY: progress.interpolate({ inputRange: [0, 1], outputRange: [distance, 0] }) },
+            { scale },
+          ],
         },
       ]}
     >
