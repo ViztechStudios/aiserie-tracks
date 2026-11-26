@@ -1,6 +1,6 @@
 # Aiserie Tracks 🐾
 
-A jungle-green, hand-drawn **personal finance tracker** that runs as a **native Android app (APK)**, an **iPhone/iPad app**, and an **installable PWA** — built with [Expo](https://expo.dev), React Native and TypeScript. v2.6.0 "Fern & Bark, unified" completes the rebrand: the **hand-drawn pup + tabby badge** is now the single logo across the iOS app icon, Android adaptive icons, native splash, PWA icons, favicon and the redesigned iOS launch screens — plus a polished professional boot curtain.
+A jungle-green, hand-drawn **personal finance tracker** that runs as a **native Android app (APK)**, an **iPhone/iPad app**, and an **installable PWA** — built with [Expo](https://expo.dev), React Native and TypeScript. v2.7.0 "Reliability & trust" adds **backup & restore**, **CSV/PDF reports**, **recurring transactions** and **budget alerts** on top of the v2.6.0 rebrand, where the **hand-drawn pup + tabby badge** became the single logo across the iOS app icon, Android adaptive icons, native splash, PWA icons, favicon and the redesigned iOS launch screens — plus a polished professional boot curtain.
 
 ![stack](https://img.shields.io/badge/Expo-SDK%2058-0EA5E9) ![platform](https://img.shields.io/badge/Android%20%7C%20iOS%20%7C%20Web-Expo%20EAS%20%2B%20PWA-22D3EE) ![cost](https://img.shields.io/badge/distribution-%240-success)
 
