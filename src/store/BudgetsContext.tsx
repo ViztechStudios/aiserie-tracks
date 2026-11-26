@@ -2,17 +2,26 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Budget } from '../types';
 import { makeId } from '../data/sampleData';
+import { AlertState } from '../utils/budgetAlerts';
 
 const BUDGETS_KEY = 'aiserie.v1.budgets';
+const ALERTS_KEY = 'aiserie.v1.budgetAlerts';
 
 interface BudgetsContextValue {
   ready: boolean;
   budgets: Budget[];
+  /** "budgetId:ym" → highest spending threshold already announced. */
+  alertState: AlertState;
   addBudget: (categoryId: string, cap: number) => void;
   updateBudget: (budget: Budget) => void;
   removeBudget: (id: string) => void;
   /** Only one budget per category — replaces the cap if it already exists. */
-  upsertBudget: (categoryId: string, cap: number) => void;
+  upsertBudget: (categoryId: string, cap: number, alerts?: number[]) => void;
+  /** Clear the "already announced" state — a fresh start for the month. */
+  resetAlerts: (budgetId?: string, ym?: string) => void;
+  /** Used by backup restore: replaces the whole list. */
+  replaceAll: (budgets: Budget[]) => void;
+  setAlertState: (state: AlertState) => void;
   clearAll: () => Promise<void>;
 }
 
@@ -21,6 +30,7 @@ const BudgetsContext = createContext<BudgetsContextValue | null>(null);
 export function BudgetsProvider({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
   const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [alertState, setAlertStateRaw] = useState<AlertState>({});
 
   useEffect(() => {
     (async () => {
@@ -29,6 +39,11 @@ export function BudgetsProvider({ children }: { children: React.ReactNode }) {
         if (raw) {
           const parsed = JSON.parse(raw) as Budget[];
           if (Array.isArray(parsed)) setBudgets(parsed);
+        }
+        const aRaw = await AsyncStorage.getItem(ALERTS_KEY);
+        if (aRaw) {
+          const parsed = JSON.parse(aRaw) as AlertState;
+          if (parsed && typeof parsed === 'object') setAlertStateRaw(parsed);
         }
       } catch {
         // corrupted storage: start fresh
@@ -43,13 +58,18 @@ export function BudgetsProvider({ children }: { children: React.ReactNode }) {
     AsyncStorage.setItem(BUDGETS_KEY, JSON.stringify(budgets)).catch(() => {});
   }, [budgets, ready]);
 
-  const upsertBudget = useCallback((categoryId: string, cap: number) => {
+  useEffect(() => {
+    if (!ready) return;
+    AsyncStorage.setItem(ALERTS_KEY, JSON.stringify(alertState)).catch(() => {});
+  }, [alertState, ready]);
+
+  const upsertBudget = useCallback((categoryId: string, cap: number, alerts?: number[]) => {
     setBudgets((prev) => {
       const existing = prev.find((b) => b.categoryId === categoryId);
       if (existing) {
-        return prev.map((b) => (b.id === existing.id ? { ...b, cap } : b));
+        return prev.map((b) => (b.id === existing.id ? { ...b, cap, alerts: alerts ?? b.alerts } : b));
       }
-      return [...prev, { id: makeId(), categoryId, cap, createdAt: Date.now() }];
+      return [...prev, { id: makeId(), categoryId, cap, createdAt: Date.now(), alerts }];
     });
   }, []);
 
@@ -59,15 +79,47 @@ export function BudgetsProvider({ children }: { children: React.ReactNode }) {
   }, []);
   const removeBudget = useCallback((id: string) => {
     setBudgets((prev) => prev.filter((b) => b.id !== id));
+    setAlertStateRaw((prev) => {
+      const next: AlertState = {};
+      for (const [k, v] of Object.entries(prev)) if (!k.startsWith(`${id}:`)) next[k] = v;
+      return next;
+    });
   }, []);
+  const resetAlerts = useCallback((budgetId?: string, ym?: string) => {
+    setAlertStateRaw((prev) => {
+      if (!budgetId && !ym) return {};
+      const next: AlertState = {};
+      for (const [k, v] of Object.entries(prev)) {
+        const [bid, key] = k.split(':');
+        if (budgetId && bid !== budgetId) next[k] = v;
+        else if (ym && key !== ym) next[k] = v;
+      }
+      return next;
+    });
+  }, []);
+  const setAlertState = useCallback((state: AlertState) => setAlertStateRaw(state), []);
+  const replaceAll = useCallback((list: Budget[]) => setBudgets(list), []);
   const clearAll = useCallback(async () => {
     setBudgets([]);
-    await AsyncStorage.removeItem(BUDGETS_KEY).catch(() => {});
+    setAlertStateRaw({});
+    await AsyncStorage.multiRemove([BUDGETS_KEY, ALERTS_KEY]).catch(() => {});
   }, []);
 
   const value = useMemo(
-    () => ({ ready, budgets, addBudget, updateBudget, removeBudget, upsertBudget, clearAll }),
-    [ready, budgets, addBudget, updateBudget, removeBudget, upsertBudget, clearAll]
+    () => ({
+      ready,
+      budgets,
+      alertState,
+      addBudget,
+      updateBudget,
+      removeBudget,
+      upsertBudget,
+      resetAlerts,
+      replaceAll,
+      setAlertState,
+      clearAll,
+    }),
+    [ready, budgets, alertState, addBudget, updateBudget, removeBudget, upsertBudget, resetAlerts, replaceAll, setAlertState, clearAll]
   );
 
   return <BudgetsContext.Provider value={value}>{children}</BudgetsContext.Provider>;

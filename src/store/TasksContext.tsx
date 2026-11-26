@@ -17,6 +17,8 @@ interface TasksContextValue {
   clearDone: () => void;
   /** Wipe the whole tasks list (used by Settings → Erase all data). */
   clearAll: () => Promise<void>;
+  /** Used by backup restore: replaces the whole list. */
+  replaceAll: (tasks: Task[]) => void;
 }
 
 const TasksContext = createContext<TasksContextValue | null>(null);
@@ -80,6 +82,8 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
     await AsyncStorage.removeItem(TASKS_KEY).catch(() => {});
   }, []);
 
+  const replaceAll = useCallback((list: Task[]) => setTasks(list), []);
+
   const value = useMemo(() => {
     const doneCount = tasks.filter((t) => t.done).length;
     return {
@@ -93,8 +97,9 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
       removeTask,
       clearDone,
       clearAll,
+      replaceAll,
     };
-  }, [ready, tasks, addTask, toggleTask, toggleImportant, removeTask, clearDone, clearAll]);
+  }, [ready, tasks, addTask, toggleTask, toggleImportant, removeTask, clearDone, clearAll, replaceAll]);
 
   return <TasksContext.Provider value={value}>{children}</TasksContext.Provider>;
 }

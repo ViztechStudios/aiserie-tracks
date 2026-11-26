@@ -12,6 +12,7 @@ import { FinanceProvider, useFinance } from './src/store/FinanceContext';
 import { TasksProvider } from './src/store/TasksContext';
 import { BudgetsProvider } from './src/store/BudgetsContext';
 import { BillsProvider } from './src/store/BillsContext';
+import { RecurringProvider } from './src/store/RecurringContext';
 import { UIProvider, useUI } from './src/store/UIContext';
 import { ThemeProvider, useTheme } from './src/store/ThemeContext';
 import { RootNavigator } from './src/navigation/RootNavigator';
@@ -19,6 +20,9 @@ import { TransactionModal } from './src/components/TransactionModal';
 import { WalletsModal } from './src/components/WalletsModal';
 import { LegalModal } from './src/components/LegalModal';
 import { UpdateModal } from './src/components/UpdateModal';
+import { ReportsModal } from './src/components/ReportsModal';
+import { BackupRestoreModal } from './src/components/BackupRestoreModal';
+import { BudgetAlertsHost } from './src/components/BudgetAlertsHost';
 import { ConfirmSheet } from './src/components/ConfirmSheet';
 import { ToastHost } from './src/components/ToastHost';
 import { LoadingScreen } from './src/components/LoadingScreen';
@@ -115,6 +119,9 @@ function Shell() {
       <WalletsModal />
       <LegalModal />
       <UpdateModal />
+      <ReportsModal />
+      <BackupRestoreModal />
+      <BudgetAlertsHost />
       <ConfirmSheet />
       <ToastHost />
       <LoadingScreen ready={finance.ready && fontsLoaded} onDone={() => setBooting(false)} />
@@ -132,9 +139,11 @@ export default function App() {
             <TasksProvider>
               <BudgetsProvider>
                 <BillsProvider>
-                  <UIProvider>
-                    <Shell />
-                  </UIProvider>
+                  <RecurringProvider>
+                    <UIProvider>
+                      <Shell />
+                    </UIProvider>
+                  </RecurringProvider>
                 </BillsProvider>
               </BudgetsProvider>
             </TasksProvider>

@@ -1,6 +1,6 @@
 export type TxType = 'expense' | 'income' | 'transfer';
 
-export type TxSource = 'manual' | 'scan' | 'sample' | 'detect';
+export type TxSource = 'manual' | 'scan' | 'sample' | 'detect' | 'recurring';
 
 export type AccountType = 'ewallet' | 'bank' | 'cash';
 
@@ -49,6 +49,11 @@ export interface Budget {
   /** Positive monthly cap. */
   cap: number;
   createdAt: number;
+  /**
+   * Spending thresholds (0..1) that fire a gentle in-app notice, e.g.
+   * [0.5, 0.75, 0.9, 1]. Undefined keeps the full default set.
+   */
+  alerts?: number[];
 }
 
 /** A repeating bill the user wants reminded about. */
@@ -60,6 +65,33 @@ export interface Bill {
   dueDay: number;
   emoji?: string;
   accountId?: string;
+  createdAt: number;
+}
+
+export type RecurFreq = 'daily' | 'weekly' | 'monthly' | 'yearly';
+
+/**
+ * A scheduled transaction Aiserie generates automatically while the app is
+ * used. Generation is idempotent: every occurrence derives a deterministic
+ * transaction id, so restoring a backup or re-running the engine never
+ * duplicates money movement.
+ */
+export interface Recurring {
+  id: string;
+  /** Short label — becomes the transaction note. */
+  name: string;
+  type: 'income' | 'expense';
+  amount: number;
+  categoryId: string;
+  accountId?: string;
+  freq: RecurFreq;
+  /** ISO date (YYYY-MM-DD) the schedule starts. */
+  startDate: string;
+  /** ISO date of the next occurrence that has NOT been generated yet. */
+  nextRun: string;
+  /** ISO date of the last occurrence actually generated, if any. */
+  lastRun?: string;
+  paused: boolean;
   createdAt: number;
 }
 

@@ -8,7 +8,7 @@ const TX_KEY = 'aiserie.v1.transactions';
 const SETTINGS_KEY = 'aiserie.v1.settings';
 const ACCOUNTS_KEY = 'aiserie.v1.accounts';
 
-/** Every storage key the app can own — used by the full wipe. */
+/** Every storage key the app can own — used by the full wipe and by backups. */
 export const ALL_STORAGE_KEYS = [
   TX_KEY,
   ACCOUNTS_KEY,
@@ -16,6 +16,8 @@ export const ALL_STORAGE_KEYS = [
   'aiserie.v1.tasks',
   'aiserie.v1.budgets',
   'aiserie.v1.bills',
+  'aiserie.v1.recurring',
+  'aiserie.v1.budgetAlerts',
 ];
 
 export interface NewTransactionInput {
@@ -24,10 +26,12 @@ export interface NewTransactionInput {
   categoryId: string;
   date: string;
   note?: string;
-  source?: 'manual' | 'scan' | 'sample' | 'detect';
+  source?: 'manual' | 'scan' | 'sample' | 'detect' | 'recurring';
   accountId?: string;
   /** Transfer destination wallet. */
   toAccountId?: string;
+  /** Deterministic id — recurring occurrences use one so re-runs never duplicate. */
+  id?: string;
 }
 
 interface FinanceContextValue {
@@ -36,11 +40,15 @@ interface FinanceContextValue {
   accounts: Account[];
   settings: Settings;
   addTransaction: (input: NewTransactionInput) => Transaction;
+  /** Adds many transactions at once, skipping ids that already exist (backup restore, recurring engine). */
+  addTransactionsUnique: (txs: Transaction[]) => number;
   updateTransaction: (tx: Transaction) => void;
   deleteTransaction: (id: string) => void;
   addAccount: (input: Omit<Account, 'id' | 'updatedAt'>) => Account;
   updateAccount: (account: Account) => void;
   deleteAccount: (id: string) => void;
+  /** Adds only wallets whose id is not already present (backup restore, merge mode). */
+  mergeAccounts: (incoming: Account[]) => void;
   setCurrency: (code: string) => void;
   setUserName: (name: string) => void;
   clearAllData: () => Promise<void>;
@@ -106,13 +114,24 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
 
   const addTransaction = useCallback((input: NewTransactionInput): Transaction => {
     const tx: Transaction = {
-      id: makeId(),
+      id: input.id ?? makeId(),
       createdAt: Date.now(),
       source: input.source ?? 'manual',
       ...input,
     };
     setTransactions((prev) => [tx, ...prev]);
     return tx;
+  }, []);
+
+  const addTransactionsUnique = useCallback((txs: Transaction[]): number => {
+    let added = 0;
+    setTransactions((prev) => {
+      const existing = new Set(prev.map((t) => t.id));
+      const fresh = txs.filter((t) => t.id && !existing.has(t.id) && !(existing.add(t.id), false));
+      added = fresh.length;
+      return [...fresh, ...prev];
+    });
+    return added;
   }, []);
 
   const updateTransaction = useCallback((tx: Transaction) => {
@@ -148,6 +167,14 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     );
   }, []);
 
+  const mergeAccounts = useCallback((incoming: Account[]) => {
+    setAccounts((prev) => {
+      const ids = new Set(prev.map((a) => a.id));
+      const fresh = incoming.filter((a) => a.id && !ids.has(a.id) && !(ids.add(a.id), false));
+      return fresh.length ? [...prev, ...fresh] : prev;
+    });
+  }, []);
+
   const setCurrency = useCallback((code: string) => {
     setSettings((s) => ({ ...s, currency: code }));
   }, []);
@@ -179,11 +206,13 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       accounts,
       settings,
       addTransaction,
+      addTransactionsUnique,
       updateTransaction,
       deleteTransaction,
       addAccount,
       updateAccount,
       deleteAccount,
+      mergeAccounts,
       setCurrency,
       setUserName,
       clearAllData,
@@ -195,11 +224,13 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       accounts,
       settings,
       addTransaction,
+      addTransactionsUnique,
       updateTransaction,
       deleteTransaction,
       addAccount,
       updateAccount,
       deleteAccount,
+      mergeAccounts,
       setCurrency,
       setUserName,
       clearAllData,

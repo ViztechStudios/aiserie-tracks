@@ -7,6 +7,7 @@ import { Entrance } from '../components/Entrance';
 import { GlassCard } from '../components/GlassCard';
 import { PressableScale } from '../components/PressableScale';
 import { TasksPanel } from '../components/TasksPanel';
+import { RecurringSection } from '../components/RecurringSection';
 import { useFinance } from '../store/FinanceContext';
 import { useBudgets } from '../store/BudgetsContext';
 import { useBills } from '../store/BillsContext';
@@ -17,6 +18,7 @@ import { accountBalance } from '../utils/accounts';
 import { billsDueWithin, nextDueDate, daysUntil } from '../utils/bills';
 import { categoryTotals, currentMonthKey, monthKey } from '../utils/stats';
 import { formatMoney, parseAmount } from '../utils/money';
+import { DEFAULT_ALERT_LEVELS, activeLevels } from '../utils/budgetAlerts';
 import { Bill, Budget } from '../types';
 import { font, radius, spacing } from '../theme';
 import { useResponsive } from '../hooks/useResponsive';
@@ -37,6 +39,7 @@ export function FinanceScreen() {
   const [budgetModal, setBudgetModal] = useState<{ budget?: Budget } | null>(null);
   const [budgetCat, setBudgetCat] = useState('food');
   const [budgetCap, setBudgetCap] = useState('');
+  const [budgetAlerts, setBudgetAlerts] = useState<number[]>(DEFAULT_ALERT_LEVELS);
   const [billModal, setBillModal] = useState<{ bill?: Bill } | null>(null);
   const [billName, setBillName] = useState('');
   const [billAmount, setBillAmount] = useState('');
@@ -65,15 +68,44 @@ export function FinanceScreen() {
 
   const planPct = cash > 0 ? Math.min(assigned / cash, 1) : 0;
 
+  // budget month summary — caps vs actual spending for the visible month
+  const budgetSummary = useMemo(() => {
+    const totalCap = budgets.budgets.reduce((s, b) => s + b.cap, 0);
+    const totalSpent = budgets.budgets.reduce((s, b) => s + (spentByCategory.get(b.categoryId) ?? 0), 0);
+    const over = budgets.budgets.filter((b) => (spentByCategory.get(b.categoryId) ?? 0) > b.cap).length;
+    return { totalCap, totalSpent, over };
+  }, [budgets.budgets, spentByCategory]);
+
+  const openBudgetModal = (budget?: Budget) => {
+    setBudgetCat(budget?.categoryId ?? 'food');
+    setBudgetCap(budget ? String(budget.cap) : '');
+    setBudgetAlerts(budget ? activeLevels(budget) : [...DEFAULT_ALERT_LEVELS]);
+    setBudgetModal({ budget });
+  };
+
   const submitBudget = () => {
     const cap = parseAmount(budgetCap);
     if (cap === null) {
       ui.toast('Enter a monthly cap greater than zero.');
       return;
     }
-    budgets.upsertBudget(budgetCat, cap);
+    const alerts = budgetAlerts.length === DEFAULT_ALERT_LEVELS.length && DEFAULT_ALERT_LEVELS.every((v) => budgetAlerts.includes(v)) ? undefined : budgetAlerts;
+    if (budgetModal?.budget) {
+      budgets.updateBudget({ ...budgetModal.budget, categoryId: budgetCat, cap, alerts });
+      ui.toast('Budget saved.');
+    } else {
+      budgets.upsertBudget(budgetCat, cap, alerts);
+    }
     setBudgetModal(null);
     setBudgetCap('');
+  };
+
+  const resetBudgetAlerts = () => {
+    const b = budgetModal?.budget;
+    if (!b) return;
+    budgets.resetAlerts(b.id);
+    ui.toast(`Alerts for the ${getCategory(b.categoryId)?.label ?? ''} budget reset — it will notify again at each threshold.`);
+    setBudgetModal(null);
   };
 
   const removeBudget = (b: Budget) => {
@@ -249,7 +281,11 @@ export function FinanceScreen() {
           <Entrance delay={140}>
             <View style={[styles.sectionHead, styles.sectionSpacing]}>
               <Text style={[styles.sectionTitle, { color: t.text }]}>Envelope budgets</Text>
-              <Text style={[styles.sectionHint, { color: t.subtext }]}>this month · caps per category</Text>
+              <Text style={[styles.sectionHint, { color: t.subtext }]}>
+                {budgets.budgets.length > 0
+                  ? `${formatMoney(budgetSummary.totalSpent, finance.settings.currency)} of ${formatMoney(budgetSummary.totalCap, finance.settings.currency)} · ${formatMoney(Math.max(budgetSummary.totalCap - budgetSummary.totalSpent, 0), finance.settings.currency)} left${budgetSummary.over > 0 ? ` · ${budgetSummary.over} over` : ''}`
+                  : 'this month · caps per category'}
+              </Text>
             </View>
 
             {budgets.budgets.length === 0 ? (
@@ -257,7 +293,7 @@ export function FinanceScreen() {
                 <Text style={[styles.emptyText, { color: t.subtext }]}>
                   Give every peso a job: set a monthly cap per category and watch the envelopes fill up as you spend.
                 </Text>
-                <PressableScale onPress={() => setBudgetModal({})} haptic="medium" style={[styles.primaryBtn, { backgroundColor: '#1E7A50' }]}>
+                <PressableScale onPress={() => openBudgetModal()} haptic="medium" style={[styles.primaryBtn, { backgroundColor: '#1E7A50' }]}>
                   <Ionicons name="add" size={16} color="#FFFFFF" />
                   <Text style={styles.primaryBtnText}>Create a budget</Text>
                 </PressableScale>
@@ -295,7 +331,7 @@ export function FinanceScreen() {
                               {Math.round(pct * 100)}% of {formatMoney(b.cap, finance.settings.currency)}
                             </Text>
                           </View>
-                          <PressableScale onPress={() => setBudgetModal({ budget: b })} haptic="light" scaleTo={0.85} style={styles.rowIconBtn}>
+                          <PressableScale onPress={() => openBudgetModal(b)} haptic="light" scaleTo={0.85} style={styles.rowIconBtn}>
                             <Ionicons name="pencil" size={15} color={t.subtext} />
                           </PressableScale>
                           <PressableScale onPress={() => removeBudget(b)} haptic="light" scaleTo={0.85} style={styles.rowIconBtn}>
@@ -316,13 +352,16 @@ export function FinanceScreen() {
                       </View>
                     );
                   })}
-                <PressableScale onPress={() => setBudgetModal({})} haptic="light" style={styles.ghostBtn}>
+                <PressableScale onPress={() => openBudgetModal()} haptic="light" style={styles.ghostBtn}>
                   <Ionicons name="add" size={15} color={t.ocean600} />
                   <Text style={[styles.ghostBtnText, { color: t.ocean600 }]}>New envelope</Text>
                 </PressableScale>
               </>
             )}
           </Entrance>
+
+          {/* recurring */}
+          <RecurringSection />
 
           {/* money chores */}
           <Entrance delay={200}>
@@ -371,6 +410,32 @@ export function FinanceScreen() {
                 autoFocus
               />
             </View>
+            <Text style={[styles.modalSection, { color: t.subtext }]}>NOTIFY ME AT</Text>
+            <View style={styles.modalChips}>
+              {([
+                [0.5, '50%'],
+                [0.75, '75%'],
+                [0.9, '90%'],
+                [1, '100%'],
+              ] as const).map(([lv, label]) => {
+                const on = budgetAlerts.includes(lv);
+                return (
+                  <TouchableOpacity
+                    key={label}
+                    onPress={() => setBudgetAlerts((prev) => (on ? prev.filter((v) => v !== lv) : [...prev, lv].sort((a, b) => a - b)))}
+                    style={[styles.modalChip, { backgroundColor: t.ice50, borderColor: t.line }, on && { backgroundColor: t.ocean600, borderColor: t.ocean600 }]}
+                  >
+                    <Text style={[styles.modalChipText, { color: t.text }, on && { color: '#FFFFFF' }]}>{label}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+            {budgetModal?.budget && (
+              <PressableScale onPress={resetBudgetAlerts} haptic="light" style={styles.resetBtn}>
+                <Ionicons name="refresh" size={14} color={t.subtext} />
+                <Text style={[styles.resetBtnText, { color: t.subtext }]}>Reset alerts for this month</Text>
+              </PressableScale>
+            )}
             <View style={styles.modalActions}>
               <PressableScale onPress={() => setBudgetModal(null)} haptic="light" style={[styles.modalBtn, { backgroundColor: t.ice100 }]} containerStyle={styles.modalBtnContainer}>
                 <Text style={[styles.modalBtnText, { color: t.text }]}>Cancel</Text>
@@ -543,6 +608,8 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   ghostBtnText: { fontFamily: font.bold, fontSize: 13 },
+  resetBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: spacing.md, alignSelf: 'flex-start' },
+  resetBtnText: { fontFamily: font.bold, fontSize: 12 },
   modalBackdrop: { flex: 1, backgroundColor: 'rgba(4,16,10,0.5)', justifyContent: 'flex-end' },
   modalSheet: {
     borderTopLeftRadius: radius.lg + 8,

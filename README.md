@@ -22,6 +22,10 @@ A jungle-green, hand-drawn **personal finance tracker** that runs as a **native 
 - **🔒 Private by design** — all data on-device (AsyncStorage on native, localStorage on web). No account, no cloud, no tracking. Privacy Policy & T&C included in-app.
 - **📱 Responsive** — phones and tablets, with a mobile-first web layout and real `<input type="date">` on web
 - **✨ Gentle animations** — entrance fades, count-up balances, springy press feedback, animated theme cross-fade
+- **💾 Backup & restore** — one JSON file with everything (transactions, wallets, budgets, bills, recurring, tasks, settings), exported on-device; import validates the file first, then merges without overwriting or duplicating existing records — or replaces everything after a double confirmation. Perfect for moving to a new phone
+- **📊 Reports (CSV & PDF)** — income, expenses, category breakdown, wallet balances and every transaction for any period: this/last month, last 3 months, year, all time or custom range. CSV opens in Excel/Sheets; the PDF is branded and readable
+- **🔁 Recurring transactions** — schedule salary, rent or subscriptions daily/weekly/monthly/yearly; Aiserie logs them automatically with **deterministic ids so re-runs and restores never duplicate money**. Pause, edit or delete any time; a 90-day backfill horizon keeps old schedules from flooding the ledger
+- **🔔 Budget alerts** — envelopes notify once when spending reaches 50 / 75 / 90 / 100% (configurable per budget), reset each month, and a month summary shows caps vs actual spending
 
 ## Project structure
 
@@ -80,7 +84,7 @@ open the site in **Safari** → **Share** □↑ → **Add to Home Screen** → 
 
 ### 2. Android as a downloadable APK
 
-**✅ v2.6.0 APK is live:** [Releases → v2.6.0](https://github.com/ViztechStudios/aiserie-tracks/releases/latest) → download `AiserieTracks-v2.6.0.apk` → allow *"install unknown apps"* for the browser when Android asks → install. v2.6.0 ("Fern & Bark, unified") replaces the leftover wave-era PWA icon and painterly app icon with the hand-drawn badge everywhere — iOS/Android app icons, PWA icons, favicon, native splash and all 14 iOS launch screens — and gives the boot curtain a cleaner, more professional motion. Updating keeps all data; existing installs show the in-app update nudge automatically.
+**✅ v2.7.0 APK is live:** [Releases → v2.7.0](https://github.com/ViztechStudios/aiserie-tracks/releases/latest) → download `AiserieTracks-v2.7.0.apk` → allow *"install unknown apps"* for the browser when Android asks → install. v2.7.0 ("Reliability & trust") adds backup & restore, CSV/PDF reports, recurring transactions, budget alerts with a monthly summary — plus a 29-test reliability suite covering balances, transfers, totals, schedules, backup validation and alert thresholds. All data stays on-device; nothing new is collected. Updating keeps every record; existing installs see the update nudge automatically.
 
 How it was built, and how future versions get built (Expo free tier, 30 builds/month):
 
@@ -126,6 +130,21 @@ python3 scripts/brand_sync.py   # redraws + rewrites everything below
 ```
 
 Regenerated outputs: `assets/icon.png` (1024 — this is what EAS uses for the **iOS app icon** and Android legacy icon), `assets/favicon.png`, `assets/splash-icon.png` (native splash + boot curtain), `assets/android-icon-{foreground,background,monochrome}.png`, `public/icons/icon-{192,512,maskable-512}.png`, `public/apple-touch-icon.png` (iOS home-screen web icon) and all 14 `public/splash/startup-*.png` iOS launch screens.
+
+## Tests
+
+Pure logic (balances, transfers, monthly totals, recurring scheduling, backup validation, budget alerts) is covered by a dependency-free test suite:
+
+```bash
+npm test        # 29 assertions — exits non-zero on any failure
+```
+
+## Security & privacy notes
+
+- All data stays in AsyncStorage on-device; the only network call is the GitHub releases update check (public version number only). Backup files and reports are written locally or shared via the system share sheet — nothing is uploaded.
+- Backup import validates structure and sanitizes every entry (drops corrupt rows, dedupes ids, clamps values) before anything is written.
+- `npm audit --omit=dev` reports 3 *moderate* advisories inside Expo's build tooling (`minimatch` via `@expo/fingerprint`) — build-time only, not shipped in the app; fixing them requires force-upgrading the Expo SDK.
+- Permissions are unchanged: camera (receipt scanning) only. No biometrics in this version, per project scope.
 
 ## Receipt scanning notes
 

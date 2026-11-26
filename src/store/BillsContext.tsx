@@ -12,6 +12,8 @@ interface BillsContextValue {
   updateBill: (bill: Bill) => void;
   removeBill: (id: string) => void;
   clearAll: () => Promise<void>;
+  /** Used by backup restore: replaces the whole list. */
+  replaceAll: (bills: Bill[]) => void;
 }
 
 const BillsContext = createContext<BillsContextValue | null>(null);
@@ -55,9 +57,11 @@ export function BillsProvider({ children }: { children: React.ReactNode }) {
     await AsyncStorage.removeItem(BILLS_KEY).catch(() => {});
   }, []);
 
+  const replaceAll = useCallback((list: Bill[]) => setBills(list), []);
+
   const value = useMemo(
-    () => ({ ready, bills, addBill, updateBill, removeBill, clearAll }),
-    [ready, bills, addBill, updateBill, removeBill, clearAll]
+    () => ({ ready, bills, addBill, updateBill, removeBill, clearAll, replaceAll }),
+    [ready, bills, addBill, updateBill, removeBill, clearAll, replaceAll]
   );
 
   return <BillsContext.Provider value={value}>{children}</BillsContext.Provider>;

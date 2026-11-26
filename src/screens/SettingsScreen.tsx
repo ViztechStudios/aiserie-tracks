@@ -11,6 +11,7 @@ import { useFinance } from '../store/FinanceContext';
 import { useTasks } from '../store/TasksContext';
 import { useBudgets } from '../store/BudgetsContext';
 import { useBills } from '../store/BillsContext';
+import { useRecurring } from '../store/RecurringContext';
 import { useUI } from '../store/UIContext';
 import { useTheme, ThemeMode } from '../store/ThemeContext';
 import { CURRENCIES } from '../data/currencies';
@@ -80,6 +81,7 @@ export function SettingsScreen() {
   const tasks = useTasks();
   const budgets = useBudgets();
   const bills = useBills();
+  const recurring = useRecurring();
   const ui = useUI();
   const { t, isDark } = useTheme();
   const { contentWidth } = useResponsive();
@@ -100,7 +102,7 @@ export function SettingsScreen() {
       .confirm({
         title: 'Erase everything?',
         message:
-          'All transactions, wallets, tasks, budgets, bills and streak history saved on this device will be permanently deleted. This cannot be undone.',
+          'All transactions, wallets, tasks, budgets, bills, recurring schedules and streak history saved on this device will be permanently deleted. This cannot be undone.',
         confirmLabel: 'Erase',
         danger: true,
       })
@@ -108,7 +110,7 @@ export function SettingsScreen() {
         if (!ok) return;
         // every store wipes its own state AND storage; finance also clears
         // the shared keys so nothing is re-persisted afterwards
-        await Promise.all([finance.clearAllData(), tasks.clearAll(), budgets.clearAll(), bills.clearAll()]);
+        await Promise.all([finance.clearAllData(), tasks.clearAll(), budgets.clearAll(), bills.clearAll(), recurring.clearAll()]);
       });
   };
 
@@ -222,6 +224,47 @@ export function SettingsScreen() {
           </Entrance>
 
           <Entrance delay={160}>
+            <Text style={[styles.section, { color: t.subtext }]}>Backup & restore</Text>
+            <PressableScale onPress={() => ui.openBackup('export')} style={[styles.row, { backgroundColor: t.card, borderColor: t.glassBorderSoft }]} haptic="light">
+              <RowIcon name="cloud-download-outline" tint={t.ocean600} />
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.rowTitle, { color: t.text }]}>Export backup file</Text>
+                <Text style={[styles.rowSub, { color: t.subtext }]}>
+                  One file with everything — transactions, wallets, budgets, bills, recurring, settings. Saved on-device.
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={16} color={t.faint} />
+            </PressableScale>
+            <PressableScale onPress={() => ui.openBackup('import')} style={[styles.row, { backgroundColor: t.card, borderColor: t.glassBorderSoft }]} haptic="light">
+              <RowIcon name="cloud-upload-outline" tint={t.ocean600} />
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.rowTitle, { color: t.text }]}>Import backup file</Text>
+                <Text style={[styles.rowSub, { color: t.subtext }]}>
+                  Move to a new device or undo an accident — the file is validated first, then merged or applied.
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={16} color={t.faint} />
+            </PressableScale>
+            <Text style={[styles.hint, { color: t.faint }]}>
+              Backups are plain JSON that never leaves your device unless you share it. Import asks before touching anything.
+            </Text>
+          </Entrance>
+
+          <Entrance delay={180}>
+            <Text style={[styles.section, { color: t.subtext }]}>Reports & export</Text>
+            <PressableScale onPress={() => ui.openReports()} style={[styles.row, { backgroundColor: t.card, borderColor: t.glassBorderSoft }]} haptic="light">
+              <RowIcon name="document-outline" tint={t.ocean600} />
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.rowTitle, { color: t.text }]}>Export report (CSV / PDF)</Text>
+                <Text style={[styles.rowSub, { color: t.subtext }]}>
+                  Income, expenses, category breakdown and wallet balances for any month, year or custom range.
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={16} color={t.faint} />
+            </PressableScale>
+          </Entrance>
+
+          <Entrance delay={200}>
             <Text style={[styles.section, { color: t.subtext }]}>Your data</Text>
             <View style={[styles.row, { backgroundColor: t.card, borderColor: t.glassBorderSoft }]}>
               <RowIcon name="lock-closed-outline" tint={t.subtext} />
