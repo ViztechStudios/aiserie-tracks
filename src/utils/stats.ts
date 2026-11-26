@@ -56,7 +56,7 @@ export function totalsForMonth(txs: Transaction[], ym: string): MonthTotals {
   let income = 0;
   let expense = 0;
   for (const t of txs) {
-    if (monthKey(t.date) !== ym) continue;
+    if (monthKey(t.date) !== ym || t.type === 'transfer') continue; // transfers move money, they don't earn or spend it
     if (t.type === 'income') income += t.amount;
     else expense += t.amount;
   }
@@ -66,7 +66,7 @@ export function totalsForMonth(txs: Transaction[], ym: string): MonthTotals {
 export function categoryTotals(txs: Transaction[], ym: string, type: 'expense' | 'income'): CategoryTotal[] {
   const map = new Map<string, number>();
   for (const t of txs) {
-    if (t.type !== type || monthKey(t.date) !== ym) continue;
+    if (t.type !== type || monthKey(t.date) !== ym) continue; // transfers are excluded from category charts
     map.set(t.categoryId, (map.get(t.categoryId) ?? 0) + t.amount);
   }
   return [...map.entries()]

@@ -8,14 +8,26 @@ const TX_KEY = 'aiserie.v1.transactions';
 const SETTINGS_KEY = 'aiserie.v1.settings';
 const ACCOUNTS_KEY = 'aiserie.v1.accounts';
 
+/** Every storage key the app can own — used by the full wipe. */
+export const ALL_STORAGE_KEYS = [
+  TX_KEY,
+  ACCOUNTS_KEY,
+  SETTINGS_KEY,
+  'aiserie.v1.tasks',
+  'aiserie.v1.budgets',
+  'aiserie.v1.bills',
+];
+
 export interface NewTransactionInput {
-  type: 'expense' | 'income';
+  type: 'expense' | 'income' | 'transfer';
   amount: number;
   categoryId: string;
   date: string;
   note?: string;
   source?: 'manual' | 'scan' | 'sample' | 'detect';
   accountId?: string;
+  /** Transfer destination wallet. */
+  toAccountId?: string;
 }
 
 interface FinanceContextValue {
@@ -125,7 +137,14 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     setAccounts((prev) => prev.filter((a) => a.id !== id));
     // unlink transactions that referenced this wallet
     setTransactions((prev) =>
-      prev.map((t) => (t.accountId === id ? { ...t, accountId: undefined } : t))
+      prev.map((t) => {
+        const next = { ...t };
+        if (next.accountId === id) next.accountId = undefined;
+        if (next.toAccountId === id) next.toAccountId = undefined;
+        // a transfer with neither side left becomes meaningless — drop it
+        if (next.type === 'transfer' && !next.accountId && !next.toAccountId) return null;
+        return next;
+      }).filter((t): t is Transaction => t !== null)
     );
   }, []);
 
@@ -140,7 +159,11 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
   const clearAllData = useCallback(async () => {
     setTransactions([]);
     setAccounts([]);
-    await AsyncStorage.multiRemove([TX_KEY, ACCOUNTS_KEY]);
+    // Wipe every trace the app can leave on the device — transactions,
+    // wallets, settings, tasks, budgets and bills — so "Erase all data"
+    // really erases everything (transactions/wallets are also reset in state).
+    await AsyncStorage.multiRemove(ALL_STORAGE_KEYS).catch(() => {});
+    setSettings({ currency: DEFAULT_CURRENCY, userName: 'Aiserie' });
   }, []);
 
   const loadSampleData = useCallback(() => {

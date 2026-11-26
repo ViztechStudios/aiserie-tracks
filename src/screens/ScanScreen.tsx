@@ -1,7 +1,6 @@
 import React, { useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -61,7 +60,7 @@ export function ScanScreen() {
   const saveDraft = () => {
     const amount = parseAmount(amountRaw);
     if (amount === null) {
-      Alert.alert('Missing amount', 'Enter the receipt total to save.');
+      ui.toast('Enter the receipt total to save first.');
       return;
     }
     finance.addTransaction({
@@ -72,7 +71,7 @@ export function ScanScreen() {
       note: note.trim() || 'Scanned receipt',
       source: 'scan',
     });
-    Alert.alert('Saved', `${formatMoney(amount, finance.settings.currency)} logged under your chosen category.`);
+    ui.toast(`Logged ${formatMoney(amount, finance.settings.currency)} under your chosen category.`);
     setStage('camera');
     setPhotoUri(null);
     setAmountRaw('');
@@ -121,7 +120,7 @@ export function ScanScreen() {
       }
       setStage('review');
     } catch {
-      Alert.alert('Camera error', 'Could not capture the photo. Please try again.');
+      ui.toast('Could not capture the photo. Please try again.');
     } finally {
       setBusy('');
     }

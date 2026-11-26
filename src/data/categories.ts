@@ -20,9 +20,19 @@ export const INCOME_CATEGORIES: Category[] = [
   { id: 'other-inc', label: 'Other', emoji: '💰', color: '#6366F1', type: 'income' },
 ];
 
-export const ALL_CATEGORIES = [...EXPENSE_CATEGORIES, ...INCOME_CATEGORIES];
+/** Pseudo-category for wallet-to-wallet transfers (not real spending). */
+export const TRANSFER_CATEGORY: Category = {
+  id: 'transfer',
+  label: 'Transfer',
+  emoji: '🔁',
+  color: '#2E9B63',
+  type: 'transfer',
+};
 
-export function categoriesFor(type: 'expense' | 'income'): Category[] {
+export const ALL_CATEGORIES = [...EXPENSE_CATEGORIES, ...INCOME_CATEGORIES, TRANSFER_CATEGORY];
+
+export function categoriesFor(type: 'expense' | 'income' | 'transfer'): Category[] {
+  if (type === 'transfer') return [TRANSFER_CATEGORY];
   return type === 'expense' ? EXPENSE_CATEGORIES : INCOME_CATEGORIES;
 }
 

@@ -1,10 +1,17 @@
 import { Account, Transaction } from '../types';
 
-/** Net amount of transactions linked to an account (income − expense). */
+/** Net amount of transactions linked to an account (income − expense), including transfers in/out. */
 export function accountNet(accountId: string, txs: Transaction[]): number {
-  return txs
-    .filter((t) => t.accountId === accountId)
-    .reduce((sum, t) => sum + (t.type === 'income' ? t.amount : -t.amount), 0);
+  return txs.reduce((sum, t) => {
+    if (t.type === 'transfer') {
+      // money leaves the source wallet and lands in the destination wallet
+      if (t.accountId === accountId) return sum - t.amount;
+      if (t.toAccountId === accountId) return sum + t.amount;
+      return sum;
+    }
+    if (t.accountId !== accountId) return sum;
+    return sum + (t.type === 'income' ? t.amount : -t.amount);
+  }, 0);
 }
 
 /** Current balance = declared balance + net of linked transactions. */

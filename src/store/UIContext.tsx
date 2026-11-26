@@ -1,8 +1,16 @@
 import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
-import { Transaction } from '../types';
+import { Transaction, TxType } from '../types';
 import { UpdateInfo } from '../services/updateCheck';
 
 export type LegalDoc = 'privacy' | 'terms';
+
+export interface ConfirmOptions {
+  title: string;
+  message?: string;
+  confirmLabel?: string;
+  cancelLabel?: string;
+  danger?: boolean;
+}
 
 export interface ModalPreset {
   categoryId?: string;
@@ -11,6 +19,10 @@ export interface ModalPreset {
   date?: string;
   source?: 'manual' | 'scan' | 'detect';
   accountId?: string;
+  /** Pre-select the entry mode (expense / income / transfer). */
+  type?: TxType;
+  /** For transfer presets: destination wallet. */
+  toAccountId?: string;
 }
 
 interface ModalState {
@@ -30,6 +42,24 @@ interface UIContextValue extends ModalState {
   openLegal: (doc: LegalDoc) => void;
   showUpdate: (info: UpdateInfo) => void;
   close: () => void;
+  /**
+   * In-app confirmation that works identically on native and web (the RN
+   * Alert API drops its buttons on react-native-web, which silently broke
+   * every destructive action on the PWA). Resolves true when confirmed.
+   */
+  confirm: (opts: ConfirmOptions) => Promise<boolean>;
+  /** In-app notice (validation, confirmations) — Alert.alert is a no-op on web. */
+  toast: (message: string) => void;
+}
+
+interface ConfirmState extends ConfirmOptions {
+  id: number;
+  resolve: (v: boolean) => void;
+}
+
+interface ToastState {
+  id: number;
+  message: string;
 }
 
 const UIContext = createContext<UIContextValue | null>(null);
@@ -40,6 +70,25 @@ export function UIProvider({ children }: { children: React.ReactNode }) {
   const [editAccountId, setEditAccountId] = useState<string | undefined>(undefined);
   const [legalDoc, setLegalDoc] = useState<LegalDoc | null>(null);
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
+  const [confirmState, setConfirmState] = useState<ConfirmState | null>(null);
+  const [toastState, setToastState] = useState<ToastState | null>(null);
+
+  const confirm = useCallback((opts: ConfirmOptions) => {
+    return new Promise<boolean>((resolve) => {
+      setConfirmState({ ...opts, id: Date.now(), resolve });
+    });
+  }, []);
+
+  const settleConfirm = useCallback((value: boolean) => {
+    setConfirmState((prev) => {
+      if (prev) prev.resolve(value);
+      return null;
+    });
+  }, []);
+
+  const toast = useCallback((message: string) => {
+    setToastState({ id: Date.now(), message });
+  }, []);
 
   const openAdd = useCallback((preset?: ModalPreset) => {
     setState({ visible: true, editing: undefined, preset });
@@ -86,15 +135,39 @@ export function UIProvider({ children }: { children: React.ReactNode }) {
       closeWallets: () => setWalletsVisible(false),
       closeLegal: () => setLegalDoc(null),
       closeUpdate,
+      confirm,
+      confirmState,
+      settleConfirm,
+      toast,
+      toastState,
     }),
-    [state, walletsVisible, editAccountId, legalDoc, updateInfo, openAdd, openEdit, openWallets, openLegal, showUpdate, close, closeUpdate]
+    [state, walletsVisible, editAccountId, legalDoc, updateInfo, openAdd, openEdit, openWallets, openLegal, showUpdate, close, closeUpdate, confirm, confirmState, settleConfirm, toast, toastState]
   );
 
   return <UIContext.Provider value={value}>{children}</UIContext.Provider>;
 }
 
-export function useUI(): UIContextValue & { closeWallets: () => void; closeLegal: () => void; closeUpdate: () => void } {
+export function useUI():
+  | UIContextValue & {
+      closeWallets: () => void;
+      closeLegal: () => void;
+      closeUpdate: () => void;
+      confirm: (opts: ConfirmOptions) => Promise<boolean>;
+      confirmState: (ConfirmState & ConfirmOptions) | null;
+      settleConfirm: (v: boolean) => void;
+      toast: (message: string) => void;
+      toastState: { id: number; message: string } | null;
+    } {
   const ctx = useContext(UIContext);
   if (!ctx) throw new Error('useUI must be used inside UIProvider');
-  return ctx as UIContextValue & { closeWallets: () => void; closeLegal: () => void; closeUpdate: () => void };
+  return ctx as UIContextValue & {
+    closeWallets: () => void;
+    closeLegal: () => void;
+    closeUpdate: () => void;
+    confirm: (opts: ConfirmOptions) => Promise<boolean>;
+    confirmState: (ConfirmState & ConfirmOptions) | null;
+    settleConfirm: (v: boolean) => void;
+    toast: (message: string) => void;
+    toastState: { id: number; message: string } | null;
+  };
 }

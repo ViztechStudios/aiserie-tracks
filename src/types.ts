@@ -1,4 +1,4 @@
-export type TxType = 'expense' | 'income';
+export type TxType = 'expense' | 'income' | 'transfer';
 
 export type TxSource = 'manual' | 'scan' | 'sample' | 'detect';
 
@@ -38,6 +38,29 @@ export interface Transaction {
   createdAt: number;
   /** Optional wallet this transaction moved money in/out of. */
   accountId?: string;
+  /** For transfers only: the wallet that receives the money. */
+  toAccountId?: string;
+}
+
+/** Monthly cap for one spending category. */
+export interface Budget {
+  id: string;
+  categoryId: string;
+  /** Positive monthly cap. */
+  cap: number;
+  createdAt: number;
+}
+
+/** A repeating bill the user wants reminded about. */
+export interface Bill {
+  id: string;
+  name: string;
+  amount: number;
+  /** Day of month (1..31) the bill normally comes due. */
+  dueDay: number;
+  emoji?: string;
+  accountId?: string;
+  createdAt: number;
 }
 
 export interface Settings {

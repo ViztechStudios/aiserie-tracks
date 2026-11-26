@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Alert, Image, ImageSourcePropType, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Image, ImageSourcePropType, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { AuroraBackground } from './AuroraBackground';
@@ -106,10 +106,16 @@ export function WalletsModal() {
   };
 
   const confirmDelete = (account: Account) => {
-    Alert.alert(`Remove ${account.name}?`, 'Transactions stay — they just become unlinked from this wallet.', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Remove', style: 'destructive', onPress: () => finance.deleteAccount(account.id) },
-    ]);
+    ui
+      .confirm({
+        title: `Remove ${account.name}?`,
+        message: 'Transactions stay — they just become unlinked from this wallet.',
+        confirmLabel: 'Remove',
+        danger: true,
+      })
+      .then((ok) => {
+        if (ok) finance.deleteAccount(account.id);
+      });
   };
 
   const detectFromText = () => {

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Alert, Linking, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Linking, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 import { Animated, Easing } from 'react-native';
@@ -8,6 +8,9 @@ import { AuroraBackground } from '../components/AuroraBackground';
 import { Entrance } from '../components/Entrance';
 import { PressableScale } from '../components/PressableScale';
 import { useFinance } from '../store/FinanceContext';
+import { useTasks } from '../store/TasksContext';
+import { useBudgets } from '../store/BudgetsContext';
+import { useBills } from '../store/BillsContext';
 import { useUI } from '../store/UIContext';
 import { useTheme, ThemeMode } from '../store/ThemeContext';
 import { CURRENCIES } from '../data/currencies';
@@ -74,6 +77,9 @@ function SegButton({ opt, active, onPick }: { opt: { key: ThemeMode; label: stri
 
 export function SettingsScreen() {
   const finance = useFinance();
+  const tasks = useTasks();
+  const budgets = useBudgets();
+  const bills = useBills();
   const ui = useUI();
   const { t, isDark } = useTheme();
   const { contentWidth } = useResponsive();
@@ -90,10 +96,20 @@ export function SettingsScreen() {
   const current = CURRENCIES.find((c) => c.code === finance.settings.currency) ?? CURRENCIES[0];
 
   const askClear = () => {
-    Alert.alert('Erase everything?', 'All transactions, wallets and tasks saved on this device will be permanently deleted.', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Erase', style: 'destructive', onPress: () => finance.clearAllData() },
-    ]);
+    ui
+      .confirm({
+        title: 'Erase everything?',
+        message:
+          'All transactions, wallets, tasks, budgets, bills and streak history saved on this device will be permanently deleted. This cannot be undone.',
+        confirmLabel: 'Erase',
+        danger: true,
+      })
+      .then(async (ok) => {
+        if (!ok) return;
+        // every store wipes its own state AND storage; finance also clears
+        // the shared keys so nothing is re-persisted afterwards
+        await Promise.all([finance.clearAllData(), tasks.clearAll(), budgets.clearAll(), bills.clearAll()]);
+      });
   };
 
   const runUpdateCheck = async () => {
@@ -104,7 +120,7 @@ export function SettingsScreen() {
     if (info) {
       ui.showUpdate(info);
     } else {
-      Alert.alert("You're up to date", `Aiserie Tracks v${APP_VERSION} is the latest release. New versions will nudge you right here.`);
+      ui.toast(`You are up to date — v${APP_VERSION} is the latest release. New versions nudge you right here.`);
     }
   };
 
@@ -223,7 +239,9 @@ export function SettingsScreen() {
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.rowTitle, { color: t.risk }]}>Erase all data</Text>
-                <Text style={[styles.rowSub, { color: t.subtext }]}>Wipe every transaction, wallet and task from this device.</Text>
+                <Text style={[styles.rowSub, { color: t.subtext }]}>
+                  Wipe every transaction, wallet, task, budget and bill from this device.
+                </Text>
               </View>
             </PressableScale>
           </Entrance>
@@ -272,10 +290,8 @@ export function SettingsScreen() {
               <RowIcon name="water" tint={t.ocean600} />
               <View style={{ flex: 1 }}>
                 <Text style={[styles.rowTitle, { color: t.text }]}>Aiserie Tracks v{APP_VERSION}</Text>
-                <Text style={[styles.rowSub, { color: t.subtext }]}>
-                  Fern &amp; Bark: a greener home for your money with the pup-and-tabby duo, deep fern pages, wallet
-                  balances with official bank logos, calendar ledger, tasks, animated dark mode, and update nudges from
-                  GitHub. Made by Viztech Studios for Aiserie.
+                <Text style={[styles.rowSub, { color: t.subtext }]}
+                  >Fern &amp; Bark: a greener home for your money with the pup-and-tabby duo, wallet cards you can swipe, plain-money insights with a day-by-day trail, a money plan with envelope budgets and bill reminders, transfers, streaks, dark mode and update nudges from GitHub. Made by Viztech Studios for Aiserie.
                 </Text>
               </View>
             </View>

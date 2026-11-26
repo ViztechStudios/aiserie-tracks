@@ -10,6 +10,7 @@ import { MonthSummary } from '../components/MonthSummary';
 import { MonthTxList } from '../components/MonthTxList';
 import { AccountsStrip } from '../components/AccountsStrip';
 import { GlassCard } from '../components/GlassCard';
+import { StreakCard } from '../components/StreakCard';
 import { PressableScale } from '../components/PressableScale';
 import { useFinance } from '../store/FinanceContext';
 import { useUI } from '../store/UIContext';
@@ -148,21 +149,28 @@ export function HomeScreen() {
             </View>
           </Entrance>
 
-          {/* advisor teaser with the coach duo */}
+          {/* insights teaser with the coach duo */}
           <Entrance delay={240}>
-            <GlassCard style={styles.advisorRow} onPress={() => navigation.navigate('Advisor' as never)}>
+            <GlassCard style={styles.advisorRow} onPress={() => navigation.navigate('Insights' as never)}>
               <View style={[styles.advisorIcon, { backgroundColor: 'rgba(30,122,80,0.12)' }]}>
                 <Ionicons name="bulb-outline" size={17} color={t.ocean600} />
               </View>
               <View style={styles.advisorMid}>
-                <Text style={[styles.advisorTitle, { color: t.text }]}>Advisor</Text>
+                <Text style={[styles.advisorTitle, { color: t.text }]}>Insights</Text>
                 <Text style={[styles.advisorSub, { color: t.subtext }]} numberOfLines={1}>
-                  Coaching and safe-to-spend, from your own numbers.
+                  Plain answers, safe-to-spend and your day-by-day trail.
                 </Text>
               </View>
               <Image source={require('../../assets/mascot-advisor.png')} style={styles.advisorMascot} resizeMode="contain" />
               <Ionicons name="chevron-forward" size={15} color={t.faint} />
             </GlassCard>
+          </Entrance>
+
+          {/* daily streak with the tabby */}
+          <Entrance delay={300}>
+            <View style={{ marginTop: spacing.lg }}>
+              <StreakCard />
+            </View>
           </Entrance>
         </View>
       </ScrollView>

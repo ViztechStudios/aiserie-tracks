@@ -1,8 +1,9 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../store/ThemeContext';
+import { useFinance } from '../store/FinanceContext';
 import { font, radius, spacing } from '../theme';
-import { Category } from '../types';
+import { Category, Transaction } from '../types';
 import { formatMoney } from '../utils/money';
 import { dayLabel } from '../utils/stats';
 import { PressableScale } from './PressableScale';
@@ -10,24 +11,36 @@ import { PressableScale } from './PressableScale';
 interface Props {
   category: Category;
   amount: number;
-  type: 'expense' | 'income';
+  type: 'expense' | 'income' | 'transfer';
   date: string;
   note?: string;
   currency: string;
+  /** Full transaction — used to render transfer from → to labels. */
+  tx?: Transaction;
   onPress?: () => void;
   onLongPress?: () => void;
 }
 
-export function TransactionRow({ category, amount, type, date, note, currency, onPress, onLongPress }: Props) {
+export function TransactionRow({ category, amount, type, date, note, currency, tx, onPress, onLongPress }: Props) {
   const { t } = useTheme();
+  const finance = useFinance();
   const income = type === 'income';
+  const transfer = type === 'transfer';
+
+  const fromName = finance.accounts.find((a) => a.id === tx?.accountId)?.name ?? 'Wallet';
+  const toName = finance.accounts.find((a) => a.id === tx?.toAccountId)?.name ?? 'Wallet';
+
+  const tint = income ? t.income : transfer ? t.ocean600 : t.expense;
+  const bg = income ? t.income + '12' : transfer ? t.ocean600 + '12' : t.card;
+  const border = income ? t.income + '3A' : transfer ? t.ocean600 + '3A' : t.glassBorderSoft;
+
   return (
     <PressableScale
       style={[
         styles.row,
         {
-          backgroundColor: income ? t.income + '12' : t.card,
-          borderColor: income ? t.income + '3A' : t.glassBorderSoft,
+          backgroundColor: bg,
+          borderColor: border,
           borderWidth: 1,
         },
       ]}
@@ -40,14 +53,14 @@ export function TransactionRow({ category, amount, type, date, note, currency, o
       </View>
       <View style={styles.mid}>
         <Text style={[styles.label, { color: t.text }]} numberOfLines={1}>
-          {note ? note : category.label}
+          {transfer ? `${fromName} → ${toName}` : note ? note : category.label}
         </Text>
         <Text style={[styles.sub, { color: t.subtext }]} numberOfLines={1}>
-          {category.label} · {dayLabel(date)}
+          {transfer ? `Transfer · ${dayLabel(date)}` : `${category.label} · ${dayLabel(date)}`}
         </Text>
       </View>
-      <Text style={[styles.amount, { color: type === 'income' ? t.income : t.expense }]}>
-        {type === 'income' ? '+' : '−'}
+      <Text style={[styles.amount, { color: tint }]}>
+        {income ? '+' : transfer ? '' : '−'}
         {formatMoney(amount, currency)}
       </Text>
     </PressableScale>

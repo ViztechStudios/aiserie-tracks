@@ -9,15 +9,17 @@ import { useTheme } from '../store/ThemeContext';
 import { useUI } from '../store/UIContext';
 import { PressableScale } from '../components/PressableScale';
 import { HomeScreen } from '../screens/HomeScreen';
-import { CalendarScreen } from '../screens/CalendarScreen';
-import { TasksScreen } from '../screens/TasksScreen';
+import { WalletsScreen } from '../screens/WalletsScreen';
 
 // Heavy screens load on demand — keeps the first paint light on old devices.
+const InsightsScreen = React.lazy(() =>
+  import('../screens/InsightsScreen').then((m) => ({ default: m.InsightsScreen }))
+);
+const FinanceScreen = React.lazy(() =>
+  import('../screens/FinanceScreen').then((m) => ({ default: m.FinanceScreen }))
+);
 const ScanScreen = React.lazy(() =>
   import('../screens/ScanScreen').then((m) => ({ default: m.ScanScreen }))
-);
-const AdvisorScreen = React.lazy(() =>
-  import('../screens/AdvisorScreen').then((m) => ({ default: m.AdvisorScreen }))
 );
 const SettingsScreen = React.lazy(() =>
   import('../screens/SettingsScreen').then((m) => ({ default: m.SettingsScreen }))
@@ -33,17 +35,18 @@ function suspend(Component: React.ComponentType<any>) {
 
 export type RootTabParamList = {
   Home: undefined;
-  Calendar: undefined;
+  Wallets: undefined;
   Scan: undefined;
-  Advisor: undefined;
-  Tasks: undefined;
+  Insights: undefined;
+  Finance: undefined;
   Settings: undefined;
 };
 
 const TAB_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
-  Home: 'wallet',
-  Calendar: 'calendar',
-  Tasks: 'flag',
+  Home: 'paw',
+  Wallets: 'wallet',
+  Insights: 'stats-chart',
+  Finance: 'leaf',
 };
 
 /**
@@ -81,8 +84,8 @@ function TabSlot({
 }
 
 /**
- * The bottom rail — three quiet slots (Goals · Calendar · [+ add] · Balance)
- * on a solid paper surface. The big green + lives in the rail itself, so no
+ * The bottom rail — Home · Wallets · [+ add] · Insights · Finance — on a
+ * solid paper surface. The big green + lives in the rail itself, so no
  * floating button ever covers the page content. Anchored insets keep
  * everything clear of the home indicator on notched iPhones.
  */
@@ -109,7 +112,7 @@ function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
         {state.routes.map((route, index) => {
           const focused = state.index === index;
           const label = descriptors[route.key].options.title ?? route.name;
-          if (!TAB_ICONS[route.name]) return null; // hidden routes: Scan, Advisor, Settings
+          if (!TAB_ICONS[route.name]) return null; // hidden routes: Scan, Settings
 
           const icon = TAB_ICONS[route.name];
           const slot = (
@@ -125,8 +128,8 @@ function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
               }}
             />
           );
-          // after the second slot, lay the big green + button into the rail
-          return index === 2
+          // after the second slot (Wallets), lay the big green + into the rail
+          return index === 1
             ? [
                 slot,
                 <View key="add-slot" style={styles.slot}>
@@ -163,11 +166,11 @@ export function RootNavigator() {
       }}
       initialRouteName="Home"
     >
-      <Tab.Screen name="Tasks" component={TasksScreen} options={{ title: 'Goals' }} />
-      <Tab.Screen name="Calendar" component={CalendarScreen} options={{ title: 'Calendar' }} />
-      <Tab.Screen name="Home" component={HomeScreen} options={{ title: 'Balance' }} />
+      <Tab.Screen name="Home" component={HomeScreen} options={{ title: 'Home' }} />
+      <Tab.Screen name="Wallets" component={WalletsScreen} options={{ title: 'Wallets' }} />
+      <Tab.Screen name="Insights" component={suspend(InsightsScreen)} options={{ title: 'Insights' }} />
+      <Tab.Screen name="Finance" component={suspend(FinanceScreen)} options={{ title: 'Finance' }} />
       <Tab.Screen name="Scan" component={suspend(ScanScreen)} options={{ title: 'Scan' }} />
-      <Tab.Screen name="Advisor" component={suspend(AdvisorScreen)} options={{ title: 'Advisor' }} />
       <Tab.Screen name="Settings" component={suspend(SettingsScreen)} options={{ title: 'Settings' }} />
     </Tab.Navigator>
   );

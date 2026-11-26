@@ -15,6 +15,8 @@ interface TasksContextValue {
   toggleImportant: (id: string) => void;
   removeTask: (id: string) => void;
   clearDone: () => void;
+  /** Wipe the whole tasks list (used by Settings → Erase all data). */
+  clearAll: () => Promise<void>;
 }
 
 const TasksContext = createContext<TasksContextValue | null>(null);
@@ -73,6 +75,11 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
     setTasks((prev) => prev.filter((t) => !t.done));
   }, []);
 
+  const clearAll = useCallback(async () => {
+    setTasks([]);
+    await AsyncStorage.removeItem(TASKS_KEY).catch(() => {});
+  }, []);
+
   const value = useMemo(() => {
     const doneCount = tasks.filter((t) => t.done).length;
     return {
@@ -85,8 +92,9 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
       toggleImportant,
       removeTask,
       clearDone,
+      clearAll,
     };
-  }, [ready, tasks, addTask, toggleTask, toggleImportant, removeTask, clearDone]);
+  }, [ready, tasks, addTask, toggleTask, toggleImportant, removeTask, clearDone, clearAll]);
 
   return <TasksContext.Provider value={value}>{children}</TasksContext.Provider>;
 }

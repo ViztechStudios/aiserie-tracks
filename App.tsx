@@ -10,6 +10,8 @@ import { useFonts, Manrope_500Medium, Manrope_700Bold, Manrope_800ExtraBold } fr
 import { Lora_600SemiBold, Lora_700Bold } from '@expo-google-fonts/lora';
 import { FinanceProvider, useFinance } from './src/store/FinanceContext';
 import { TasksProvider } from './src/store/TasksContext';
+import { BudgetsProvider } from './src/store/BudgetsContext';
+import { BillsProvider } from './src/store/BillsContext';
 import { UIProvider, useUI } from './src/store/UIContext';
 import { ThemeProvider, useTheme } from './src/store/ThemeContext';
 import { RootNavigator } from './src/navigation/RootNavigator';
@@ -17,6 +19,8 @@ import { TransactionModal } from './src/components/TransactionModal';
 import { WalletsModal } from './src/components/WalletsModal';
 import { LegalModal } from './src/components/LegalModal';
 import { UpdateModal } from './src/components/UpdateModal';
+import { ConfirmSheet } from './src/components/ConfirmSheet';
+import { ToastHost } from './src/components/ToastHost';
 import { LoadingScreen } from './src/components/LoadingScreen';
 import { checkForUpdate } from './src/services/updateCheck';
 
@@ -111,6 +115,8 @@ function Shell() {
       <WalletsModal />
       <LegalModal />
       <UpdateModal />
+      <ConfirmSheet />
+      <ToastHost />
       <LoadingScreen ready={finance.ready && fontsLoaded} onDone={() => setBooting(false)} />
     </NavigationContainer>
   );
@@ -124,9 +130,13 @@ export default function App() {
         <ThemeProvider>
           <FinanceProvider>
             <TasksProvider>
-              <UIProvider>
-                <Shell />
-              </UIProvider>
+              <BudgetsProvider>
+                <BillsProvider>
+                  <UIProvider>
+                    <Shell />
+                  </UIProvider>
+                </BillsProvider>
+              </BudgetsProvider>
             </TasksProvider>
           </FinanceProvider>
         </ThemeProvider>

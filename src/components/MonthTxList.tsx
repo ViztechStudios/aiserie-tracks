@@ -139,6 +139,7 @@ export function MonthTxList({
                     date={tx.date}
                     note={tx.note}
                     currency={currency}
+                    tx={tx}
                     onPress={onPressTx ? () => onPressTx(tx) : undefined}
                     onLongPress={onLongPressTx ? () => onLongPressTx(tx) : undefined}
                   />

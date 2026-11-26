@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  Alert,
   Image,
   KeyboardAvoidingView,
   Modal,
@@ -64,6 +63,7 @@ export function TransactionModal() {
   const [date, setDate] = useState(new Date());
   const [note, setNote] = useState('');
   const [accountId, setAccountId] = useState<string | null>(null);
+  const [toAccountId, setToAccountId] = useState<string | null>(null);
   const [iosPicker, setIosPicker] = useState(false);
 
   useEffect(() => {
@@ -71,17 +71,20 @@ export function TransactionModal() {
     if (editing) {
       setType(editing.type);
       setAmountRaw(String(editing.amount));
-      setCategoryId(editing.categoryId);
+      setCategoryId(editing.type === 'transfer' ? 'transfer' : editing.categoryId);
       setDate(new Date(editing.date + 'T12:00:00'));
       setNote(editing.note ?? '');
       setAccountId(editing.accountId ?? null);
+      setToAccountId(editing.toAccountId ?? null);
     } else {
-      setType('expense');
+      const presetType: TxType = preset?.type ?? 'expense';
+      setType(presetType);
       setAmountRaw(preset?.amount !== undefined ? String(preset.amount) : '');
-      setCategoryId(preset?.categoryId ?? 'groceries');
+      setCategoryId(presetType === 'transfer' ? 'transfer' : (preset?.categoryId ?? (presetType === 'income' ? 'salary' : 'groceries')));
       setDate(preset?.date ? new Date(preset.date + 'T12:00:00') : new Date());
       setNote(preset?.note ?? '');
       setAccountId(preset?.accountId ?? null);
+      setToAccountId(preset?.toAccountId ?? null);
     }
     setIosPicker(false);
   }, [visible, editing, preset]);
@@ -91,8 +94,12 @@ export function TransactionModal() {
 
   const switchType = (tx: TxType) => {
     setType(tx);
-    const keep = getCategory(categoryId);
-    if (!keep || keep.type !== tx) setCategoryId(tx === 'expense' ? 'groceries' : 'salary');
+    if (tx === 'transfer') {
+      setCategoryId('transfer');
+    } else {
+      const keep = getCategory(categoryId);
+      if (!keep || keep.type !== tx) setCategoryId(tx === 'expense' ? 'groceries' : 'salary');
+    }
   };
 
   const onDateChange = (event: DateTimePickerEvent, d?: Date) => {
@@ -103,8 +110,18 @@ export function TransactionModal() {
   const save = () => {
     const amount = parseAmount(amountRaw);
     if (amount === null) {
-      Alert.alert('Missing amount', 'Please enter an amount greater than zero.');
+      ui.toast('Enter an amount greater than zero first.');
       return;
+    }
+    if (type === 'transfer') {
+      if (!accountId || !toAccountId) {
+        ui.toast('A transfer needs both a source and a destination wallet.');
+        return;
+      }
+      if (accountId === toAccountId) {
+        ui.toast('Pick two different wallets to move money between.');
+        return;
+      }
     }
     if (editing) {
       const updated: Transaction = {
@@ -115,6 +132,7 @@ export function TransactionModal() {
         date: toISODate(date),
         note: note.trim() || undefined,
         accountId: accountId ?? undefined,
+        toAccountId: type === 'transfer' ? (toAccountId ?? undefined) : undefined,
       };
       finance.updateTransaction(updated);
     } else {
@@ -126,6 +144,7 @@ export function TransactionModal() {
         note: note.trim() || undefined,
         source: preset?.source ?? 'manual',
         accountId: accountId ?? undefined,
+        toAccountId: type === 'transfer' ? (toAccountId ?? undefined) : undefined,
       });
     }
     ui.close();
@@ -133,17 +152,17 @@ export function TransactionModal() {
 
   const confirmDelete = () => {
     if (!editing) return;
-    Alert.alert('Delete transaction', 'This cannot be undone. Delete it?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: () => {
-          finance.deleteTransaction(editing.id);
-          ui.close();
-        },
-      },
-    ]);
+    ui.confirm({
+      title: 'Delete transaction?',
+      message: 'This cannot be undone — the entry disappears from every page.',
+      confirmLabel: 'Delete',
+      danger: true,
+    }).then((ok) => {
+      if (ok) {
+        finance.deleteTransaction(editing.id);
+        ui.close();
+      }
+    });
   };
 
   return (
@@ -174,11 +193,31 @@ export function TransactionModal() {
             >
               <Text style={[styles.toggleText, { color: t.subtext }, type === 'income' && { color: t.white }]}>+ Income</Text>
             </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.toggleBtn, type === 'transfer' && { backgroundColor: t.ocean600 }]}
+              onPress={() => switchType('transfer')}
+            >
+              <Text style={[styles.toggleText, { color: t.subtext }, type === 'transfer' && { color: t.white }]}>⇄ Transfer</Text>
+            </TouchableOpacity>
           </View>
 
           {/* amount */}
-          <View style={[styles.amountBox, { backgroundColor: t.ice50 }, { borderColor: type === 'income' ? t.income : t.expense }]}>
-            <Text style={[styles.currencyChip, { color: type === 'income' ? t.income : t.expense }]}>
+          <View
+            style={[
+              styles.amountBox,
+              { backgroundColor: t.ice50 },
+              {
+                borderColor:
+                  type === 'income' ? t.income : type === 'transfer' ? t.ocean600 : t.expense,
+              },
+            ]}
+          >
+            <Text
+              style={[
+                styles.currencyChip,
+                { color: type === 'income' ? t.income : type === 'transfer' ? t.ocean600 : t.expense },
+              ]}
+            >
               {finance.settings.currency === 'PHP' ? '₱' : finance.settings.currency}
             </Text>
             <TextInput
@@ -196,39 +235,45 @@ export function TransactionModal() {
           </View>
 
           <ScrollView style={{ maxHeight: 260 }} showsVerticalScrollIndicator={false}>
-            {/* categories */}
-            <Text style={[styles.section, { color: t.subtext }]}>Category</Text>
+            {type !== 'transfer' ? (
+              <>
+                {/* categories */}
+                <Text style={[styles.section, { color: t.subtext }]}>Category</Text>
+                <View style={styles.chips}>
+                  {cats.map((c) => (
+                    <TouchableOpacity
+                      key={c.id}
+                      onPress={() => setCategoryId(c.id)}
+                      style={[
+                        styles.chip,
+                        { backgroundColor: t.ice50, borderColor: t.line },
+                        categoryId === c.id && { backgroundColor: c.color, borderColor: c.color },
+                      ]}
+                    >
+                      <Text style={[styles.chipText, { color: t.text }, categoryId === c.id && { color: t.white }]}>
+                        {c.emoji} {c.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </>
+            ) : null}
+
+            {/* wallet */}
+            <Text style={[styles.section, { color: t.subtext }]}>{type === 'transfer' ? 'From wallet' : 'Wallet'}</Text>
             <View style={styles.chips}>
-              {cats.map((c) => (
+              {type !== 'transfer' ? (
                 <TouchableOpacity
-                  key={c.id}
-                  onPress={() => setCategoryId(c.id)}
+                  onPress={() => setAccountId(null)}
                   style={[
                     styles.chip,
                     { backgroundColor: t.ice50, borderColor: t.line },
-                    categoryId === c.id && { backgroundColor: c.color, borderColor: c.color },
+                    accountId === null && { backgroundColor: t.ocean600, borderColor: t.ocean600 },
                   ]}
                 >
-                  <Text style={[styles.chipText, { color: t.text }, categoryId === c.id && { color: t.white }]}>
-                    {c.emoji} {c.label}
-                  </Text>
+                  <Text style={[styles.chipText, { color: t.text }, accountId === null && { color: t.white }]}>No wallet</Text>
                 </TouchableOpacity>
-              ))}
-            </View>
-
-            {/* wallet */}
-            <Text style={[styles.section, { color: t.subtext }]}>Wallet</Text>
-            <View style={styles.chips}>
-              <TouchableOpacity
-                onPress={() => setAccountId(null)}
-                style={[
-                  styles.chip,
-                  { backgroundColor: t.ice50, borderColor: t.line },
-                  accountId === null && { backgroundColor: t.ocean600, borderColor: t.ocean600 },
-                ]}
-              >
-                <Text style={[styles.chipText, { color: t.text }, accountId === null && { color: t.white }]}>No wallet</Text>
-              </TouchableOpacity>
+              ) : null}
               {finance.accounts.map((a) => {
                 const brand = getBrand(a.logoId);
                 return (
@@ -250,6 +295,40 @@ export function TransactionModal() {
                 );
               })}
             </View>
+
+            {/* transfer destination */}
+            {type === 'transfer' ? (
+              <>
+                <Text style={[styles.section, { color: t.subtext }]}>To wallet</Text>
+                <View style={styles.chips}>
+                  {finance.accounts
+                    .filter((a) => a.id !== accountId)
+                    .map((a) => {
+                      const brand = getBrand(a.logoId);
+                      return (
+                        <TouchableOpacity
+                          key={a.id}
+                          onPress={() => setToAccountId(a.id)}
+                          style={[
+                            styles.chip,
+                            { backgroundColor: t.ice50, borderColor: t.line },
+                            toAccountId === a.id && { backgroundColor: t.ocean600, borderColor: t.ocean600 },
+                          ]}
+                        >
+                          <View style={styles.chipRow}>
+                            {brand && <Image source={brand.logo} style={styles.chipLogo} resizeMode="contain" />}
+                            {!brand && <Text style={styles.chipEmoji}>{a.emoji}</Text>}
+                            <Text style={[styles.chipText, { color: t.text }, toAccountId === a.id && { color: t.white }]}>{a.name}</Text>
+                          </View>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  {finance.accounts.filter((a) => a.id !== accountId).length === 0 ? (
+                    <Text style={[styles.transferHint, { color: t.faint }]}>Add a second wallet first — transfers need two.</Text>
+                  ) : null}
+                </View>
+              </>
+            ) : null}
 
             {/* date */}
             <Text style={[styles.section, { color: t.subtext }]}>Date</Text>
@@ -379,6 +458,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: spacing.md,
   },
+  transferHint: { fontFamily: font.medium, fontSize: 12.5, lineHeight: 18, flexShrink: 1 },
   dateText: { fontFamily: font.bold, fontSize: 14.5 },
   noteInput: {
     borderWidth: 1.5,

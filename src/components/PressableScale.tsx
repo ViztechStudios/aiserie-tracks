@@ -6,6 +6,9 @@ interface Props {
   onPress?: () => void;
   onLongPress?: () => void;
   style?: Animated.WithAnimatedValue<StyleProp<ViewStyle>>;
+  /** Layout styles for the outer touch target (flex, width...) — the inner
+   *  style only decorates the scaling surface, so row children need this. */
+  containerStyle?: StyleProp<ViewStyle>;
   children: React.ReactNode;
   /** How much to shrink while pressed. Keep it subtle. */
   scaleTo?: number;
@@ -18,7 +21,7 @@ interface Props {
  * Pressable with premium tactile feel: quick ease-in scale on touch,
  * springy release, optional light haptic tick.
  */
-export function PressableScale({ onPress, onLongPress, style, children, scaleTo = 0.97, disabled, haptic }: Props) {
+export function PressableScale({ onPress, onLongPress, style, containerStyle, children, scaleTo = 0.97, disabled, haptic }: Props) {
   const scale = useRef(new Animated.Value(1)).current;
 
   const pressIn = () => {
@@ -53,6 +56,7 @@ export function PressableScale({ onPress, onLongPress, style, children, scaleTo 
       onPressIn={pressIn}
       onPressOut={pressOut}
       disabled={disabled}
+      style={containerStyle}
     >
       <Animated.View style={[style, { transform: [{ scale }] }]}>{children}</Animated.View>
     </Pressable>
