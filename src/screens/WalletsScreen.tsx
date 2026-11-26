@@ -16,6 +16,7 @@ import { getBrand } from '../data/banks';
 import { accountBalance } from '../utils/accounts';
 import { currentMonthKey, monthKey, monthLabel } from '../utils/stats';
 import { formatMoney } from '../utils/money';
+import { AnimatedNumber } from '../components/AnimatedNumber';
 import { font, radius, spacing } from '../theme';
 import { useResponsive } from '../hooks/useResponsive';
 
@@ -87,14 +88,15 @@ export function WalletsScreen() {
           {/* total */}
           <View style={styles.totalBlock}>
             <Text style={[styles.totalLabel, { color: '#F0D492' }]}>TOTAL ACROSS WALLETS</Text>
-            <Text
+            <AnimatedNumber
+              value={total}
+              flash="auto"
+              restingColor={heroInk}
+              flashUpColor="#9FE7C0"
+              flashDownColor="#FFC9CD"
               style={[styles.totalValue, { color: heroInk }]}
-              numberOfLines={1}
-              adjustsFontSizeToFit
-              minimumFontScale={0.55}
-            >
-              {formatMoney(total, finance.settings.currency)}
-            </Text>
+              format={(n) => formatMoney(n, finance.settings.currency)}
+            />
             <Text style={[styles.totalSub, { color: heroSub }]}>
               {cards.length} wallet{cards.length === 1 ? '' : 's'} · swipe the cards to browse
             </Text>
@@ -177,14 +179,15 @@ export function WalletsScreen() {
                             <Ionicons name="pencil" size={14} color={on ? heroInk : t.ocean600} />
                           </PressableScale>
                         </View>
-                        <Text
+                        <AnimatedNumber
+                          value={bal}
+                          flash="auto"
+                          restingColor={on ? heroInk : t.text}
+                          flashUpColor="#9FE7C0"
+                          flashDownColor="#FFC9CD"
                           style={[styles.cardBalance, { color: on ? heroInk : t.text }]}
-                          numberOfLines={1}
-                          adjustsFontSizeToFit
-                          minimumFontScale={0.6}
-                        >
-                          {formatMoney(bal, finance.settings.currency)}
-                        </Text>
+                          format={(n) => formatMoney(n, finance.settings.currency)}
+                        />
                         <Text style={[styles.cardFoot, { color: on ? heroSub : t.subtext }]}>
                           {bal < 0 ? 'Owed on this wallet — check recent spending' : 'Balance updates from your transactions'}
                         </Text>

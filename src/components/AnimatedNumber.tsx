@@ -5,39 +5,93 @@ interface Props {
   value: number;
   format: (n: number) => string;
   style?: TextStyle | TextStyle[];
+  /**
+   * Flash the number briefly when the value changes: `auto` tints toward the
+   * income colour when the value rose and the expense colour when it fell;
+   * `up`/`down` force a direction; `none` disables. Requires `restingColor`.
+   */
+  flash?: 'auto' | 'up' | 'down' | 'none';
+  /** The resting colour the number returns to after the flash. */
+  restingColor?: string;
+  /** Override the flash colours (defaults fit the Fern & Bark palette). */
+  flashUpColor?: string;
+  flashDownColor?: string;
+  /** Duration of the count tween, ms. */
+  duration?: number;
 }
 
+const EASE = Easing.out(Easing.cubic);
+const UP = '#2E9E6B';
+const DOWN = '#C4554D';
+
 /**
- * Counts from the previous value to the new one (650ms, ease-out) and adds
- * a tiny scale pulse on every change, so a fresh amount visibly "lands".
+ * The money counter used across the app: it counts from the previous value to
+ * the new one with an ease-out tween, springs a tiny scale pulse so a fresh
+ * amount visibly "lands", and (optionally) flashes toward the income or
+ * expense colour for a beat before settling back. All JS-driven so the
+ * interpolated digits render identically on Android, iOS and web.
  */
-export function AnimatedNumber({ value, format, style }: Props) {
+export function AnimatedNumber({
+  value,
+  format,
+  style,
+  flash = 'none',
+  restingColor,
+  flashUpColor = UP,
+  flashDownColor = DOWN,
+  duration = 650,
+}: Props) {
   const [display, setDisplay] = useState(value);
   const prev = useRef(value);
   const anim = useRef(new Animated.Value(1)).current;
   const pulse = useRef(new Animated.Value(1)).current;
+  const tint = useRef(new Animated.Value(0)).current; // 0 = resting, 1 = flash colour
+  const [flashColor, setFlashColor] = useState(flashUpColor);
 
   useEffect(() => {
     const from = prev.current;
     const to = value;
     prev.current = value;
     if (from === to) return;
+    anim.stopAnimation();
     anim.setValue(0);
     const id = anim.addListener(({ value: v }) => setDisplay(from + (to - from) * v));
     Animated.timing(anim, {
       toValue: 1,
-      duration: 650,
-      easing: Easing.out(Easing.cubic),
+      duration,
+      easing: EASE,
       useNativeDriver: false, // JS-driven so the listener fires
     }).start();
     Animated.sequence([
-      Animated.timing(pulse, { toValue: 1.04, duration: 110, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+      Animated.timing(pulse, { toValue: 1.045, duration: 110, easing: Easing.out(Easing.quad), useNativeDriver: true }),
       Animated.spring(pulse, { toValue: 1, friction: 4, tension: 220, useNativeDriver: true }),
     ]).start();
+    if (flash !== 'none' && restingColor) {
+      const color = flash === 'down' ? flashDownColor : flash === 'up' ? flashUpColor : to < from ? flashDownColor : flashUpColor;
+      setFlashColor(color);
+      tint.setValue(0);
+      Animated.sequence([
+        Animated.timing(tint, { toValue: 1, duration: 160, easing: Easing.out(Easing.quad), useNativeDriver: false }),
+        Animated.timing(tint, { toValue: 0, duration: 640, easing: Easing.in(Easing.quad), useNativeDriver: false }),
+      ]).start();
+    }
     return () => anim.removeListener(id);
-  }, [value, anim, pulse]);
+  }, [value, anim, pulse, tint, flash, restingColor, flashUpColor, flashDownColor, duration]);
+
+  const interpolated =
+    flash !== 'none' && restingColor
+      ? tint.interpolate({ inputRange: [0, 1], outputRange: [restingColor, flashColor] })
+      : restingColor;
 
   return (
-    <Animated.Text style={[style, { transform: [{ scale: pulse }] }]}>{format(display)}</Animated.Text>
+    <Animated.Text
+      style={[
+        style,
+        interpolated ? { color: interpolated as unknown as string } : null,
+        { transform: [{ scale: pulse }] },
+      ]}
+    >
+      {format(display)}
+    </Animated.Text>
   );
 }

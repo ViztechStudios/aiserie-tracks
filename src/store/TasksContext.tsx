@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { persistDebounced } from './storage';
 import { Task } from '../types';
 import { makeId } from '../data/sampleData';
 
@@ -47,7 +48,7 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
   // persist on change
   useEffect(() => {
     if (!ready) return;
-    AsyncStorage.setItem(TASKS_KEY, JSON.stringify(tasks)).catch(() => {});
+    persistDebounced(TASKS_KEY, JSON.stringify(tasks));
   }, [tasks, ready]);
 
   const addTask = useCallback((title: string, important = false): Task => {

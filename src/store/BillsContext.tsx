@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { persistDebounced } from './storage';
 import { Bill } from '../types';
 import { makeId } from '../data/sampleData';
 
@@ -40,7 +41,7 @@ export function BillsProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!ready) return;
-    AsyncStorage.setItem(BILLS_KEY, JSON.stringify(bills)).catch(() => {});
+    persistDebounced(BILLS_KEY, JSON.stringify(bills));
   }, [bills, ready]);
 
   const addBill = useCallback((input: Omit<Bill, 'id' | 'createdAt'>) => {

@@ -2,7 +2,7 @@
   "expo": {
     "name": "Aiserie Tracks",
     "slug": "aiserie-tracks",
-    "version": "2.7.0",
+    "version": "3.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -16,7 +16,7 @@
     },
     "android": {
       "package": "com.aiserie.tracks",
-      "versionCode": 13,
+      "versionCode": 14,
       "adaptiveIcon": {
         "backgroundColor": "#0D3B27",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -36,7 +36,7 @@
       "lang": "en",
       "themeColor": "#0D3B27",
       "backgroundColor": "#F4F8F1",
-      "description": "Personal finance tracker \u2014 budgets, wallets and receipts, all on your device."
+      "description": "Personal finance tracker — budgets, wallets and receipts, all on your device."
     },
     "experiments": {
       "baseUrl": "/aiserie-tracks"
@@ -68,7 +68,8 @@
           }
         }
       ],
-      "expo-sharing"
+      "expo-sharing",
+      "./plugins/gradle-abis"
     ],
     "extra": {
       "eas": {

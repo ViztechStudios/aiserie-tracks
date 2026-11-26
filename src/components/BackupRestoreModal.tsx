@@ -8,6 +8,7 @@ import { useTasks } from '../store/TasksContext';
 import { useBudgets } from '../store/BudgetsContext';
 import { useBills } from '../store/BillsContext';
 import { useRecurring } from '../store/RecurringContext';
+import { useGoals } from '../store/GoalsContext';
 import { useUI } from '../store/UIContext';
 import { useTheme } from '../store/ThemeContext';
 import { AlertState } from '../utils/budgetAlerts';
@@ -38,6 +39,7 @@ export function BackupRestoreModal() {
   const budgets = useBudgets();
   const bills = useBills();
   const recurring = useRecurring();
+  const goals = useGoals();
   const ui = useUI();
   const { t } = useTheme();
 
@@ -72,6 +74,7 @@ export function BackupRestoreModal() {
     budgets: budgets.budgets.length,
     bills: bills.bills.length,
     recurring: recurring.recurrings.length,
+    goals: goals.goals.length,
   };
 
   const startImport = () => {
@@ -110,6 +113,7 @@ export function BackupRestoreModal() {
           bills: bills.bills,
           recurring: recurring.recurrings,
           budgetAlerts: budgets.alertState as AlertState,
+          goals: goals.goals,
         },
         APP_VERSION
       );
@@ -133,7 +137,7 @@ export function BackupRestoreModal() {
     ui
       .confirm({
         title: 'Create a backup file?',
-        message: `${counts.transactions} transactions · ${counts.wallets} wallets · ${counts.tasks} tasks · ${counts.budgets} budgets · ${counts.bills} bills · ${counts.recurring} recurring — plus your name and currency, in one file only you can read.`,
+        message: `${counts.transactions} transactions · ${counts.wallets} wallets · ${counts.tasks} tasks · ${counts.budgets} budgets · ${counts.bills} bills · ${counts.recurring} recurring · ${counts.goals} goals — plus your name and currency, in one file only you can read.`,
         confirmLabel: 'Export',
       })
       .then((ok) => {
@@ -157,7 +161,7 @@ export function BackupRestoreModal() {
     try {
       if (mode === 'replace') {
         // wipe in-memory stores, then write the backup in
-        await Promise.all([finance.clearAllData(), tasks.clearAll(), budgets.clearAll(), bills.clearAll(), recurring.clearAll()]);
+        await Promise.all([finance.clearAllData(), tasks.clearAll(), budgets.clearAll(), bills.clearAll(), recurring.clearAll(), goals.clearAll()]);
       }
       // merge always adds by unique id — no duplication, no overwriting
       finance.addTransactionsUnique(d.transactions);
@@ -172,6 +176,7 @@ export function BackupRestoreModal() {
         budgets.replaceAll(d.budgets);
         bills.replaceAll(d.bills);
         recurring.replaceAll(d.recurring);
+        goals.replaceGoals(d.goals);
         budgets.setAlertState(d.budgetAlerts);
       } else {
         // merge: append records whose id is not already on the device
@@ -183,6 +188,7 @@ export function BackupRestoreModal() {
         budgets.replaceAll(merge(d.budgets, budgets.budgets));
         bills.replaceAll(merge(d.bills, bills.bills));
         recurring.replaceAll(merge(d.recurring, recurring.recurrings));
+        goals.replaceGoals(merge(d.goals, goals.goals));
         budgets.setAlertState({ ...d.budgetAlerts, ...budgets.alertState });
       }
       ui.closeBackup();
@@ -228,7 +234,7 @@ export function BackupRestoreModal() {
               <View style={[styles.infoCard, { backgroundColor: t.ice50 }]}>
                 <Text style={[styles.infoLine, { color: t.subtext }]}>
                   On this device: {counts.transactions} transactions · {counts.wallets} wallets · {counts.tasks} tasks ·{' '}
-                  {counts.budgets} budgets · {counts.bills} bills · {counts.recurring} recurring
+                  {counts.budgets} budgets · {counts.bills} bills · {counts.recurring} recurring · {counts.goals} goals
                 </Text>
               </View>
 

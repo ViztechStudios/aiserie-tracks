@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { persistDebounced } from './storage';
 import { Recurring, RecurFreq } from '../types';
 import { makeId } from '../data/sampleData';
 import { useFinance } from './FinanceContext';
@@ -53,7 +54,7 @@ export function RecurringProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!ready) return;
-    AsyncStorage.setItem(RECUR_KEY, JSON.stringify(recurrings)).catch(() => {});
+    persistDebounced(RECUR_KEY, JSON.stringify(recurrings));
   }, [recurrings, ready]);
 
   const addRecurring = useCallback<RecurringContextValue['addRecurring']>((input) => {

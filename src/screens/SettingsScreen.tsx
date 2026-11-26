@@ -12,6 +12,11 @@ import { useTasks } from '../store/TasksContext';
 import { useBudgets } from '../store/BudgetsContext';
 import { useBills } from '../store/BillsContext';
 import { useRecurring } from '../store/RecurringContext';
+import { useGoals } from '../store/GoalsContext';
+import { useLock } from '../store/LockContext';
+import { measureStorage, formatBytes, compactData } from '../store/storage';
+import { isPinAcceptable } from '../utils/pinlock';
+import { GOALS_KEY } from '../store/GoalsContext';
 import { useUI } from '../store/UIContext';
 import { useTheme, ThemeMode } from '../store/ThemeContext';
 import { CURRENCIES } from '../data/currencies';
@@ -96,13 +101,101 @@ export function SettingsScreen() {
   }, [finance.settings.userName]);
 
   const current = CURRENCIES.find((c) => c.code === finance.settings.currency) ?? CURRENCIES[0];
+  const goals = useGoals();
+  const lock = useLock();
+
+  // ---- storage meter state ----
+  const [storageReport, setStorageReport] = useState<{ totalBytes: number; entries: { key: string; bytes: number }[] } | null>(null);
+  const [storageVisible, setStorageVisible] = useState(false);
+  const [storageBusy, setStorageBusy] = useState(false);
+
+  const openStorage = async () => {
+    setStorageVisible(true);
+    setStorageReport(await measureStorage());
+  };
+
+  const reclaim = async () => {
+    setStorageBusy(true);
+    const before = storageReport?.totalBytes ?? 0;
+    const compact = compactData({ transactions: finance.transactions, tasks: tasks.tasks, budgetAlerts: budgets.alertState });
+    const changedTx = compact.transactions.length !== finance.transactions.length;
+    const changedTasks = compact.tasks.length !== tasks.tasks.length;
+    if (changedTx) finance.replaceTransactions(compact.transactions as never[]);
+    if (changedTasks) tasks.replaceAll(compact.tasks as never[]);
+    // fresh measurement after the write settles
+    setTimeout(async () => {
+      const after = await measureStorage();
+      setStorageReport(after);
+      setStorageBusy(false);
+      const freed = Math.max(before - after.totalBytes, 0);
+      ui.toast(freed > 0 ? `Reclaimed ${formatBytes(freed)} of storage.` : 'Storage is already tidy — nothing to reclaim.');
+    }, 700);
+  };
+
+  // ---- app lock state ----
+  const [lockVisible, setLockVisible] = useState(false);
+  const [pinStage, setPinStage] = useState<'first' | 'confirm' | 'disable'>('first');
+  const [pinDraft, setPinDraft] = useState('');
+  const [pinError, setPinError] = useState('');
+
+  const openLockSheet = () => {
+    setPinDraft('');
+    setPinError('');
+    setPinStage(lock.config?.enabled ? 'disable' : 'first');
+    setLockVisible(true);
+  };
+
+  const handlePinDigit = (d: string) => {
+    const next = (pinDraft + d).slice(0, 4);
+    setPinDraft(next);
+    setPinError('');
+    if (next.length === 4) {
+      setTimeout(() => {
+        if (pinStage === 'disable') {
+          if (lock.disable(next)) {
+            setLockVisible(false);
+            ui.toast('App lock turned off.');
+          } else {
+            setPinDraft('');
+            setPinError('Wrong pin — try again.');
+          }
+        } else if (!isPinAcceptable(next)) {
+          setPinDraft('');
+          setPinError('Too simple — avoid repeats like 1111 or runs like 1234.');
+        } else if (pinStage === 'first') {
+          setPinStage('confirm');
+          setPinDraft('');
+        } else {
+          // confirm
+          // the first pin is kept in the closure? we need it stored — keep in a ref
+          if (next === firstPinRef.current) {
+            lock.setPin(next);
+            setLockVisible(false);
+            ui.toast('App lock is on — Aiserie asks for the pin at launch.');
+          } else {
+            setPinStage('first');
+            setPinDraft('');
+            setPinError('Pins did not match — start again.');
+          }
+        }
+      }, 120);
+    }
+  };
+
+  const firstPinRef = React.useRef('');
+  // capture the first pin when moving to confirm stage
+  React.useEffect(() => {
+    if (pinStage === 'first' && pinDraft.length === 4) firstPinRef.current = pinDraft;
+  }, [pinDraft, pinStage]);
+
+  const keypad = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del'];
 
   const askClear = () => {
     ui
       .confirm({
         title: 'Erase everything?',
         message:
-          'All transactions, wallets, tasks, budgets, bills, recurring schedules and streak history saved on this device will be permanently deleted. This cannot be undone.',
+          'All transactions, wallets, tasks, budgets, bills, recurring schedules, savings goals and streak history saved on this device will be permanently deleted. This cannot be undone.',
         confirmLabel: 'Erase',
         danger: true,
       })
@@ -110,7 +203,7 @@ export function SettingsScreen() {
         if (!ok) return;
         // every store wipes its own state AND storage; finance also clears
         // the shared keys so nothing is re-persisted afterwards
-        await Promise.all([finance.clearAllData(), tasks.clearAll(), budgets.clearAll(), bills.clearAll(), recurring.clearAll()]);
+        await Promise.all([finance.clearAllData(), tasks.clearAll(), budgets.clearAll(), bills.clearAll(), recurring.clearAll(), goals.clearAll()]);
       });
   };
 
@@ -265,7 +358,29 @@ export function SettingsScreen() {
           </Entrance>
 
           <Entrance delay={200}>
-            <Text style={[styles.section, { color: t.subtext }]}>Your data</Text>
+            <Text style={[styles.section, { color: t.subtext }]}>Privacy & storage</Text>
+            <PressableScale onPress={openLockSheet} style={[styles.row, { backgroundColor: t.card, borderColor: t.glassBorderSoft }]} haptic="light">
+              <RowIcon name="finger-print-outline" tint={t.ocean600} />
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.rowTitle, { color: t.text }]}>App lock (4-digit pin)</Text>
+                <Text style={[styles.rowSub, { color: t.subtext }]}>
+                  {lock.config?.enabled
+                    ? 'On — Aiserie asks for your pin when the app starts. Tap to turn off.'
+                    : 'Off — ask for a pin when the app starts. Optional, stored as a salted hash, never the pin itself.'}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={16} color={t.faint} />
+            </PressableScale>
+            <PressableScale onPress={openStorage} style={[styles.row, { backgroundColor: t.card, borderColor: t.glassBorderSoft }]} haptic="light">
+              <RowIcon name="server-outline" tint={t.ocean600} />
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.rowTitle, { color: t.text }]}>Storage on this device</Text>
+                <Text style={[styles.rowSub, { color: t.subtext }]}>
+                  See exactly what Aiserie keeps on your phone and reclaim space from stale records.
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={16} color={t.faint} />
+            </PressableScale>
             <View style={[styles.row, { backgroundColor: t.card, borderColor: t.glassBorderSoft }]}>
               <RowIcon name="lock-closed-outline" tint={t.subtext} />
               <View style={{ flex: 1 }}>
@@ -283,7 +398,7 @@ export function SettingsScreen() {
               <View style={{ flex: 1 }}>
                 <Text style={[styles.rowTitle, { color: t.risk }]}>Erase all data</Text>
                 <Text style={[styles.rowSub, { color: t.subtext }]}>
-                  Wipe every transaction, wallet, task, budget and bill from this device.
+                  Wipe every transaction, wallet, goal, task, budget and bill from this device.
                 </Text>
               </View>
             </PressableScale>
@@ -381,6 +496,109 @@ export function SettingsScreen() {
           </View>
         </View>
       </Modal>
+
+          {/* storage meter sheet */}
+          <Modal visible={storageVisible} transparent animationType="fade" onRequestClose={() => setStorageVisible(false)}>
+            <TouchableOpacity style={styles.sheetScrim} activeOpacity={1} onPress={() => setStorageVisible(false)}>
+              <TouchableOpacity activeOpacity={1} style={[styles.sheetCard, { backgroundColor: t.cardSolid }]} onPress={() => {}}>
+                <ScrollView bounces={false}>
+                  <Text style={[styles.sheetTitle, { color: t.text }]}>Storage on this device</Text>
+                  <Text style={[styles.sheetHint, { color: t.subtext }]}>
+                    Everything below lives only on this phone. Aiserie writes changes in one coalesced burst instead of rewriting
+                    everything on every tap — lighter on flash memory and battery.
+                  </Text>
+                  <View style={[styles.storageTotalRow, { backgroundColor: t.card, borderColor: t.line }]}>
+                    <Text style={[styles.storageTotalLabel, { color: t.subtext }]}>Total used</Text>
+                    <Text style={[styles.storageTotalValue, { color: t.text }]}>
+                      {storageReport ? formatBytes(storageReport.totalBytes) : '…'}
+                    </Text>
+                  </View>
+                  {storageReport?.entries.map((e) => {
+                    const label = e.key.replace('aiserie.v1.', '');
+                    const pct = storageReport.totalBytes ? e.bytes / storageReport.totalBytes : 0;
+                    return (
+                      <View key={e.key} style={styles.storageEntry}>
+                        <View style={styles.storageEntryHead}>
+                          <Text style={[styles.storageKey, { color: t.text }]} numberOfLines={1}>{label}</Text>
+                          <Text style={[styles.storageBytes, { color: t.subtext }]}>{formatBytes(e.bytes)}</Text>
+                        </View>
+                        <View style={[styles.storageTrack, { backgroundColor: 'rgba(0,0,0,0.07)' }]}>
+                          <View style={[styles.storageFill, { width: `${Math.round(pct * 100)}%`, backgroundColor: t.ocean500 }]} />
+                        </View>
+                      </View>
+                    );
+                  })}
+                  <View style={styles.sheetBtnRow}>
+                    <PressableScale
+                      onPress={() => setStorageVisible(false)}
+                      containerStyle={{ flex: 1 }}
+                      style={[styles.sheetBtn, { backgroundColor: t.card, borderColor: t.line }]}
+                    >
+                      <Text style={[styles.sheetBtnText, { color: t.subtext }]}>Close</Text>
+                    </PressableScale>
+                    <PressableScale
+                      onPress={reclaim}
+                      disabled={storageBusy}
+                      containerStyle={{ flex: 1 }}
+                      style={[styles.sheetBtn, { backgroundColor: t.ocean600 }]}
+                    >
+                      <Text style={[styles.sheetBtnText, { color: '#FFFFFF' }]}>
+                        {storageBusy ? 'Reclaiming…' : 'Reclaim space'}
+                      </Text>
+                    </PressableScale>
+                  </View>
+                  <Text style={[styles.sheetFoot, { color: t.faint }]}>
+                    Reclaiming removes duplicate or broken records and finished chores older than 45 days. Your balances and history stay untouched.
+                  </Text>
+                </ScrollView>
+              </TouchableOpacity>
+            </TouchableOpacity>
+          </Modal>
+
+          {/* app lock sheet */}
+          <Modal visible={lockVisible} transparent animationType="fade" onRequestClose={() => setLockVisible(false)}>
+            <TouchableOpacity style={styles.sheetScrim} activeOpacity={1} onPress={() => setLockVisible(false)}>
+              <TouchableOpacity activeOpacity={1} style={[styles.sheetCard, styles.sheetCardSmall, { backgroundColor: t.cardSolid }]} onPress={() => {}}>
+                <Text style={[styles.sheetTitle, { color: t.text }]}>
+                  {pinStage === 'disable' ? 'Turn off app lock' : pinStage === 'first' ? 'Choose a 4-digit pin' : 'Repeat the pin'}
+                </Text>
+                <Text style={[styles.sheetHint, { color: t.subtext }]}>
+                  {pinStage === 'disable'
+                    ? 'Enter your current pin to turn the lock off.'
+                    : pinStage === 'first'
+                      ? 'Avoid repeated digits (1111) and runs (1234) — this pin guards your ledger.'
+                      : 'One more time to be sure.'}
+                </Text>
+                <View style={styles.pinDots}>
+                  {[0, 1, 2, 3].map((i) => (
+                    <View
+                      key={i}
+                      style={[
+                        styles.pinDot,
+                        { borderColor: pinError ? t.risk : t.ocean600, backgroundColor: i < pinDraft.length ? t.ocean600 : 'transparent' },
+                      ]}
+                    />
+                  ))}
+                </View>
+                {pinError ? <Text style={[styles.pinError, { color: t.risk }]}>{pinError}</Text> : null}
+                <View style={styles.pinPad}>
+                  {keypad.map((k, i) =>
+                    k === '' ? (
+                      <View key={i} style={styles.pinKey} />
+                    ) : k === 'del' ? (
+                      <PressableScale key={i} onPress={() => setPinDraft((p) => p.slice(0, -1))} scaleTo={0.9} style={[styles.pinKeyBtn, { backgroundColor: t.card }]}>
+                        <Ionicons name="backspace-outline" size={20} color={t.subtext} />
+                      </PressableScale>
+                    ) : (
+                      <PressableScale key={i} onPress={() => handlePinDigit(k)} scaleTo={0.9} style={[styles.pinKeyBtn, { backgroundColor: t.card }]}>
+                        <Text style={[styles.pinKeyText, { color: t.text }]}>{k}</Text>
+                      </PressableScale>
+                    )
+                  )}
+                </View>
+              </TouchableOpacity>
+            </TouchableOpacity>
+          </Modal>
     </View>
   );
 }
@@ -481,4 +699,39 @@ const styles = StyleSheet.create({
   currencyCode: { fontFamily: font.medium, fontSize: 12, marginTop: 1 },
   pickerCancel: { alignItems: 'center', paddingVertical: spacing.lg },
   pickerCancelText: { fontFamily: font.bold },
+
+  sheetScrim: { flex: 1, backgroundColor: 'rgba(9,32,24,0.45)', alignItems: 'center', justifyContent: 'flex-end' },
+  sheetCard: {
+    width: '100%', borderTopLeftRadius: 24, borderTopRightRadius: 24,
+    paddingHorizontal: spacing.lg, paddingTop: spacing.lg, paddingBottom: spacing.xl, maxHeight: '85%',
+  },
+  sheetCardSmall: { maxHeight: '70%' },
+  sheetTitle: { fontFamily: font.display, fontSize: 20 },
+  sheetHint: { fontFamily: font.medium, fontSize: 12.5, marginTop: 4, marginBottom: spacing.md },
+  storageTotalRow: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, marginTop: spacing.sm,
+  },
+  storageTotalLabel: { fontFamily: font.medium, fontSize: 13 },
+  storageTotalValue: { fontFamily: font.heavy, fontSize: 15 },
+  storageEntry: { marginTop: spacing.md },
+  storageEntryHead: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
+  storageKey: { fontFamily: font.bold, fontSize: 12.5, flex: 1, marginRight: 8 },
+  storageBytes: { fontFamily: font.medium, fontSize: 12 },
+  storageTrack: { height: 7, borderRadius: 4, overflow: 'hidden' },
+  storageFill: { height: '100%', borderRadius: 4 },
+  sheetBtnRow: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.lg },
+  sheetBtn: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 12, borderRadius: 14, borderWidth: 1, borderColor: 'transparent' },
+  sheetBtnText: { fontFamily: font.bold, fontSize: 14 },
+  sheetFoot: { fontFamily: font.medium, fontSize: 11.5, marginTop: spacing.md, lineHeight: 16 },
+  pinDots: { flexDirection: 'row', justifyContent: 'center', gap: 14, marginTop: spacing.md },
+  pinDot: { width: 14, height: 14, borderRadius: 7, borderWidth: 2 },
+  pinError: { fontFamily: font.medium, fontSize: 12, marginTop: spacing.md, textAlign: 'center' },
+  pinPad: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 12, marginTop: spacing.lg },
+  pinKey: { width: 64, height: 58 },
+  pinKeyBtn: {
+    width: 64, height: 58, borderRadius: 18, alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1, borderColor: 'rgba(0,0,0,0.05)',
+  },
+  pinKeyText: { fontFamily: font.heavy, fontSize: 21 },
 });

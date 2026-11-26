@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { persistDebounced } from './storage';
 import { Budget } from '../types';
 import { makeId } from '../data/sampleData';
 import { AlertState } from '../utils/budgetAlerts';
@@ -55,12 +56,12 @@ export function BudgetsProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!ready) return;
-    AsyncStorage.setItem(BUDGETS_KEY, JSON.stringify(budgets)).catch(() => {});
+    persistDebounced(BUDGETS_KEY, JSON.stringify(budgets));
   }, [budgets, ready]);
 
   useEffect(() => {
     if (!ready) return;
-    AsyncStorage.setItem(ALERTS_KEY, JSON.stringify(alertState)).catch(() => {});
+    persistDebounced(ALERTS_KEY, JSON.stringify(alertState));
   }, [alertState, ready]);
 
   const upsertBudget = useCallback((categoryId: string, cap: number, alerts?: number[]) => {

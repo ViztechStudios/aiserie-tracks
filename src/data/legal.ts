@@ -15,9 +15,9 @@ export const PRIVACY_POLICY: LegalSection[] = [
   {
     heading: '2. Data we store — and where',
     paragraphs: [
-      'Your transactions, wallet balances, budgets, bills, recurring schedules, tasks, categories, notes, currency preference and display name are stored locally on your device using AsyncStorage. This data never leaves your device: it is not synced, uploaded, backed up remotely, or shared with anyone.',
+      'Your transactions, wallet balances, budgets, bills, recurring schedules, savings goals, tasks, categories, notes, currency preference and display name are stored locally on your device using AsyncStorage. This data never leaves your device: it is not synced, uploaded, backed up remotely, or shared with anyone.',
       'Deleting the app from your device removes all of this data with it. You can also erase everything at any time from Settings → Erase all data — the wipe clears every storage key the app owns, so nothing is left behind or re-persisted afterwards.',
-      'Backups and reports are created only when you ask for them (Settings → Backup & restore, Settings → Export report). The backup file or report is written to your device or share sheet — it is not uploaded anywhere, and the app never reads any file except the backup you personally pick to restore. Keep backup files somewhere safe: they contain your records in plain JSON and are not encrypted, so anyone holding the file can read it.',
+      'If you turn on the optional app lock, only a salted hash of your 4-digit pin is stored on the device — never the pin itself, and it never leaves the device. Backups and reports are created only when you ask for them (Settings → Backup & restore, Settings → Export report). The backup file or report is written to your device or share sheet — it is not uploaded anywhere, and the app never reads any file except the backup you personally pick to restore. Keep backup files somewhere safe: they contain your records in plain JSON and are not encrypted, so anyone holding the file can read it.',
     ],
   },
   {

@@ -145,3 +145,21 @@ export interface Task {
   createdAt: number;
   doneAt?: number;
 }
+
+/** A savings goal — a piggy bank with a target worth reaching. */
+export interface Goal {
+  id: string;
+  name: string;
+  emoji: string;
+  /** Positive target amount. */
+  target: number;
+  /** Amount already set aside. Never negative; may exceed target only via target edits. */
+  saved: number;
+  /** Optional wallet the goal money "lives" in (organisational only — balances stay independent). */
+  accountId?: string;
+  createdAt: number;
+  /** Set the first time saved >= target. */
+  completedAt?: number;
+  /** Optional note: why this goal matters. */
+  note?: string;
+}

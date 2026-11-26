@@ -17,6 +17,7 @@ import { useTheme } from '../store/ThemeContext';
 import { getCategory } from '../data/categories';
 import { buildAdvisorReport, categoryTotals, daysInMonth, monthKey, monthLabel, shiftMonth, todayISO, totalsForMonth } from '../utils/stats';
 import { formatMoney } from '../utils/money';
+import { AnimatedNumber } from '../components/AnimatedNumber';
 import { font, radius, spacing } from '../theme';
 import { Transaction } from '../types';
 import { useResponsive } from '../hooks/useResponsive';
@@ -175,9 +176,13 @@ export function InsightsScreen() {
             <Entrance delay={80}>
               <GlassCard hi tint={t.card} style={styles.safeCard}>
                 <Text style={[styles.safeLabel, { color: t.sun500 }]}>Safe to spend per day</Text>
-                <Text style={[styles.safeValue, { color: t.text }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.55}>
-                  {formatMoney(report.safeToSpendPerDay, finance.settings.currency)}
-                </Text>
+                <AnimatedNumber
+                  value={report.safeToSpendPerDay}
+                  flash="auto"
+                  restingColor={t.text}
+                  style={[styles.safeValue, { color: t.text }]}
+                  format={(n) => formatMoney(n, finance.settings.currency)}
+                />
                 <Text style={[styles.safeBody, { color: t.subtext }]}>
                   Spread over the {report.daysRemaining} day{report.daysRemaining === 1 ? '' : 's'} left in {monthLabel(ym, true)} — keeps you even by the 30th.
                 </Text>

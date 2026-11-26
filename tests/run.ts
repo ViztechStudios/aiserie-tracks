@@ -17,6 +17,10 @@ import { generateDue, nextAfter, upcomingFor, REC_TX_ID_PREFIX } from '../src/ut
 import { buildBackup, validateBackup, planRestore, BACKUP_SCHEMA } from '../src/services/backup';
 import { buildReportCSV, buildReportHTML, inRange, rangeThisMonth } from '../src/services/report';
 import { activeLevels, crossingLevel, alertMessage, alertKey } from '../src/utils/budgetAlerts';
+import { Goal } from '../src/types';
+import { goalProgress, goalRemaining, applyGoalChange, completesGoal } from '../src/utils/goals';
+import { hashPin, makeSalt, isPinAcceptable, verifyPin, LockConfig } from '../src/utils/pinlock';
+import { compactData, byteSize, formatBytes } from '../src/store/storage';
 
 let passed = 0;
 let failed = 0;
@@ -252,15 +256,25 @@ test('buildBackup embeds schema, counts and every section', () => {
       bills: [],
       recurring: [rule({ id: 'r1' })],
       budgetAlerts: {},
+      goals: [{ id: 'g1', name: 'Trip', emoji: '🐷', target: 5000, saved: 2000, createdAt: 0 }],
     },
-    '2.7.0'
+    '3.0.0'
   );
   assert.equal(b.schema, BACKUP_SCHEMA);
   assert.equal(b.counts?.transactions, 1);
   assert.equal(b.data.budgets.length, 1);
+  assert.equal(b.data.goals.length, 1);
   const v = validateBackup(JSON.stringify(b));
   assert.equal(v.ok, true);
   assert.equal(v.counts?.transactions, 1);
+  assert.equal(v.counts?.goals, 1);
+  assert.equal(v.data?.goals[0].saved, 2000);
+  // goals with junk targets or names are dropped on import
+  const dirty = JSON.parse(JSON.stringify(b));
+  dirty.data.goals.push({ id: 'g2', name: '', emoji: '🐷', target: 100, saved: 0, createdAt: 0 });
+  dirty.data.goals.push({ id: 'g3', name: 'Zero', emoji: '🐷', target: 0, saved: 0, createdAt: 0 });
+  const v2 = validateBackup(JSON.stringify(dirty));
+  assert.equal(v2.counts?.goals, 1);
 });
 test('validateBackup rejects non-JSON, foreign schemas and empty payloads', () => {
   assert.equal(validateBackup('not json{').ok, false);
@@ -330,6 +344,86 @@ test('HTML report carries the brand, totals and on-device note', () => {
   assert.equal(html.includes('Aiserie Tracks — Financial Report'), true);
   assert.equal(html.includes('₱1,000.00'), true);
   assert.equal(html.includes('Generated on-device'), true);
+});
+
+/* --------------------------- savings goals ---------------------------- */
+
+test('goal progress clamps to 0..100%', () => {
+  const goal: Goal = { id: 'g1', name: 'Trip', emoji: '🐷', target: 5000, saved: 2500, createdAt: 0 };
+  assert.equal(goalProgress(goal), 0.5);
+  assert.equal(goalProgress({ ...goal, saved: 9999 }), 1);
+  assert.equal(goalProgress({ ...goal, saved: -100 }), 0);
+  assert.equal(goalProgress({ ...goal, target: 0 }), 0);
+  assert.equal(goalRemaining({ ...goal, saved: 6000 }), 0);
+});
+
+test('contributions cap at target, withdrawals floor at zero', () => {
+  const goal: Goal = { id: 'g1', name: 'Trip', emoji: '🐷', target: 1000, saved: 900, createdAt: 0 };
+  assert.equal(applyGoalChange(goal, 250), 1000);
+  assert.equal(applyGoalChange(goal, 50), 950);
+  assert.equal(applyGoalChange(goal, -2000), 0);
+  assert.equal(applyGoalChange(goal, 0), 900);
+  assert.equal(applyGoalChange(goal, NaN), 900);
+  assert.equal(completesGoal(goal, 100), true);
+  assert.equal(completesGoal({ ...goal, saved: 1000 }, 100), false); // already complete
+  assert.equal(completesGoal(goal, -100), false);
+});
+
+/* ------------------------------ pin lock ------------------------------ */
+
+test('pin hashing is salted, deterministic and never reversible', () => {
+  const salt = makeSalt();
+  const h1 = hashPin('1234', salt);
+  const h2 = hashPin('1234', salt);
+  const h3 = hashPin('4321', salt);
+  assert.equal(h1, h2);
+  assert.notEqual(h1, h3);
+  assert.equal(h1.length, 64);
+  assert.equal(h1.includes(salt), false);
+  const cfg: LockConfig = { enabled: true, salt, hash: h1 };
+  assert.equal(verifyPin('1234', cfg), true);
+  assert.equal(verifyPin('9999', cfg), false);
+});
+
+test('pin policy rejects repeats and runs', () => {
+  for (const bad of ['1111', '1234', '9876', '12', 'abcd', '']) assert.equal(isPinAcceptable(bad), false, bad);
+  for (const good of ['1357', '2468', '9041', '5527']) assert.equal(isPinAcceptable(good), true, good);
+});
+
+/* --------------------------- storage care ----------------------------- */
+
+test('storage compaction drops only broken rows and exact duplicates', () => {
+  const rows = [
+    { id: 'a', type: 'expense', amount: 100, date: '2026-11-01' },
+    { id: 'a', type: 'expense', amount: 100, date: '2026-11-01' }, // duplicate id
+    { id: 'b', type: 'income', amount: -5, date: '2026-11-02' }, // bad amount
+    { id: 'c', type: 'transfer', amount: 50, date: '2026-11-03' }, // orphan transfer
+    { id: 'd', type: 'expense', amount: 20, date: '20261103' }, // bad date
+    { id: 'e', type: 'expense', amount: 20, date: '2026-11-05' }, // keep
+  ];
+  const result = compactData({ transactions: rows, tasks: [], budgetAlerts: {} });
+  assert.deepEqual(result.transactions.map((r: any) => r.id), ['a', 'e']);
+  assert.equal(result.transactionsChanged, true);
+});
+
+test('finished chores older than 45 days are pruned, open ones never', () => {
+  const now = Date.now();
+  const day = 24 * 60 * 60 * 1000;
+  const tasks = [
+    { id: '1', title: 'old done', done: true, doneAt: now - 50 * day, important: false, createdAt: now },
+    { id: '2', title: 'recent done', done: true, doneAt: now - 10 * day, important: false, createdAt: now },
+    { id: '3', title: 'open', done: false, important: false, createdAt: now },
+  ];
+  const result = compactData({ transactions: [], tasks, budgetAlerts: {} }, now);
+  assert.deepEqual(result.tasks.map((r: any) => r.id), ['2', '3']);
+});
+
+test('byteSize and formatBytes speak honest file sizes', () => {
+  assert.equal(byteSize(''), 0);
+  assert.equal(byteSize('{}'), 2);
+  assert.equal(formatBytes(1024), '1.0 KB');
+  assert.equal(formatBytes(2048 * 1024), '2.0 MB');
+  assert.equal(formatBytes(50), '50 B');
 });
 
 /* ------------------------------ summary ------------------------------- */

@@ -9,6 +9,7 @@ import { accountBalance } from '../utils/accounts';
 import { formatMoney } from '../utils/money';
 import { font, radius, shadow, spacing } from '../theme';
 import { PressableScale } from './PressableScale';
+import { AnimatedNumber } from './AnimatedNumber';
 
 /** Horizontal strip of wallet balance cards shown on Home. */
 export function AccountsStrip() {
@@ -39,9 +40,13 @@ export function AccountsStrip() {
                   {account.name}
                 </Text>
               </View>
-              <Text style={[styles.balance, { color: balance >= 0 ? t.text : t.expense }]} numberOfLines={1}>
-                {formatMoney(balance, finance.settings.currency)}
-              </Text>
+              <AnimatedNumber
+                value={balance}
+                flash="auto"
+                restingColor={balance >= 0 ? t.text : t.expense}
+                style={[styles.balance, { color: balance >= 0 ? t.text : t.expense }]}
+                format={(n) => formatMoney(n, finance.settings.currency)}
+              />
             </PressableScale>
           );
         })}

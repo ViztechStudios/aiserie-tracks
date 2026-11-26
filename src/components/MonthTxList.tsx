@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { StyleSheet, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../store/ThemeContext';
 import { font, spacing } from '../theme';
@@ -79,11 +79,26 @@ export function MonthTxList({
   emptyBody = 'Tap the + button to record your first transaction for this month.',
 }: Props) {
   const { t } = useTheme();
+  const [query, setQuery] = useState('');
+  const [kind, setKind] = useState<'all' | 'expense' | 'income' | 'transfer'>('all');
+
+  const filtered = useMemo(() => {
+    if (dayFilter) return transactions;
+    const q = query.trim().toLowerCase();
+    if (!q && kind === 'all') return transactions;
+    return transactions.filter((tx) => {
+      if (kind !== 'all' && tx.type !== kind) return false;
+      if (!q) return true;
+      const cat = getCategory(tx.categoryId);
+      const hay = `${tx.note ?? ''} ${cat?.label ?? ''} ${tx.amount}`.toLowerCase();
+      return hay.includes(q);
+    });
+  }, [transactions, query, kind, dayFilter]);
 
   const groups = useMemo<DayGroup[]>(() => {
-    const all = groupByDay(transactions) as DayGroup[];
+    const all = groupByDay(filtered) as DayGroup[];
     return dayFilter ? all.filter((g) => g.date === dayFilter) : all;
-  }, [transactions, dayFilter]);
+  }, [filtered, dayFilter]);
 
   const [year, month] = ym.split('-').map((n) => parseInt(n, 10));
   const monthTitle = `${MONTH_NAMES[month - 1]} ${year}`;
@@ -105,10 +120,56 @@ export function MonthTxList({
             <Text style={[styles.filterText, { color: t.ocean600 }]}>Filtered to one day — tap to clear</Text>
           </View>
         </PressableScale>
+      ) : transactions.length >= 4 ? (
+        <View style={styles.searchWrap}>
+          <View style={[styles.searchBox, { backgroundColor: t.card, borderColor: t.line }]}>
+            <Ionicons name="search" size={14} color={t.faint} />
+            <TextInput
+              style={[styles.searchInput, { color: t.text }]}
+              placeholderTextColor={t.faint}
+              placeholder="Search notes, categories, amounts"
+              value={query}
+              onChangeText={setQuery}
+              returnKeyType="search"
+            />
+            {query ? (
+              <PressableScale onPress={() => setQuery('')} scaleTo={0.85}>
+                <Ionicons name="close-circle" size={16} color={t.faint} />
+              </PressableScale>
+            ) : null}
+          </View>
+          <View style={styles.kindRow}>
+            {(
+              [
+                { key: 'all', label: 'All' },
+                { key: 'expense', label: 'Out' },
+                { key: 'income', label: 'In' },
+                { key: 'transfer', label: 'Moves' },
+              ] as const
+            ).map((chip) => {
+              const on = kind === chip.key;
+              return (
+                <PressableScale
+                  key={chip.key}
+                  onPress={() => setKind(chip.key)}
+                  scaleTo={0.94}
+                  style={[styles.kindChip, { backgroundColor: on ? t.ocean600 : t.card, borderColor: on ? t.ocean600 : t.line }]}
+                >
+                  <Text style={[styles.kindText, { color: on ? '#FFFFFF' : t.subtext }]}>{chip.label}</Text>
+                </PressableScale>
+              );
+            })}
+          </View>
+        </View>
       ) : null}
 
       {groups.length === 0 ? (
-        <EmptyState icon={emptyIcon} title={emptyTitle} body={emptyBody} mascot={!dayFilter} />
+        <EmptyState
+          icon={query || kind !== 'all' ? 'funnel-outline' : emptyIcon}
+          title={query || kind !== 'all' ? 'Nothing matches' : emptyTitle}
+          body={query || kind !== 'all' ? 'Try a different word, or clear the search and filters.' : emptyBody}
+          mascot={!dayFilter && !query && kind === 'all'}
+        />
       ) : (
         groups.map((g, gi) => {
           const showWeek = gi === 0 || weekStart(g.date) !== weekStart(groups[gi - 1].date);
@@ -177,6 +238,25 @@ const styles = StyleSheet.create({
   },
   monthPillText: { fontFamily: font.bold, fontSize: 13 },
   filterRow: { alignSelf: 'flex-start', marginBottom: spacing.sm },
+  searchWrap: { marginTop: spacing.md },
+  searchBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+  },
+  searchInput: { flex: 1, fontFamily: font.medium, fontSize: 13, paddingVertical: 0 },
+  kindRow: { flexDirection: 'row', gap: 8, marginTop: spacing.sm },
+  kindChip: {
+    paddingHorizontal: 13,
+    paddingVertical: 6,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+  kindText: { fontFamily: font.bold, fontSize: 12 },
   filterChip: {
     paddingHorizontal: 12,
     paddingVertical: 6,

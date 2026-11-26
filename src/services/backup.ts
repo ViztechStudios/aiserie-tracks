@@ -1,4 +1,4 @@
-import { Account, Bill, Budget, Recurring, Settings, Task, Transaction } from '../types';
+import { Account, Bill, Budget, Goal, Recurring, Settings, Task, Transaction } from '../types';
 import { isISODate } from '../utils/recurring';
 import { AlertState } from '../utils/budgetAlerts';
 
@@ -27,6 +27,7 @@ export interface BackupData {
   bills: Bill[];
   recurring: Recurring[];
   budgetAlerts: AlertState;
+  goals: Goal[];
 }
 
 export interface BackupInput {
@@ -38,6 +39,7 @@ export interface BackupInput {
   bills: Bill[];
   recurring: Recurring[];
   budgetAlerts: AlertState;
+  goals: Goal[];
 }
 
 export interface Validation {
@@ -59,6 +61,7 @@ export function buildBackup(input: BackupInput, appVersion: string): BackupFile 
     bills: input.bills,
     recurring: input.recurring,
     budgetAlerts: input.budgetAlerts,
+    goals: input.goals,
   };
   return {
     app: 'Aiserie Tracks',
@@ -72,6 +75,7 @@ export function buildBackup(input: BackupInput, appVersion: string): BackupFile 
       budgets: data.budgets.length,
       bills: data.bills.length,
       recurring: data.recurring.length,
+      goals: data.goals.length,
     },
     data,
   };
@@ -242,6 +246,24 @@ export function validateBackup(raw: string): Validation {
     };
   });
 
+  const goals = safeArray<Goal>(d.goals, (g) => {
+    const name = sanitizeString(g.name).trim();
+    const target = sanitizeNumber(g.target, -1);
+    if (!name || target <= 0) return null;
+    const saved = Math.max(sanitizeNumber(g.saved, 0), 0);
+    return {
+      id: sanitizeString(g.id),
+      name: name.slice(0, 40),
+      emoji: sanitizeString(g.emoji, '🐷').slice(0, 4),
+      target: Math.round(target * 100) / 100,
+      saved: Math.round(saved * 100) / 100,
+      accountId: typeof g.accountId === 'string' && g.accountId ? g.accountId : undefined,
+      createdAt: sanitizeNumber(g.createdAt, Date.now()),
+      completedAt: typeof g.completedAt === 'number' ? g.completedAt : undefined,
+      note: typeof g.note === 'string' ? g.note.slice(0, 120) : undefined,
+    };
+  });
+
   let budgetAlerts: AlertState = {};
   if (d.budgetAlerts && typeof d.budgetAlerts === 'object') {
     for (const [k, v] of Object.entries(d.budgetAlerts)) {
@@ -265,6 +287,7 @@ export function validateBackup(raw: string): Validation {
     budgets: budgets.length,
     bills: bills.length,
     recurring: recurring.length,
+    goals: goals.length,
   };
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
   if (total === 0 && !settings) {
@@ -273,7 +296,7 @@ export function validateBackup(raw: string): Validation {
 
   return {
     ok: true,
-    data: { transactions, accounts, settings, tasks, budgets, bills, recurring, budgetAlerts },
+    data: { transactions, accounts, settings, tasks, budgets, bills, recurring, budgetAlerts, goals },
     counts,
   };
 }
@@ -295,6 +318,7 @@ export function planRestore(data: BackupData, existingTxIds: Set<string>, mode: 
     budgets: data.budgets.length,
     bills: data.bills.length,
     recurring: data.recurring.length,
+    goals: data.goals.length,
   };
   return { mode, data, fresh };
 }

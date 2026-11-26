@@ -1,6 +1,6 @@
 # Aiserie Tracks 🐾
 
-A jungle-green, hand-drawn **personal finance tracker** that runs as a **native Android app (APK)**, an **iPhone/iPad app**, and an **installable PWA** — built with [Expo](https://expo.dev), React Native and TypeScript. v2.7.0 "Reliability & trust" adds **backup & restore**, **CSV/PDF reports**, **recurring transactions** and **budget alerts** on top of the v2.6.0 rebrand, where the **hand-drawn pup + tabby badge** became the single logo across the iOS app icon, Android adaptive icons, native splash, PWA icons, favicon and the redesigned iOS launch screens — plus a polished professional boot curtain.
+A jungle-green, hand-drawn **personal finance tracker** that runs as a **native Android app (APK)**, an **iPhone/iPad app**, and an **installable PWA** — built with [Expo](https://expo.dev), React Native and TypeScript. v3.0.0 "Piggy banks & polish" is the biggest update yet: **animated money counters** everywhere, **savings goals**, **search & filters**, an **optional PIN app lock**, a **storage meter with reclaim**, and a **40 % smaller APK** — on top of the v2.7.0 reliability work (backup & restore, CSV/PDF reports, recurring transactions, budget alerts) and the v2.6.0 hand-drawn Fern & Bark rebrand.
 
 ![stack](https://img.shields.io/badge/Expo-SDK%2058-0EA5E9) ![platform](https://img.shields.io/badge/Android%20%7C%20iOS%20%7C%20Web-Expo%20EAS%20%2B%20PWA-22D3EE) ![cost](https://img.shields.io/badge/distribution-%240-success)
 
@@ -84,7 +84,7 @@ open the site in **Safari** → **Share** □↑ → **Add to Home Screen** → 
 
 ### 2. Android as a downloadable APK
 
-**✅ v2.7.0 APK is live:** [Releases → v2.7.0](https://github.com/ViztechStudios/aiserie-tracks/releases/latest) → download `AiserieTracks-v2.7.0.apk` → allow *"install unknown apps"* for the browser when Android asks → install. v2.7.0 ("Reliability & trust") adds backup & restore, CSV/PDF reports, recurring transactions, budget alerts with a monthly summary — plus a 29-test reliability suite covering balances, transfers, totals, schedules, backup validation and alert thresholds. All data stays on-device; nothing new is collected. Updating keeps every record; existing installs see the update nudge automatically.
+**✅ v3.0.0 APK is live:** [Releases → v3.0.0](https://github.com/ViztechStudios/aiserie-tracks/releases/latest) → download `AiserieTracks-v3.0.0.apk` → allow *"install unknown apps"* for the browser when Android asks → install. v3.0.0 ("Piggy banks & polish") adds animated money counters, savings goals, search & filters on the ledger, an optional 4-digit PIN app lock, and a storage meter with a one-tap reclaim — plus the APK ships only ARM chips (arm64 + armv7), roughly halving the download. Updating keeps every record; existing installs see the update nudge automatically.
 
 How it was built, and how future versions get built (Expo free tier, 30 builds/month):
 

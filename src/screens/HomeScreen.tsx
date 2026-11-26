@@ -13,6 +13,7 @@ import { AccountsStrip } from '../components/AccountsStrip';
 import { GlassCard } from '../components/GlassCard';
 import { StreakCard } from '../components/StreakCard';
 import { PressableScale } from '../components/PressableScale';
+import { AnimatedNumber } from '../components/AnimatedNumber';
 import { useFinance } from '../store/FinanceContext';
 import { useUI } from '../store/UIContext';
 import { useTheme } from '../store/ThemeContext';
@@ -103,15 +104,15 @@ export function HomeScreen() {
             <Text style={[styles.balanceLabel, { color: '#F0D492' }]}>
               {monthLabel(ym, false).toUpperCase()} NET BALANCE
             </Text>
-            <Text
+            <AnimatedNumber
+              value={totals.net}
+              flash="auto"
+              restingColor={balanceTone}
+              flashUpColor="#9FE7C0"
+              flashDownColor="#FFC9CD"
               style={[styles.balanceValue, { color: balanceTone }]}
-              numberOfLines={1}
-              adjustsFontSizeToFit
-              minimumFontScale={0.55}
-            >
-              {totals.net >= 0 ? '+' : '−'}
-              {formatMoney(Math.abs(totals.net), finance.settings.currency)}
-            </Text>
+              format={(n) => `${totals.net >= 0 ? '+' : '−'}${formatMoney(Math.abs(n), finance.settings.currency)}`}
+            />
           </View>
 
           {/* wallets pill — one full-width row */}
@@ -121,9 +122,15 @@ export function HomeScreen() {
             </View>
             <Text style={[styles.walletsLabel, { color: heroInk }]}>All wallets</Text>
             <View style={styles.walletsSpacer} />
-            <Text style={[styles.walletsValue, { color: heroInk }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>
-              {formatMoney(walletsTotal, finance.settings.currency)}
-            </Text>
+            <AnimatedNumber
+              value={walletsTotal}
+              flash="auto"
+              restingColor={heroInk}
+              flashUpColor="#F0D492"
+              flashDownColor="#FFC9CD"
+              style={[styles.walletsValue, { color: heroInk }]}
+              format={(n) => formatMoney(n, finance.settings.currency)}
+            />
             <Ionicons name="chevron-forward" size={14} color={heroSub} />
           </PressableScale>
 

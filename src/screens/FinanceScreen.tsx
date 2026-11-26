@@ -8,6 +8,8 @@ import { GlassCard } from '../components/GlassCard';
 import { PressableScale } from '../components/PressableScale';
 import { TasksPanel } from '../components/TasksPanel';
 import { RecurringSection } from '../components/RecurringSection';
+import { AnimatedNumber } from '../components/AnimatedNumber';
+import { GoalsSection } from '../components/GoalsSection';
 import { useFinance } from '../store/FinanceContext';
 import { useBudgets } from '../store/BudgetsContext';
 import { useBills } from '../store/BillsContext';
@@ -173,9 +175,13 @@ export function FinanceScreen() {
             <View style={styles.planHead}>
               <View style={styles.planTitleWrap}>
                 <Text style={[styles.planLabel, { color: t.sun500 }]}>Money plan</Text>
-                <Text style={[styles.planCash, { color: t.text }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>
-                  {formatMoney(Math.max(cash - assigned, 0), finance.settings.currency)}
-                </Text>
+                <AnimatedNumber
+                  value={Math.max(cash - assigned, 0)}
+                  flash="auto"
+                  restingColor={t.text}
+                  style={[styles.planCash, { color: t.text }]}
+                  format={(n) => formatMoney(n, finance.settings.currency)}
+                />
                 <Text style={[styles.planSub, { color: t.subtext }]}>
                   left to assign from {formatMoney(Math.max(cash, 0), finance.settings.currency)}
                 </Text>
@@ -362,6 +368,11 @@ export function FinanceScreen() {
 
           {/* recurring */}
           <RecurringSection />
+
+          {/* savings goals */}
+          <Entrance delay={150}>
+            <GoalsSection />
+          </Entrance>
 
           {/* money chores */}
           <Entrance delay={200}>

@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../store/ThemeContext';
 import { font, spacing } from '../theme';
 import { formatMoney } from '../utils/money';
+import { AnimatedNumber } from './AnimatedNumber';
 
 /**
  * The Income / Expenses summary pair shown under the month chips — two white
@@ -19,9 +20,13 @@ export function MonthSummary({ income, expense, currency }: { income: number; ex
         </View>
         <View style={styles.mid}>
           <Text style={[styles.label, { color: t.subtext }]}>INCOME</Text>
-          <Text style={[styles.amount, { color: t.text }]} numberOfLines={1}>
-            {formatMoney(income, currency)}
-          </Text>
+          <AnimatedNumber
+            value={income}
+            flash="auto"
+            restingColor={t.text}
+            style={[styles.amount, { color: t.text }]}
+            format={(n) => formatMoney(n, currency)}
+          />
         </View>
       </View>
       <View style={[styles.card, { backgroundColor: t.card }]}>
@@ -30,9 +35,13 @@ export function MonthSummary({ income, expense, currency }: { income: number; ex
         </View>
         <View style={styles.mid}>
           <Text style={[styles.label, { color: t.subtext }]}>EXPENSES</Text>
-          <Text style={[styles.amount, { color: t.text }]} numberOfLines={1}>
-            {formatMoney(expense, currency)}
-          </Text>
+          <AnimatedNumber
+            value={expense}
+            flash="auto"
+            restingColor={t.text}
+            style={[styles.amount, { color: t.text }]}
+            format={(n) => formatMoney(n, currency)}
+          />
         </View>
       </View>
     </View>

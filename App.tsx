@@ -13,6 +13,8 @@ import { TasksProvider } from './src/store/TasksContext';
 import { BudgetsProvider } from './src/store/BudgetsContext';
 import { BillsProvider } from './src/store/BillsContext';
 import { RecurringProvider } from './src/store/RecurringContext';
+import { GoalsProvider } from './src/store/GoalsContext';
+import { LockProvider } from './src/store/LockContext';
 import { UIProvider, useUI } from './src/store/UIContext';
 import { ThemeProvider, useTheme } from './src/store/ThemeContext';
 import { RootNavigator } from './src/navigation/RootNavigator';
@@ -23,9 +25,11 @@ import { UpdateModal } from './src/components/UpdateModal';
 import { ReportsModal } from './src/components/ReportsModal';
 import { BackupRestoreModal } from './src/components/BackupRestoreModal';
 import { BudgetAlertsHost } from './src/components/BudgetAlertsHost';
+import { AppLockGate } from './src/components/AppLockGate';
 import { ConfirmSheet } from './src/components/ConfirmSheet';
 import { ToastHost } from './src/components/ToastHost';
 import { LoadingScreen } from './src/components/LoadingScreen';
+import { installStorageFlushHooks } from './src/store/storage';
 import { checkForUpdate } from './src/services/updateCheck';
 
 // keep the native splash visible until the animated curtain is ready
@@ -67,6 +71,10 @@ function webInitialMetrics(): Metrics | undefined {
 
 function Shell() {
   const finance = useFinance();
+  // one-time: flush queued storage writes when the app leaves the foreground
+  useEffect(() => {
+    installStorageFlushHooks();
+  }, []);
   const { t } = useTheme();
   const ui = useUI();
   const [fontsLoaded] = useFonts({ Manrope_500Medium, Manrope_700Bold, Manrope_800ExtraBold, Lora_600SemiBold, Lora_700Bold });
@@ -124,6 +132,7 @@ function Shell() {
       <BudgetAlertsHost />
       <ConfirmSheet />
       <ToastHost />
+      <AppLockGate />
       <LoadingScreen ready={finance.ready && fontsLoaded} onDone={() => setBooting(false)} />
     </NavigationContainer>
   );
@@ -140,9 +149,13 @@ export default function App() {
               <BudgetsProvider>
                 <BillsProvider>
                   <RecurringProvider>
-                    <UIProvider>
-                      <Shell />
-                    </UIProvider>
+                    <GoalsProvider>
+                      <LockProvider>
+                        <UIProvider>
+                          <Shell />
+                        </UIProvider>
+                      </LockProvider>
+                    </GoalsProvider>
                   </RecurringProvider>
                 </BillsProvider>
               </BudgetsProvider>

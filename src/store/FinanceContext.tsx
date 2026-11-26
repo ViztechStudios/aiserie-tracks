@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { persistDebounced } from './storage';
 import { Account, Settings, Transaction } from '../types';
 import { DEFAULT_CURRENCY } from '../data/currencies';
 import { buildSampleAccounts, buildSampleTransactions, makeId } from '../data/sampleData';
@@ -18,6 +19,8 @@ export const ALL_STORAGE_KEYS = [
   'aiserie.v1.bills',
   'aiserie.v1.recurring',
   'aiserie.v1.budgetAlerts',
+  'aiserie.v1.goals',
+  'aiserie.v1.lock',
 ];
 
 export interface NewTransactionInput {
@@ -49,6 +52,8 @@ interface FinanceContextValue {
   deleteAccount: (id: string) => void;
   /** Adds only wallets whose id is not already present (backup restore, merge mode). */
   mergeAccounts: (incoming: Account[]) => void;
+  /** Replaces the whole transaction list (storage compaction, backup replace). */
+  replaceTransactions: (txs: Transaction[]) => void;
   setCurrency: (code: string) => void;
   setUserName: (name: string) => void;
   clearAllData: () => Promise<void>;
@@ -99,17 +104,17 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
   // persist on change
   useEffect(() => {
     if (!ready) return;
-    AsyncStorage.setItem(TX_KEY, JSON.stringify(transactions)).catch(() => {});
+    persistDebounced(TX_KEY, JSON.stringify(transactions));
   }, [transactions, ready]);
 
   useEffect(() => {
     if (!ready) return;
-    AsyncStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts)).catch(() => {});
+    persistDebounced(ACCOUNTS_KEY, JSON.stringify(accounts));
   }, [accounts, ready]);
 
   useEffect(() => {
     if (!ready) return;
-    AsyncStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)).catch(() => {});
+    persistDebounced(SETTINGS_KEY, JSON.stringify(settings));
   }, [settings, ready]);
 
   const addTransaction = useCallback((input: NewTransactionInput): Transaction => {
@@ -175,6 +180,8 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  const replaceTransactions = useCallback((txs: Transaction[]) => setTransactions(txs), []);
+
   const setCurrency = useCallback((code: string) => {
     setSettings((s) => ({ ...s, currency: code }));
   }, []);
@@ -213,6 +220,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       updateAccount,
       deleteAccount,
       mergeAccounts,
+      replaceTransactions,
       setCurrency,
       setUserName,
       clearAllData,
@@ -231,6 +239,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       updateAccount,
       deleteAccount,
       mergeAccounts,
+      replaceTransactions,
       setCurrency,
       setUserName,
       clearAllData,
