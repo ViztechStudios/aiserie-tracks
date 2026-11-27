@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  Image,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -19,6 +18,7 @@ import { useUI } from '../store/UIContext';
 import { useTheme } from '../store/ThemeContext';
 import { categoriesFor, getCategory } from '../data/categories';
 import { getBrand } from '../data/banks';
+import { BrandLogo } from './BrandLogo';
 import { Transaction, TxType } from '../types';
 import { font, radius, spacing } from '../theme';
 import { formatMoney, parseAmount } from '../utils/money';
@@ -296,7 +296,7 @@ export function TransactionModal() {
                     ]}
                   >
                     <View style={styles.chipRow}>
-                      {brand && <Image source={brand.logo} style={styles.chipLogo} resizeMode="contain" />}
+                      {brand && <BrandLogo logo={brand.logo} size={20} />}
                       {!brand && <Text style={styles.chipEmoji}>{a.emoji}</Text>}
                       <Text style={[styles.chipText, { color: t.text }, accountId === a.id && { color: t.white }]}>{a.name}</Text>
                     </View>
@@ -325,7 +325,7 @@ export function TransactionModal() {
                           ]}
                         >
                           <View style={styles.chipRow}>
-                            {brand && <Image source={brand.logo} style={styles.chipLogo} resizeMode="contain" />}
+                            {brand && <BrandLogo logo={brand.logo} size={20} />}
                             {!brand && <Text style={styles.chipEmoji}>{a.emoji}</Text>}
                             <Text style={[styles.chipText, { color: t.text }, toAccountId === a.id && { color: t.white }]}>{a.name}</Text>
                           </View>

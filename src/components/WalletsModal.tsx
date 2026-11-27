@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Image, ImageSourcePropType, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ImageSourcePropType, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { AuroraBackground } from './AuroraBackground';
@@ -17,12 +17,13 @@ import { useResponsive } from '../hooks/useResponsive';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { PressableScale } from './PressableScale';
+import { BrandLogo } from './BrandLogo';
 
 type Step = 'list' | 'brand' | 'form';
 
-/** Brand tile: white rounded logo, consistent on glass in both themes. */
+/** Brand tile: the normalized squircle asset, edge-to-edge, hairline edge. */
 function BrandTile({ logo, size = 56, style }: { logo: ImageSourcePropType; size?: number; style?: object }) {
-  return <Image source={logo} style={[{ width: size, height: size, borderRadius: size * 0.22 }, style]} resizeMode="contain" />;
+  return <BrandLogo logo={logo} size={size} style={style} />;
 }
 
 export function WalletsModal() {

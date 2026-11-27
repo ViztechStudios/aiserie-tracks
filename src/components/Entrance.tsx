@@ -4,35 +4,36 @@ import { Animated, Easing, Platform, StyleProp, ViewStyle } from 'react-native';
 interface Props {
   delay?: number; // ms
   distance?: number; // px to travel up
-  pop?: boolean; // also scale 0.92 -> 1 (springy overshoot)
+  /** v4.4.0: subtle 0.985 → 1 settle (no springy overshoot). Kept for
+   *  call-site compatibility; default is now off — a quiet fade-rise reads
+   *  more professional than a bounce on every section. */
+  pop?: boolean;
   children: React.ReactNode;
   style?: StyleProp<ViewStyle>;
 }
 
 /**
- * Springy entrance: the card rises, fades in and lands with a soft
- * overshoot (a real bounce, not a straight fade). One-shot on mount —
- * safe to wrap any card or list row.
- *
- * On web the spring is slightly firmer than on native so tab switches
- * stay crisp, but it keeps the same lively character.
+ * Calm entrance (v4.4.0): the card rises a short distance and fades in on a
+ * smooth ease-out — nothing springs, nothing overshoots. One-shot on mount.
+ * Web and native share one gentle profile now; tab switches stay crisp
+ * because the motion is short, not because it is springy.
  */
-export function Entrance({ delay = 0, distance = 22, pop = true, children, style }: Props) {
+export function Entrance({ delay = 0, distance = 12, pop = false, children, style }: Props) {
   const isWeb = Platform.OS === 'web';
   const progress = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    Animated.spring(progress, {
+    Animated.timing(progress, {
       toValue: 1,
       delay: isWeb ? 0 : delay,
-      friction: isWeb ? 9 : 7,
-      tension: isWeb ? 110 : 80,
+      duration: 400,
+      easing: Easing.out(Easing.cubic),
       useNativeDriver: true,
     }).start();
   }, [progress, delay, isWeb]);
 
   const scale = pop
-    ? progress.interpolate({ inputRange: [0, 1], outputRange: [isWeb ? 0.96 : 0.92, 1] })
+    ? progress.interpolate({ inputRange: [0, 1], outputRange: [0.985, 1] })
     : 1;
 
   return (

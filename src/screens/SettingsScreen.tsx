@@ -65,7 +65,8 @@ function SegButton({ opt, active, onPick }: { opt: { key: ThemeMode; label: stri
   const fill = React.useRef(new Animated.Value(active ? 1 : 0)).current;
 
   React.useEffect(() => {
-    Animated.spring(fill, { toValue: active ? 1 : 0, speed: 30, bounciness: 6, useNativeDriver: true }).start();
+    // v4.4.0: the theme pill fades into place — calm, no bounce
+    Animated.timing(fill, { toValue: active ? 1 : 0, duration: 240, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
   }, [active, fill]);
 
   return (
@@ -75,7 +76,7 @@ function SegButton({ opt, active, onPick }: { opt: { key: ThemeMode; label: stri
           pointerEvents="none"
           style={[
             styles.segPill,
-            { opacity: fill, transform: [{ scale: fill.interpolate({ inputRange: [0, 1], outputRange: [0.85, 1] }) }] },
+            { opacity: fill, transform: [{ scale: fill.interpolate({ inputRange: [0, 1], outputRange: [0.94, 1] }) }] },
           ]}
         />
         <Ionicons name={opt.icon} size={16} color={active ? '#FFFFFF' : t.subtext} />

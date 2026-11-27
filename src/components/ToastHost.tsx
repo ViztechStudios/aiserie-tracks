@@ -9,7 +9,7 @@ import { font, radius, spacing } from '../theme';
  * Themed notice pill for validation messages and confirmations — replaces
  * Alert.alert(), which react-native-web implements as an empty function
  * (alerts were literally invisible on the PWA, making "dead button" bugs).
- * Slides up with a spring and gently settles.
+ * Slides up with a soft ease-out and gently settles (v4.4.0: no spring).
  */
 export function ToastHost() {
   const ui = useUI();
@@ -25,7 +25,7 @@ export function ToastHost() {
     rise.setValue(16);
     Animated.parallel([
       Animated.timing(opacity, { toValue: 1, duration: 170, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
-      Animated.spring(rise, { toValue: 0, friction: 6, tension: 190, useNativeDriver: true }),
+      Animated.timing(rise, { toValue: 0, duration: 240, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
     ]).start();
     const timer = setTimeout(() => {
       Animated.parallel([

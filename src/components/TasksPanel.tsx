@@ -29,10 +29,11 @@ function TaskRow({
   const check = useRef(new Animated.Value(task.done ? 1 : 0)).current;
 
   useEffect(() => {
-    Animated.spring(check, {
+    // v4.4.0: calm check-in — ease-out settle, no bounce
+    Animated.timing(check, {
       toValue: task.done ? 1 : 0,
-      speed: 30,
-      bounciness: 8,
+      duration: 220,
+      easing: Easing.out(Easing.cubic),
       useNativeDriver: true,
     }).start();
   }, [task.done, check]);
@@ -114,7 +115,7 @@ export function TasksPanel() {
   const ratio = total === 0 ? 0 : store.doneCount / total;
 
   useEffect(() => {
-    Animated.spring(progress, { toValue: ratio, speed: 22, bounciness: 5, useNativeDriver: false }).start();
+    Animated.timing(progress, { toValue: ratio, duration: 320, easing: Easing.out(Easing.cubic), useNativeDriver: false }).start();
   }, [ratio, progress]);
 
   const open = useMemo(

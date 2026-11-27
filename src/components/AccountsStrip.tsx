@@ -1,5 +1,5 @@
 import React from 'react';
-import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFinance } from '../store/FinanceContext';
 import { useUI } from '../store/UIContext';
@@ -10,6 +10,7 @@ import { formatMoney } from '../utils/money';
 import { font, radius, shadow, spacing } from '../theme';
 import { PressableScale } from './PressableScale';
 import { AnimatedNumber } from './AnimatedNumber';
+import { BrandLogo } from './BrandLogo';
 
 /** Horizontal strip of wallet balance cards shown on Home. */
 export function AccountsStrip() {
@@ -32,7 +33,7 @@ export function AccountsStrip() {
               <View style={[styles.accent, { backgroundColor: account.color }]} />
               <View style={styles.topRow}>
                 {brand ? (
-                  <Image source={brand.logo} style={styles.tile} resizeMode="contain" />
+                  <BrandLogo logo={brand.logo} size={24} />
                 ) : (
                   <Text style={styles.emoji}>{account.emoji}</Text>
                 )}
@@ -78,7 +79,6 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   topRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  tile: { width: 22, height: 22, borderRadius: 5 },
   emoji: { fontSize: 14 },
   name: { fontFamily: font.bold, fontSize: 12, flexShrink: 1 },
   balance: { fontFamily: font.heavy, fontSize: 15, marginTop: 8, letterSpacing: 0.1 },

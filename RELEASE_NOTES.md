@@ -1,35 +1,29 @@
 # RELEASE NOTES
 
-## Aiserie Tracks v4.3.0 — Showroom Match
+## Aiserie Tracks v4.4.0 — Polish & Poise
 
-The app now looks exactly like the mockups on the Aiserie website: a deep jungle-night canvas with a moonlit aurora glow, and frosted glass panes floating straight on it. Same identity, every feature kept — and the website is now one tap away from inside the app.
+A refinement update with one goal: everything you touch and see should feel calm, crisp and professional. No new features to learn — the same app, noticeably better behaved.
 
-### The showroom look
+### Bank & e-wallet tiles, re-engineered
 
-- **Jungle night by default** — the app opens on the deep green canvas (`#0B241A`) with a moonlit mint glow up top and a whisper of gold; the light mint paper stays one tap away in Settings. Users who already picked a scheme keep it.
-- **Glass on an open canvas** — page headers are transparent veils now: no painted fern blocks anywhere, the frosted panes sit directly on the aurora, exactly like the site mockups. Screen titles stay in the display serif.
-- **A brighter accent** — links, the active tab and focus marks use the site's mint-teal; income is mint green, expenses coral.
-- **Home, redrawn to the mockup** — the safe-to-spend hero ("SAFE TO SPEND TODAY", with `+in / −out` chips), the total-balance and savings-rate tiles, the advisor line, and a compact RECENT pane whose "See all" expands into the full month ledger with chips, search and filters. Wallet strip, streak and scan/settings actions all stay.
-- **Wordmark tab rail** — HOME · WALLETS · [+] · REPORTS · FINANCE as quiet uppercase labels; the active tab turns mint with a springing dot. The Insights tab is now labelled "Reports" (the page is still Insights).
-- **Wallets** — the hero reads "Across N wallets · synced on-device" like the mockup, and the history header gained a `+₱X this month / −₱X this month` delta chip for the wallet you're browsing.
-- **Light mode kept coherent** — every hero ink, chip and trio tile is theme-aware; the status bar now follows the scheme instead of always-white.
+- The 22 brand logos (GCash, Maya, Coins.ph, GrabPay, ShopeePay, BPI, BDO, Metrobank, AUB, UnionBank, Security Bank, Landbank, RCBC, PNB, China Bank, EastWest, PSBank, Maribank, GoTyme, CIMB, Tonik, Cash) were inconsistent before: different baked-in margins, corner radii and optical sizes, so a big black Maya blob sat next to a tiny Grab bag in a white square.
+- Every asset is now a **tight, edge-to-edge squircle with one uniform corner radius** (`scripts/logo_normalize.py` — crop to tile, square-pad, re-round, optimize). Same weight everywhere: the wallet deck, the dock, the home wallet strip, the wallet list, the 22-brand picker and the transaction-sheet chips.
+- A new shared `BrandLogo` renderer clips each tile to the matching radius and adds a hairline edge, so white tiles stay legible on glass and on mint paper.
 
-### Fixes
+### Calm motion, everywhere
 
-- **Tab bleed (the "overlapping tabs" report)** — page content scrolled beneath the rail used to ghost through the tab labels; the rail is now a solid ink of the canvas with a hairline edge, so nothing ever shows through. Screens also keep more clearance above the rail.
-- Month chips render correctly on the transparent headers in both themes (selected = deep pine pill in light, gold in dark).
-
-### New: the website, in-app
-
-- Settings → Updates → **Visit the Aiserie website** opens [aiserie-tracks-site.onrender.com](https://aiserie-tracks-site.onrender.com/) — the feature tour, the 22-wallet catalog and install guides.
-- The About card carries a link pill to the same site.
+- **Presses no longer bounce.** Every tappable surface now sinks slightly on touch and settles back on a smooth ease-out — the springy release overshoot is gone app-wide (press depths are gently dampened too).
+- **Sections enter quietly.** Cards fade and rise a short distance on a smooth ease; the springy pop on every section is gone.
+- **The tab dot fades in** instead of springing; the theme-segment pill, toast, update sheet, chore check-offs and empty-state mascots all settle on eases now.
+- **Chart bars grow without overshoot**; the money counters land with a 2% settle instead of a 4.5% pulse; the mascots breathe ~40% slower and shallower.
+- One deliberate exception family remains untouched: the boot curtain and privacy shield keep their cinematic moments — those are meant to be seen.
 
 ### Unchanged on purpose
 
-- No feature was removed or redesigned away: the wallet deck, receipt scanning, purchase detection, backup/restore, budgets, bills, goals, chores, recurring rules and reports all work as in v4.2.0.
-- No new permissions, no new network calls (the update check remains the only one), no biometrics.
+- No features removed, no layout restructured, no data touched. Backup/restore, budgets, bills, goals, recurring rules, reports, receipt scanning and purchase detection all behave exactly as v4.3.0.
+- No new permissions, no new network calls.
 
 ### For testers
 
-- 48 logic tests cover balances, transfers, recurring scheduling, backup validation and fidelity, PIN hashing + lockout, amount parsing and compaction — `npm test`.
-- Verified on the web build: home/wallets/reports/finance/settings in both themes, the See-all expansion, and both website links.
+- 48 logic tests pass — `npm test`.
+- Verified on the web build: deck/dock/picker/list tiles at every size, both themes, and the full press/entrance motion pass.

@@ -10,7 +10,7 @@ interface Props {
   currency: string;
 }
 
-/** One bar that grows from zero with a springy overshoot. */
+/** One bar that grows from zero with a calm ease-out (no overshoot). */
 function GrowBar({ target, color, delay }: { target: number; color: string; delay: number }) {
   const h = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -18,8 +18,8 @@ function GrowBar({ target, color, delay }: { target: number; color: string; dela
     Animated.timing(h, {
       toValue: target,
       delay,
-      duration: 620,
-      easing: Easing.out(Easing.back(1.5)),
+      duration: 560,
+      easing: Easing.out(Easing.cubic),
       useNativeDriver: false, // height is a layout prop
     }).start();
   }, [h, target, delay]);

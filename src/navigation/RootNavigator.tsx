@@ -1,5 +1,5 @@
 import React, { Suspense, useEffect, useRef } from 'react';
-import { Animated, Platform, StyleSheet, Text, View } from 'react-native';
+import { Animated, Easing, Platform, StyleSheet, Text, View } from 'react-native';
 import { BottomTabBarProps, createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -74,15 +74,16 @@ function TabSlot({
   onPress: () => void;
 }) {
   const { t } = useTheme();
-  // the active dot pops in with a spring — tabs feel alive, not static
+  // the active dot fades in softly (v4.4.0: a calm fade, no spring pop) —
+  // opacity + scale on one value, one native driver
   const dot = useRef(new Animated.Value(focused ? 1 : 0)).current;
   useEffect(() => {
     try {
-      Animated.spring(dot, {
+      Animated.timing(dot, {
         toValue: focused ? 1 : 0,
-        friction: 5,
-        tension: 260,
-        useNativeDriver: true, // transform only — sole driver on this value
+        duration: 220,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true, // transform + opacity only
       }).start();
     } catch {
       /* a tab dot can never take the app down */

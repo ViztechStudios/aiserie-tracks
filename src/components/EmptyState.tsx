@@ -28,10 +28,11 @@ export function EmptyState({
 
   useEffect(() => {
     if (!mascot) return;
-    Animated.spring(pop, {
+    // v4.4.0: soft fade-settle instead of a springy pop
+    Animated.timing(pop, {
       toValue: 1,
-      friction: 5,
-      tension: 130,
+      duration: 320,
+      easing: Easing.out(Easing.cubic),
       useNativeDriver: true,
     }).start();
   }, [mascot, pop]);
@@ -41,7 +42,7 @@ export function EmptyState({
       {mascot ? (
         <View style={[styles.mascotCard, { backgroundColor: t.card, borderColor: t.line }]}>
           <Animated.View
-            style={{ transform: [{ scale: pop.interpolate({ inputRange: [0, 1], outputRange: [0.7, 1] }) }], opacity: pop }}
+            style={{ transform: [{ scale: pop.interpolate({ inputRange: [0, 1], outputRange: [0.92, 1] }) }], opacity: pop }}
           >
             <MascotWiggle bob={3} tilt={1.8} duration={2600} delay={500}>
               <Image source={require('../../assets/mascot-duo.png')} style={styles.mascot} resizeMode="contain" />

@@ -1,5 +1,5 @@
 import React, { useMemo, useRef, useState } from 'react';
-import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { ScrollViewInstance } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -9,6 +9,7 @@ import { Entrance } from '../components/Entrance';
 import { MonthChips } from '../components/MonthChips';
 import { MonthTxList } from '../components/MonthTxList';
 import { PressableScale } from '../components/PressableScale';
+import { BrandLogo } from '../components/BrandLogo';
 import { useFinance } from '../store/FinanceContext';
 import { useUI } from '../store/UIContext';
 import { useTheme } from '../store/ThemeContext';
@@ -168,9 +169,9 @@ export function WalletsScreen() {
                       >
                         <View style={styles.cardTop}>
                           {brand ? (
-                            <View style={[styles.logoTile, { backgroundColor: on ? 'rgba(255,255,255,0.18)' : t.ice100 }]}>
-                              <ImageOrEmoji emoji={a.emoji} logo={brand.logo} size={26} />
-                            </View>
+                            // v4.4.0: the normalized brand tile renders edge-to-edge
+                            // — one squircle, uniform radius, true brand color
+                            <BrandLogo logo={brand.logo} size={44} />
                           ) : (
                             <View style={[styles.logoTile, { backgroundColor: on ? 'rgba(255,255,255,0.18)' : t.ice100 }]}>
                               <Text style={styles.logoEmoji}>{a.emoji}</Text>
@@ -221,25 +222,25 @@ export function WalletsScreen() {
                   </PressableScale>
                 </ScrollView>
 
-                {/* dock */}
+                {/* dock — brand wallets show their normalized tile, the rest keep the glass chip */}
                 <View style={styles.dock}>
                   {cards.map((a, i) => {
                     const brand = getBrand(a.logoId);
                     const on = i === clamped;
                     return (
-                      <PressableScale key={a.id} onPress={() => jumpTo(i)} haptic="light" scaleTo={0.86}>
-                        <View
-                          style={[
-                            styles.dockTile,
-                            { backgroundColor: on ? a.color : t.card, borderColor: on ? a.color : t.glassBorderSoft },
-                          ]}
-                        >
-                          {brand ? (
-                            <ImageOrEmoji emoji={a.emoji} logo={brand.logo} size={20} />
-                          ) : (
+                      <PressableScale key={a.id} onPress={() => jumpTo(i)} haptic="light" scaleTo={0.9}>
+                        {brand ? (
+                          <BrandLogo logo={brand.logo} size={40} />
+                        ) : (
+                          <View
+                            style={[
+                              styles.dockTile,
+                              { backgroundColor: on ? a.color : t.card, borderColor: on ? a.color : t.glassBorderSoft },
+                            ]}
+                          >
                             <Text style={styles.dockEmoji}>{a.emoji}</Text>
-                          )}
-                        </View>
+                          </View>
+                        )}
                       </PressableScale>
                     );
                   })}
@@ -310,14 +311,6 @@ export function WalletsScreen() {
       </ScrollView>
     </View>
   );
-}
-
-/** Tiny helper: brand logo image or a text emoji. */
-function ImageOrEmoji({ emoji, logo, size }: { emoji: string; logo: any; size: number }) {
-  if (logo) {
-    return <Image source={logo} style={{ width: size, height: size }} resizeMode="contain" />;
-  }
-  return <Text style={{ fontSize: size - 6 }}>{emoji}</Text>;
 }
 
 const styles = StyleSheet.create({

@@ -85,9 +85,11 @@ export function AnimatedNumber({
       setDisplay(to);
     }
     try {
+      // v4.4.0: a quiet landing — 1.02 up on an ease, settle back on an ease.
+      // No spring overshoot; the tween and tint already carry the moment.
       Animated.sequence([
-        Animated.timing(pulse, { toValue: 1.045, duration: 110, easing: Easing.out(Easing.quad), useNativeDriver: true }),
-        Animated.spring(pulse, { toValue: 1, friction: 4, tension: 220, useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 1.02, duration: 140, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 1, duration: 260, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
       ]).start();
     } catch {
       try {

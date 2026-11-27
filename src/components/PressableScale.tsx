@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { Animated, Pressable, StyleProp, ViewStyle } from 'react-native';
+import { Animated, Easing, Pressable, StyleProp, ViewStyle } from 'react-native';
 import * as Haptics from 'expo-haptics';
 
 interface Props {
@@ -23,9 +23,10 @@ interface Props {
 }
 
 /**
- * Pressable with a juicy tactile feel: quick sink on touch, springy
- * overshoot on release (the button visibly bounces back), optional light
- * haptic tick.
+ * Pressable with a quiet, professional feel (v4.4.0): a small, quick sink on
+ * touch and an ease-out settle back — no spring overshoot, no visible bounce.
+ * Call-site scaleTo values are gently dampened (×0.6 of their depth) so every
+ * press across the app stays calm even where a deeper value was asked for.
  */
 export function PressableScale({
   onPress,
@@ -42,20 +43,22 @@ export function PressableScale({
   accessibilityState,
 }: Props) {
   const scale = useRef(new Animated.Value(1)).current;
+  // dampen: 0.88 → ~0.928, 0.94 → ~0.964, default 0.95 → ~0.97
+  const target = 1 - (1 - scaleTo) * 0.6;
 
   const pressIn = () => {
-    Animated.spring(scale, {
-      toValue: scaleTo,
-      speed: 46,
-      bounciness: 0,
+    Animated.timing(scale, {
+      toValue: target,
+      duration: 110,
+      easing: Easing.out(Easing.quad),
       useNativeDriver: true,
     }).start();
   };
   const pressOut = () => {
-    Animated.spring(scale, {
+    Animated.timing(scale, {
       toValue: 1,
-      speed: 22,
-      bounciness: 10,
+      duration: 200,
+      easing: Easing.out(Easing.cubic),
       useNativeDriver: true,
     }).start();
   };

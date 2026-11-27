@@ -2,7 +2,7 @@
 
 A jungle-green **personal finance tracker** that runs as a **native Android app (APK)**, an **iPhone/iPad app**, and an **installable PWA** — built with [Expo](https://expo.dev), React Native and TypeScript.
 
-v4.3.0 is the **showroom match**: the app now looks exactly like the mockups on [our website](https://aiserie-tracks-site.onrender.com/) — a deep jungle-night canvas with a moonlit aurora glow, frosted glass panes floating straight on it, the safe-to-spend hero with in/out chips, balance & savings tiles, the advisor line, a compact RECENT pane, and a quiet wordmark tab rail. The website itself is now one tap away in Settings. Same identity, every feature kept.
+v4.4.0 is **polish & poise**: the 22 bank/e-wallet tiles are re-engineered — every logo asset is now a tight, uniform squircle (one corner radius, one optical size, edge-to-edge) so GCash sits next to Maya next to BPI with identical weight everywhere: deck, dock, wallet list, picker and transaction chips. And every interactive motion is quieted — presses settle with an ease-out instead of bouncing, sections fade-rise calmly, chart bars grow without overshoot, the mascots breathe slower. Chill, professional, still alive.
 
 **Explore the site:** [aiserie-tracks-site.onrender.com](https://aiserie-tracks-site.onrender.com/) · **Get the APK:** [Releases → latest](https://github.com/ViztechStudios/aiserie-tracks/releases/latest) · **Install the PWA:** [viztechstudios.github.io/aiserie-tracks](https://viztechstudios.github.io/aiserie-tracks/)
 
@@ -50,7 +50,8 @@ v4.3.0 is the **showroom match**: the app now looks exactly like the mockups on 
 
 | Version | Highlights |
 | --- | --- |
-| **v4.3.0** | "Showroom match" — the UI now mirrors the site mockups: jungle-night canvas by default, moonlit aurora glow, frosted panes on an open canvas (no painted header blocks), safe-to-spend hero with in/out chips, balance & savings tiles, advisor line, RECENT pane with expandable month ledger, wordmark tab rail with active dot, tab-bleed fix · website link in Settings + About · bright mint-teal accents, coral expenses |
+| **v4.4.0** | "Polish & poise" — all 22 bank/e-wallet tiles normalized into uniform squircles (one radius, one optical size, edge-to-edge; `scripts/logo_normalize.py`), new shared BrandLogo renderer across deck · dock · strip · picker · chips · calm-motion pass: no-bounce presses, ease-out entrances, calm toast/sheet/theme/checkbox motion, gentler number pulse, slower mascot breathing · tab dot fades in |
+| v4.3.0 | "Showroom match" — the UI now mirrors the site mockups: jungle-night canvas by default, moonlit aurora glow, frosted panes on an open canvas (no painted header blocks), safe-to-spend hero with in/out chips, balance & savings tiles, advisor line, RECENT pane with expandable month ledger, wordmark tab rail with active dot, tab-bleed fix · website link in Settings + About · bright mint-teal accents, coral expenses |
 | v4.2.0 | Root-cause fix of the v4.1.0 animation crash · PIN lockout + key-stretched hash · storage quarantine · backup fidelity (privacy shield, true merge counts, duplicate-rule warnings, rollback on failed replace) · signed balance input · recurring anchor-day fix · memoized ledger rows · overlap fixes (rail, camera controls, sheets) · toast tones · boot ~1.2 s faster |
 | v4.1.0 | "Orbit & Frost" — Orbit A monogram identity, glassmorphism surfaces, redesigned boot screen, clean vector companions |
 | v4.0.0 | Privacy shield · fixed the add-balance crash (disjoint animation driver graphs) |

@@ -29,7 +29,8 @@ export function UpdateModal() {
       scale.setValue(0.9);
       fade.setValue(0);
       Animated.parallel([
-        Animated.spring(scale, { toValue: 1, speed: 24, bounciness: 6, useNativeDriver: true }),
+        // v4.4.0: calm settle — no bounce on the update sheet
+        Animated.timing(scale, { toValue: 1, duration: 260, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
         Animated.timing(fade, { toValue: 1, duration: 200, easing: Easing.out(Easing.quad), useNativeDriver: true }),
       ]).start();
     }
