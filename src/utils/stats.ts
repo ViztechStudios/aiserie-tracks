@@ -1,5 +1,5 @@
 import { CategoryTotal, Insight, MonthBar, MonthTotals, Transaction } from '../types';
-import { getCategory } from '../data/categories';
+import { getCategory, FALLBACK_CATEGORY } from '../data/categories';
 import { formatMoney } from './money';
 
 /* ---------- date helpers ---------- */
@@ -69,9 +69,11 @@ export function categoryTotals(txs: Transaction[], ym: string, type: 'expense' |
     if (t.type !== type || monthKey(t.date) !== ym) continue; // transfers are excluded from category charts
     map.set(t.categoryId, (map.get(t.categoryId) ?? 0) + t.amount);
   }
+  // v4.2.0: unknown category ids (restore from a newer version, legacy rows)
+  // fall back to the shared "Other" category so the headline totals and the
+  // category breakdown can never disagree again
   return [...map.entries()]
-    .map(([id, amount]) => ({ category: getCategory(id)!, amount }))
-    .filter((ct) => Boolean(ct.category))
+    .map(([id, amount]) => ({ category: getCategory(id) ?? FALLBACK_CATEGORY, amount }))
     .sort((a, b) => b.amount - a.amount);
 }
 
@@ -227,7 +229,10 @@ export function buildAdvisorReport(
 
     // week-over-week momentum (current month only)
     if (isCurrent) {
-      const weekOf = (t: Transaction) => Math.ceil(new Date(t.date).getDate() / 7);
+      // v4.2.0: parse in LOCAL time — new Date('2026-11-07') is UTC midnight,
+      // which lands on the previous calendar day west of UTC and misbucketed
+      // the week-over-week insight across the Americas
+      const weekOf = (t: Transaction) => Math.ceil(new Date(`${t.date}T00:00:00`).getDate() / 7);
       const thisWeek = txs
         .filter((t) => t.type === 'expense' && monthKey(t.date) === ym && weekOf(t) === Math.ceil(now.getDate() / 7))
         .reduce((s, t) => s + t.amount, 0);

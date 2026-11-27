@@ -22,8 +22,10 @@ import { categoryTotals, currentMonthKey, monthKey } from '../utils/stats';
 import { formatMoney, parseAmount } from '../utils/money';
 import { DEFAULT_ALERT_LEVELS, activeLevels } from '../utils/budgetAlerts';
 import { Bill, Budget } from '../types';
-import { font, radius, spacing } from '../theme';
+import { font, radius, spacing, brandFern } from '../theme';
 import { useResponsive } from '../hooks/useResponsive';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 
 /**
  * Finance — know what is due before it is due: the Money Plan (cash to
@@ -32,6 +34,7 @@ import { useResponsive } from '../hooks/useResponsive';
  */
 export function FinanceScreen() {
   const finance = useFinance();
+  const insets = useSafeAreaInsets();
   const budgets = useBudgets();
   const bills = useBills();
   const ui = useUI();
@@ -97,6 +100,7 @@ export function FinanceScreen() {
       ui.toast('Budget saved.');
     } else {
       budgets.upsertBudget(budgetCat, cap, alerts);
+      ui.toast('Budget envelope created.', 'success');
     }
     setBudgetModal(null);
     setBudgetCap('');
@@ -140,8 +144,10 @@ export function FinanceScreen() {
     }
     if (billModal?.bill) {
       bills.updateBill({ ...billModal.bill, name: billName.trim(), amount, dueDay: day, emoji: billEmoji });
+      ui.toast(`${billName.trim()} updated — due on day ${day}.`, 'success');
     } else {
       bills.addBill({ name: billName.trim(), amount, dueDay: day, emoji: billEmoji });
+      ui.toast(`${billName.trim()} added — due on day ${day} of every month.`, 'success');
     }
     setBillModal(null);
     setBillName('');
@@ -158,7 +164,10 @@ export function FinanceScreen() {
         danger: true,
       })
       .then((ok) => {
-        if (ok) bills.removeBill(b.id);
+        if (ok) {
+          bills.removeBill(b.id);
+          ui.toast(`${b.name} removed.`, 'success');
+        }
       });
   };
 
@@ -194,7 +203,7 @@ export function FinanceScreen() {
               </View>
             </View>
             <View style={[styles.planTrack, { backgroundColor: t.ice100 }]}>
-              <View style={[styles.planFill, { width: `${Math.round(planPct * 100)}%` as `${number}%`, backgroundColor: '#1E7A50' }]} />
+              <View style={[styles.planFill, { width: `${Math.round(planPct * 100)}%` as `${number}%`, backgroundColor: brandFern }]} />
             </View>
             <View style={styles.planLegendRow}>
               <Text style={[styles.planLegend, { color: t.subtext }]}>
@@ -223,7 +232,7 @@ export function FinanceScreen() {
                 <Text style={[styles.emptyText, { color: t.subtext }]}>
                   Rent, internet, electricity, subscriptions — add them once and Finance reminds you before each one is due.
                 </Text>
-                <PressableScale onPress={() => setBillModal({})} haptic="medium" style={[styles.primaryBtn, { backgroundColor: '#1E7A50' }]}>
+                <PressableScale onPress={() => setBillModal({})} haptic="medium" style={[styles.primaryBtn, { backgroundColor: brandFern }]}>
                   <Ionicons name="add" size={16} color="#FFFFFF" />
                   <Text style={styles.primaryBtnText}>Add a bill</Text>
                 </PressableScale>
@@ -299,7 +308,7 @@ export function FinanceScreen() {
                 <Text style={[styles.emptyText, { color: t.subtext }]}>
                   Give every peso a job: set a monthly cap per category and watch the envelopes fill up as you spend.
                 </Text>
-                <PressableScale onPress={() => openBudgetModal()} haptic="medium" style={[styles.primaryBtn, { backgroundColor: '#1E7A50' }]}>
+                <PressableScale onPress={() => openBudgetModal()} haptic="medium" style={[styles.primaryBtn, { backgroundColor: brandFern }]}>
                   <Ionicons name="add" size={16} color="#FFFFFF" />
                   <Text style={styles.primaryBtnText}>Create a budget</Text>
                 </PressableScale>
@@ -388,7 +397,7 @@ export function FinanceScreen() {
       {/* budget modal */}
       <Modal visible={budgetModal !== null} transparent animationType="slide" onRequestClose={() => setBudgetModal(null)}>
         <View style={styles.modalBackdrop}>
-          <View style={[styles.modalSheet, { backgroundColor: t.cardSolid }]}>
+          <View style={[styles.modalSheet, { backgroundColor: t.cardSolid, paddingBottom: Math.max(insets.bottom, 12) + 28 }]}>
             <Text style={[styles.modalTitle, { color: t.text }]}>{budgetModal?.budget ? 'Edit envelope' : 'New envelope'}</Text>
             <Text style={[styles.modalSection, { color: t.subtext }]}>CATEGORY</Text>
             <View style={styles.modalChips}>
@@ -451,7 +460,7 @@ export function FinanceScreen() {
               <PressableScale onPress={() => setBudgetModal(null)} haptic="light" style={[styles.modalBtn, { backgroundColor: t.ice100 }]} containerStyle={styles.modalBtnContainer}>
                 <Text style={[styles.modalBtnText, { color: t.text }]}>Cancel</Text>
               </PressableScale>
-              <PressableScale onPress={submitBudget} haptic="medium" style={[styles.modalBtn, { backgroundColor: '#1E7A50' }]} containerStyle={styles.modalBtnContainer}>
+              <PressableScale onPress={submitBudget} haptic="medium" style={[styles.modalBtn, { backgroundColor: brandFern }]} containerStyle={styles.modalBtnContainer}>
                 <Text style={[styles.modalBtnText, { color: '#FFFFFF' }]}>{budgetModal?.budget ? 'Save' : 'Create'}</Text>
               </PressableScale>
             </View>
@@ -462,7 +471,7 @@ export function FinanceScreen() {
       {/* bill modal */}
       <Modal visible={billModal !== null} transparent animationType="slide" onRequestClose={() => setBillModal(null)}>
         <View style={styles.modalBackdrop}>
-          <View style={[styles.modalSheet, { backgroundColor: t.cardSolid }]}>
+          <View style={[styles.modalSheet, { backgroundColor: t.cardSolid, paddingBottom: Math.max(insets.bottom, 12) + 28 }]}>
             <Text style={[styles.modalTitle, { color: t.text }]}>{billModal?.bill ? 'Edit bill' : 'New bill'}</Text>
             <Text style={[styles.modalSection, { color: t.subtext }]}>NAME</Text>
             <TextInput
@@ -513,7 +522,7 @@ export function FinanceScreen() {
               <PressableScale onPress={() => setBillModal(null)} haptic="light" style={[styles.modalBtn, { backgroundColor: t.ice100 }]} containerStyle={styles.modalBtnContainer}>
                 <Text style={[styles.modalBtnText, { color: t.text }]}>Cancel</Text>
               </PressableScale>
-              <PressableScale onPress={submitBill} haptic="medium" style={[styles.modalBtn, { backgroundColor: '#1E7A50' }]} containerStyle={styles.modalBtnContainer}>
+              <PressableScale onPress={submitBill} haptic="medium" style={[styles.modalBtn, { backgroundColor: brandFern }]} containerStyle={styles.modalBtnContainer}>
                 <Text style={[styles.modalBtnText, { color: '#FFFFFF' }]}>{billModal?.bill ? 'Save' : 'Add bill'}</Text>
               </PressableScale>
             </View>

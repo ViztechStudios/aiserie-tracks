@@ -1,9 +1,12 @@
 /* Aiserie Tracks PWA service worker — minimal offline shell.
  * - Navigations: network-first, fall back to the cached shell when offline.
  * - Static assets: cache-first (hashed filenames make this safe).
- * Bump CACHE_VERSION when the shell changes.
+ * CACHE_VERSION is rewritten to `aiserie-v<app.json version>` by
+ * scripts/patch-pwa-html.mjs on EVERY web export (v4.2.0) — a release can no
+ * longer ship with a stale cache that never purges (v3.0.1 served through
+ * v4.0 and v4.1).
  */
-const CACHE_VERSION = 'aiserie-v3.0.1';
+const CACHE_VERSION = 'aiserie-v4.2.0';
 const SHELL = ['./', './index.html'];
 
 self.addEventListener('install', (event) => {

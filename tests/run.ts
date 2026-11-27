@@ -12,14 +12,14 @@ import assert from 'node:assert/strict';
 import { Account, Budget, Recurring, Transaction } from '../src/types';
 import { accountBalance, accountNet } from '../src/utils/accounts';
 import { categoryTotals, totalsForMonth, lastMonths } from '../src/utils/stats';
-import { formatMoney, parseAmount } from '../src/utils/money';
+import { formatMoney, parseAmount, parseAmountSigned } from '../src/utils/money';
 import { generateDue, nextAfter, upcomingFor, sanitizeRules, REC_TX_ID_PREFIX } from '../src/utils/recurring';
-import { buildBackup, validateBackup, planRestore, BACKUP_SCHEMA } from '../src/services/backup';
+import { buildBackup, validateBackup, planRestore, BACKUP_SCHEMA, backupFileName, findDuplicateRecurringSignatures } from '../src/services/backup';
 import { buildReportCSV, buildReportHTML, inRange, rangeThisMonth } from '../src/services/report';
 import { activeLevels, crossingLevel, alertMessage, alertKey } from '../src/utils/budgetAlerts';
 import { Goal } from '../src/types';
 import { goalProgress, goalRemaining, applyGoalChange, completesGoal } from '../src/utils/goals';
-import { hashPin, makeSalt, isPinAcceptable, verifyPin, LockConfig } from '../src/utils/pinlock';
+import { hashPin, hashPinV1, makeSalt, isPinAcceptable, verifyPin, LockConfig, LockGuard, recordFailedAttempt, guardRemainingMs } from '../src/utils/pinlock';
 import { compactData, byteSize, formatBytes } from '../src/store/storage';
 
 let passed = 0;
@@ -79,7 +79,24 @@ test('parseAmount handles commas, spaces and junk', () => {
   assert.equal(parseAmount(' 1250 '), 1250);
   assert.equal(parseAmount('abc'), null);
   assert.equal(parseAmount('0'), null);
-  assert.equal(parseAmount('-5'), 5, 'signs are stripped — the ledger only keeps positive amounts');
+  // v4.2.0: negatives no longer flip into positives — parseAmount rejects them
+  // (the old behavior silently saved +500 for a "-500" wallet reconciliation,
+  // doubling the error); use parseAmountSigned where a sign is meaningful
+  assert.equal(parseAmount('-5'), null);
+  assert.equal(parseAmountSigned('-5'), -5);
+  assert.equal(parseAmountSigned('(500)'), -500);
+});
+
+test('parseAmountSigned keeps the sign and separator intent', () => {
+  assert.equal(parseAmountSigned('-1,250.50'), -1250.5);
+  assert.equal(parseAmountSigned('1.250,50'), 1250.5, 'European decimal: last separator wins');
+  assert.equal(parseAmountSigned('1,250.50'), 1250.5);
+  assert.equal(parseAmountSigned('1.250.000'), 1250000, 'repeated dots are grouping');
+  assert.equal(parseAmountSigned('1.250'), 1.25, 'Filipino convention: one dot is always decimal');
+  assert.equal(parseAmountSigned('1,5'), 1.5, 'single comma with short tail is decimal');
+  assert.equal(parseAmountSigned('1,250'), 1250, 'comma with 3-digit tail is grouping');
+  assert.equal(parseAmountSigned('12 500'), 12500, 'spaces vanish');
+  assert.equal(parseAmountSigned(''), null);
 });
 test('formatMoney renders the currency and thousands separator', () => {
   const out = formatMoney(1234.5, 'PHP');
@@ -276,6 +293,68 @@ test('buildBackup embeds schema, counts and every section', () => {
   const v2 = validateBackup(JSON.stringify(dirty));
   assert.equal(v2.counts?.goals, 1);
 });
+
+test('validateBackup preserves the privacy-shield preference (v4.2.0 restore fidelity)', () => {
+  const b = buildBackup(
+    {
+      transactions: [],
+      accounts: [acct('w1', 500)],
+      settings: { currency: 'EUR', userName: 'Aiserie', privacyShield: false },
+      tasks: [],
+      budgets: [],
+      bills: [],
+      recurring: [],
+      budgetAlerts: {},
+      goals: [],
+    },
+    '4.2.0'
+  );
+  const v = validateBackup(JSON.stringify(b));
+  assert.equal(v.ok, true);
+  assert.equal(v.data?.settings?.currency, 'EUR');
+  assert.equal(v.data?.settings?.privacyShield, false);
+  // a file without the field leaves it undefined — the app keeps its default
+  const legacy = JSON.parse(JSON.stringify(b));
+  delete legacy.data.settings.privacyShield;
+  const v2 = validateBackup(JSON.stringify(legacy));
+  assert.equal(v2.data?.settings?.privacyShield, undefined);
+});
+
+test('monthly recurring rules recover their anchor day after a short month', () => {
+  // the v4.1.0 drift: Jan 31 → Feb 28 → Mar 28 → Apr 28 … forever
+  assert.equal(nextAfter('monthly', '2026-01-31', 31), '2026-02-28', 'clamped in the short month');
+  assert.equal(nextAfter('monthly', '2026-02-28', 31), '2026-03-31', 'anchor recovers on the long month');
+  assert.equal(nextAfter('monthly', '2026-02-28'), '2026-03-28', 'without an anchor the old behavior is preserved');
+  // upcoming list carries the anchor from startDate
+  const anchoredRule = rule({ id: 'anchor1', freq: 'monthly', startDate: '2026-01-31', nextRun: '2026-02-28' });
+  const upcoming = upcomingFor(anchoredRule, 2);
+  assert.equal(upcoming[0], '2026-02-28');
+  assert.equal(upcoming[1], '2026-03-31');
+});
+
+test('merge warns about recurring rules that already exist by signature', () => {
+  const salary = rule({ id: 'from-device-a', name: 'Salary', amount: 26000, freq: 'monthly' });
+  const rent = rule({ id: 'from-device-b', name: 'Rent', amount: 12000, freq: 'monthly' });
+  const existing = [rule({ id: 'from-device-b2', name: 'Salary', amount: 26000, freq: 'monthly' })];
+  const dupes = findDuplicateRecurringSignatures([salary, rent], existing);
+  assert.equal(dupes.length, 1);
+  assert.equal(dupes[0].name, 'Salary');
+  assert.equal(findDuplicateRecurringSignatures([rent], existing).length, 0);
+});
+
+test('backup filenames never collide within the same minute', () => {
+  const now = new Date(2026, 10, 27, 12, 30, 15);
+  const names = new Set([backupFileName(now), backupFileName(now), backupFileName(now)]);
+  assert.equal(names.size, 3);
+  assert.ok(backupFileName(now).startsWith('aiserie-backup-20261127-123015-'));
+});
+
+test('planRestore reports true net-new transaction counts for merge', () => {
+  const a = { ...sampleTx, id: 'tx-a' };
+  const b = { ...sampleTx, id: 'tx-b' };
+  const plan = planRestore({ transactions: [a, b], accounts: [], settings: null, tasks: [], budgets: [], bills: [], recurring: [], budgetAlerts: {}, goals: [] }, new Set(['tx-a']), 'merge');
+  assert.equal(plan.fresh.transactions, 1);
+});
 test('validateBackup rejects non-JSON, foreign schemas and empty payloads', () => {
   assert.equal(validateBackup('not json{').ok, false);
   assert.equal(validateBackup(JSON.stringify({ schema: 'other-app-9', data: {} })).ok, false);
@@ -380,9 +459,40 @@ test('pin hashing is salted, deterministic and never reversible', () => {
   assert.notEqual(h1, h3);
   assert.equal(h1.length, 64);
   assert.equal(h1.includes(salt), false);
-  const cfg: LockConfig = { enabled: true, salt, hash: h1 };
-  assert.equal(verifyPin('1234', cfg), true);
-  assert.equal(verifyPin('9999', cfg), false);
+  const cfg: LockConfig = { enabled: true, salt, hash: h1, kdf: 2 };
+  assert.deepEqual(verifyPin('1234', cfg), { ok: true, upgrade: false });
+  assert.deepEqual(verifyPin('9999', cfg), { ok: false, upgrade: false });
+});
+
+test('legacy v4.0 pin hashes still verify and offer a stretch upgrade', () => {
+  const salt = makeSalt();
+  const legacy = hashPinV1('2468', salt);
+  const cfg: LockConfig = { enabled: true, salt, hash: legacy }; // no kdf field
+  const verdict = verifyPin('2468', cfg);
+  assert.equal(verdict.ok, true);
+  assert.equal(verdict.upgrade, true);
+  assert.equal(verifyPin('1111', cfg).ok, false);
+  // after upgrade the stretched hash verifies too
+  const upgraded: LockConfig = { enabled: true, salt: cfg.salt, hash: hashPin('2468', cfg.salt), kdf: 2 };
+  assert.equal(verifyPin('2468', upgraded).ok, true);
+});
+
+test('failed pin attempts earn an escalating persisted lockout', () => {
+  let guard: LockGuard | null = null;
+  assert.equal(guardRemainingMs(guard, 1000), 0);
+  guard = recordFailedAttempt(guard, 1000);
+  guard = recordFailedAttempt(guard, 2000);
+  assert.equal(guardRemainingMs(guard, 3000), 0); // first two typos stay open
+  guard = recordFailedAttempt(guard, 3000);
+  assert.equal(guard.lockedUntil, 3000 + 30_000); // 3rd → 30s
+  guard = recordFailedAttempt(guard, 31000);
+  assert.equal(guard.lockedUntil, 31000 + 60_000); // 4th → 60s
+  guard = recordFailedAttempt(guard, 91000);
+  assert.equal(guard.lockedUntil, 91000 + 120_000); // 5th → 120s
+  for (let i = 0; i < 10; i++) guard = recordFailedAttempt(guard, 200000);
+  assert.equal(guard.lockedUntil - 200000, 300_000); // capped at 5 min
+  assert.equal(guardRemainingMs(guard, 200001), 299_999);
+  assert.equal(guardRemainingMs(guard, 501000), 0); // window passed
 });
 
 test('pin policy rejects repeats and runs', () => {

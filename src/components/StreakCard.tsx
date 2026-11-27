@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -19,7 +19,8 @@ const WEEK_INITIALS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 export function StreakCard() {
   const { t, shadow } = useTheme();
   const finance = useFinance();
-  const s = computeStreak(finance.transactions);
+  // v4.2.0: the streak scan (sort + longest run) only reruns when the ledger changes
+  const s = useMemo(() => computeStreak(finance.transactions), [finance.transactions]);
 
   const todayISO = (() => {
     const d = new Date();

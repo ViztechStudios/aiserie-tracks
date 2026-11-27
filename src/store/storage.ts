@@ -17,9 +17,9 @@ const FLUSH_DELAY_MS = 400;
 
 type Timer = { cancel: () => void; fire: () => void };
 
-const pending = new Map<string, { value: string; timer: Timer }>();
+const pending = new Map<string, { resolve: () => string; timer: Timer }>();
 
-function schedule(key: string, value: string): Timer {
+function schedule(key: string, resolve: () => string): Timer {
   let handle: ReturnType<typeof setTimeout> | null = null;
   const timer: Timer = {
     cancel: () => {
@@ -28,7 +28,7 @@ function schedule(key: string, value: string): Timer {
     },
     fire: () => {
       handle = null;
-      void AsyncStorage.setItem(key, value).catch(() => {});
+      void AsyncStorage.setItem(key, resolve()).catch(() => {});
     },
   };
   handle = setTimeout(timer.fire, FLUSH_DELAY_MS);
@@ -39,14 +39,26 @@ function schedule(key: string, value: string): Timer {
 export function persistDebounced(key: string, value: string): void {
   const entry = pending.get(key);
   if (entry) entry.timer.cancel();
-  pending.set(key, { value, timer: schedule(key, value) });
+  pending.set(key, { resolve: () => value, timer: schedule(key, () => value) });
+}
+
+/**
+ * v4.2.0: queue a debounced write whose JSON.stringify runs inside the flush
+ * timer, not on the render path. With thousands of transactions, the old
+ * effect-side stringify paid O(n) serialization on EVERY change even when the
+ * write was going to be coalesced away a moment later.
+ */
+export function persistDebouncedLazy(key: string, value: unknown): void {
+  const entry = pending.get(key);
+  if (entry) entry.timer.cancel();
+  pending.set(key, { resolve: () => JSON.stringify(value), timer: schedule(key, () => JSON.stringify(value)) });
 }
 
 /** Write any queued values to disk right now (used when app goes to background). */
 export function flushStorage(): void {
   for (const [key, entry] of pending) {
     entry.timer.cancel();
-    void AsyncStorage.setItem(key, entry.value).catch(() => {});
+    void AsyncStorage.setItem(key, entry.resolve()).catch(() => {});
   }
   pending.clear();
 }
@@ -90,6 +102,34 @@ export async function measureStorage(): Promise<StorageReport> {
     .map(([k, v]) => ({ key: k, bytes: byteSize(v as string) }))
     .sort((a, b) => b.bytes - a.bytes);
   return { totalBytes: entries.reduce((s, e) => s + e.bytes, 0), entries };
+}
+
+/**
+ * v4.2.0 — corruption quarantine. If a stored payload fails to parse, the raw
+ * bytes are copied to `<key>.corrupt-<timestamp>` BEFORE the app can write
+ * empty state over them. The v4.1.0 behavior (log a warning, start fresh)
+ * let a single truncated write permanently destroy a whole ledger ~400 ms
+ * after boot. The quarantine copy gives any later recovery attempt something
+ * to work with; it is included in every full wipe.
+ */
+export async function loadStoredJson<T>(key: string): Promise<T | null> {
+  let raw: string | null = null;
+  try {
+    raw = await AsyncStorage.getItem(key);
+  } catch {
+    return null; // storage unreadable — behave like an empty store
+  }
+  if (raw === null || raw === '') return null;
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    try {
+      await AsyncStorage.setItem(`${key}.corrupt-${Date.now().toString(36)}`, raw);
+    } catch {
+      /* even the quarantine failing must not crash hydration */
+    }
+    return null;
+  }
 }
 
 /** Friendly size label for the meter: 12.4 KB / 1.8 MB. */

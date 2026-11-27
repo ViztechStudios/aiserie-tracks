@@ -1,3 +1,4 @@
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import React, { useMemo, useState } from 'react';
 import { Modal, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -19,7 +20,7 @@ import {
 import { saveReportPDF, saveTextFile } from '../services/files';
 import { formatMoney } from '../utils/money';
 import { todayISO } from '../utils/stats';
-import { font, radius, spacing } from '../theme';
+import { font, radius, spacing, brandFern } from '../theme';
 
 type Preset = 'month' | 'lastMonth' | 'last3' | 'year' | 'all' | 'custom';
 
@@ -39,6 +40,8 @@ const PRESETS: { key: Preset; label: string }[] = [
  */
 export function ReportsModal() {
   const finance = useFinance();
+  const insets = useSafeAreaInsets();
+
   const ui = useUI();
   const { t } = useTheme();
   const [preset, setPreset] = useState<Preset>('month');
@@ -105,7 +108,7 @@ export function ReportsModal() {
 
   return (
     <Modal visible={ui.reportsVisible} transparent animationType="slide" onRequestClose={ui.closeReports}>
-      <View style={styles.backdrop}>
+      <View style={[styles.backdrop, { paddingBottom: Math.max(insets.bottom, 10) }]}>
         <View style={[styles.sheet, { backgroundColor: t.cardSolid }]}>
           <Text style={[styles.title, { color: t.text }]}>Export a report</Text>
           <Text style={[styles.sub, { color: t.subtext }]}>Pick a period — income, expenses, category breakdown, wallet balances and every transaction are included.</Text>
@@ -116,7 +119,7 @@ export function ReportsModal() {
               <TouchableOpacity
                 key={p.key}
                 onPress={() => setPreset(p.key)}
-                style={[styles.chip, { backgroundColor: t.ice50, borderColor: t.line }, preset === p.key && { backgroundColor: '#1E7A50', borderColor: '#1E7A50' }]}
+                style={[styles.chip, { backgroundColor: t.ice50, borderColor: t.line }, preset === p.key && { backgroundColor: brandFern, borderColor: brandFern }]}
               >
                 <Text style={[styles.chipText, { color: preset === p.key ? '#FFFFFF' : t.text }]}>{p.label}</Text>
               </TouchableOpacity>
@@ -167,7 +170,7 @@ export function ReportsModal() {
               <Ionicons name="grid-outline" size={18} color={t.ocean600} />
               <Text style={[styles.bigBtnText, { color: t.ocean600 }]}>{busy === 'csv' ? 'Saving…' : 'Export CSV'}</Text>
             </PressableScale>
-            <PressableScale onPress={doPDF} disabled={busy !== null} haptic="medium" style={[styles.bigBtn, { backgroundColor: '#1E7A50' }, busy === 'pdf' && { opacity: 0.6 }]} containerStyle={styles.btnWrap}>
+            <PressableScale onPress={doPDF} disabled={busy !== null} haptic="medium" style={[styles.bigBtn, { backgroundColor: brandFern }, busy === 'pdf' && { opacity: 0.6 }]} containerStyle={styles.btnWrap}>
               <Ionicons name="document-outline" size={18} color="#FFFFFF" />
               <Text style={[styles.bigBtnText, { color: '#FFFFFF' }]}>{busy === 'pdf' ? 'Building…' : 'Export PDF'}</Text>
             </PressableScale>

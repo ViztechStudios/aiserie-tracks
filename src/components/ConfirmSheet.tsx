@@ -3,7 +3,7 @@ import { Modal, Platform, StyleSheet, Text, View } from 'react-native';
 import { PressableScale } from './PressableScale';
 import { useTheme } from '../store/ThemeContext';
 import { useUI } from '../store/UIContext';
-import { font, radius, spacing } from '../theme';
+import { font, radius, spacing, brandFern } from '../theme';
 
 /**
  * In-app confirmation dialog used for every destructive action (delete

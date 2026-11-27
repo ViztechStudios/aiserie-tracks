@@ -39,13 +39,23 @@ export function ToastHost() {
 
   if (!msg) return null;
 
+  // v4.2.0: the toast speaks in tones — success lands green, error lands red,
+  // plain info keeps the classic fern pill (one voice, three volumes)
+  const kind = state?.kind ?? 'info';
+  const tone =
+    kind === 'success'
+      ? { bg: isDark ? 'rgba(9,46,30,0.96)' : 'rgba(18,94,60,0.96)', icon: 'checkmark-circle' as const, color: '#9FE7C0' }
+      : kind === 'error'
+        ? { bg: isDark ? 'rgba(56,20,18,0.96)' : 'rgba(148,54,48,0.96)', icon: 'warning' as const, color: '#FFC9CD' }
+        : { bg: isDark ? 'rgba(6,26,16,0.96)' : 'rgba(13,59,39,0.96)', icon: 'information-circle' as const, color: t.sun300 ?? '#F0D492' };
+
   return (
     <Animated.View
       pointerEvents="none"
       style={[styles.wrap, { opacity, transform: [{ translateY: rise }] }]}
     >
-      <View style={[styles.pill, { backgroundColor: isDark ? 'rgba(6,26,16,0.96)' : 'rgba(13,59,39,0.96)' }]}>
-        <Ionicons name="information-circle" size={17} color={t.sun300 ?? '#F0D492'} />
+      <View style={[styles.pill, { backgroundColor: tone.bg }]}>
+        <Ionicons name={tone.icon} size={17} color={tone.color} />
         <Text style={styles.text} numberOfLines={3}>
           {msg}
         </Text>

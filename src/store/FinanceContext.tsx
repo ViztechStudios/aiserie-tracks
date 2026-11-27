@@ -1,6 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { persistDebounced } from './storage';
+import { loadStoredJson, persistDebouncedLazy } from './storage';
 import { Account, Settings, Transaction } from '../types';
 import { DEFAULT_CURRENCY } from '../data/currencies';
 import { buildSampleAccounts, buildSampleTransactions, makeId } from '../data/sampleData';
@@ -21,6 +21,9 @@ export const ALL_STORAGE_KEYS = [
   'aiserie.v1.budgetAlerts',
   'aiserie.v1.goals',
   'aiserie.v1.lock',
+  'aiserie.v1.lockguard', // v4.2.0: failed-attempt guard
+  'aiserie.v1.themeMode', // v4.2.0: was left behind by the old wipe
+  'aiserie.v1.updateDismissed', // v4.2.0: was left behind by the old wipe
 ];
 
 export interface NewTransactionInput {
@@ -70,34 +73,31 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [settings, setSettings] = useState<Settings>({ currency: DEFAULT_CURRENCY, userName: 'Aiserie' });
 
-  // hydrate from device storage
+  // hydrate from device storage — per-key parsing (v4.2.0): one damaged key
+  // can no longer take the other stores down with it, and a parse failure
+  // quarantines the raw payload instead of silently overwriting it with empty
+  // state a moment later.
   useEffect(() => {
     (async () => {
       try {
-        const [txRaw, settingsRaw, accountsRaw] = await Promise.all([
-          AsyncStorage.getItem(TX_KEY),
-          AsyncStorage.getItem(SETTINGS_KEY),
-          AsyncStorage.getItem(ACCOUNTS_KEY),
+        const [tx, accts, saved] = await Promise.all([
+          loadStoredJson<Transaction[]>(TX_KEY),
+          loadStoredJson<Account[]>(ACCOUNTS_KEY),
+          loadStoredJson<Partial<Settings> | null>(SETTINGS_KEY),
         ]);
-        if (txRaw) {
-          const parsed = JSON.parse(txRaw) as Transaction[];
-          if (Array.isArray(parsed)) setTransactions(parsed);
-        }
-        if (accountsRaw) {
-          const parsed = JSON.parse(accountsRaw) as Account[];
-          if (Array.isArray(parsed)) setAccounts(parsed);
-        }
-        if (settingsRaw) {
-          const parsed = JSON.parse(settingsRaw) as Partial<Settings>;
+        if (Array.isArray(tx)) setTransactions(tx);
+        if (Array.isArray(accts)) setAccounts(accts);
+        if (saved && typeof saved === 'object') {
           setSettings({
-            currency: typeof parsed.currency === 'string' ? parsed.currency : DEFAULT_CURRENCY,
-            userName: typeof parsed.userName === 'string' && parsed.userName.trim() ? parsed.userName : 'Aiserie',
+            currency: typeof saved.currency === 'string' ? saved.currency : DEFAULT_CURRENCY,
+            userName: typeof saved.userName === 'string' && saved.userName.trim() ? saved.userName : 'Aiserie',
             // v4.0.0 privacy shield — undefined in old settings counts as ON
-            privacyShield: parsed.privacyShield !== false,
+            privacyShield: saved.privacyShield !== false,
           });
         }
       } catch (e) {
-        // corrupted storage: start fresh rather than crash
+        // unexpected shape errors land here — storage itself was quarantined
+        // per key inside loadStoredJson when the JSON was damaged
         console.warn('Failed to load saved data', e);
       } finally {
         setReady(true);
@@ -105,20 +105,20 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     })();
   }, []);
 
-  // persist on change
+  // persist on change — stringify happens inside the flush timer (v4.2.0)
   useEffect(() => {
     if (!ready) return;
-    persistDebounced(TX_KEY, JSON.stringify(transactions));
+    persistDebouncedLazy(TX_KEY, transactions);
   }, [transactions, ready]);
 
   useEffect(() => {
     if (!ready) return;
-    persistDebounced(ACCOUNTS_KEY, JSON.stringify(accounts));
+    persistDebouncedLazy(ACCOUNTS_KEY, accounts);
   }, [accounts, ready]);
 
   useEffect(() => {
     if (!ready) return;
-    persistDebounced(SETTINGS_KEY, JSON.stringify(settings));
+    persistDebouncedLazy(SETTINGS_KEY, settings);
   }, [settings, ready]);
 
   const addTransaction = useCallback((input: NewTransactionInput): Transaction => {
@@ -201,10 +201,17 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
   const clearAllData = useCallback(async () => {
     setTransactions([]);
     setAccounts([]);
-    // Wipe every trace the app can leave on the device — transactions,
-    // wallets, settings, tasks, budgets and bills — so "Erase all data"
-    // really erases everything (transactions/wallets are also reset in state).
-    await AsyncStorage.multiRemove(ALL_STORAGE_KEYS).catch(() => {});
+    // Wipe EVERY trace the app can leave on the device — the known keys above
+    // plus anything else namespaced `aiserie.` (quarantine copies from damaged
+    // payloads included), so "Erase all data" really erases everything and the
+    // privacy policy's claim holds verbatim (v4.2.0).
+    try {
+      const keys = await AsyncStorage.getAllKeys();
+      const ours = keys.filter((k) => k.startsWith('aiserie.'));
+      if (ours.length) await AsyncStorage.multiRemove(ours);
+    } catch {
+      await AsyncStorage.multiRemove(ALL_STORAGE_KEYS).catch(() => {});
+    }
     setSettings({ currency: DEFAULT_CURRENCY, userName: 'Aiserie', privacyShield: true });
   }, []);
 

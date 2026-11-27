@@ -15,9 +15,10 @@
  *    ExtraBold reserved for the single hero number on a screen.
  *
  * Light: fern paper / pine ink. Dark: jungle night / warm gold.
- * ThemeContext drives a 0->1 progress value so every surface cross-fades.
+ * Surfaces read the resolved palette directly (no shared animated values —
+ * see ThemeContext v4.2.0 note); AuroraBackground owns its own cross-fade.
  */
-import { Animated, Platform } from 'react-native';
+import { Platform } from 'react-native';
 
 export interface ThemeColors {
   // brand — fern + sun
@@ -323,19 +324,6 @@ export const shadow = {
   ...shadowLight,
   ...(Platform.OS === 'web' ? webShadowsLight : {}),
 };
-
-/**
- * Animated two-way color helper driven by the theme progress value
- * (0 = light, 1 = dark). Pass into an Animated style; the transition is
- * what makes switching themes feel alive.
- */
-export function mix(
-  progress: Animated.AnimatedInterpolation<number>,
-  light: string,
-  dark: string
-): Animated.AnimatedInterpolation<string> {
-  return progress.interpolate({ inputRange: [0, 1], outputRange: [light, dark] });
-}
 
 /** Legacy export — screens should use useTheme().t instead. Kept for safety. */
 export const colors = lightColors;

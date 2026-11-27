@@ -8,6 +8,8 @@ import { EmptyState } from './EmptyState';
 import { useFinance } from '../store/FinanceContext';
 import { useGoals } from '../store/GoalsContext';
 import { useUI } from '../store/UIContext';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 import { useTheme } from '../store/ThemeContext';
 import { AnimatedNumber } from './AnimatedNumber';
 import { Goal } from '../types';
@@ -24,6 +26,8 @@ const GOAL_EMOJIS = ['🐷', '🏝️', '📱', '🚲', '🏠', '🎓', '💍', 
  */
 export function GoalsSection() {
   const finance = useFinance();
+  const insets = useSafeAreaInsets();
+
   const goals = useGoals();
   const ui = useUI();
   const { t, shadow } = useTheme();
@@ -86,12 +90,21 @@ export function GoalsSection() {
       ui.toast('Enter an amount greater than zero.');
       return;
     }
+    const before = moveFor.goal.saved;
     const completed = goals.moveGoal(moveFor.goal.id, amt * moveFor.dir);
     if (completed) {
       Haptics.notificationAsync?.(Haptics.NotificationFeedbackType.Success).catch(() => {});
       ui.toast(`${moveFor.goal.emoji} "${moveFor.goal.name}" is complete — the mascots are proud of you!`);
     } else {
-      ui.toast(moveFor.dir === 1 ? `₱${amt.toLocaleString()} tucked into "${moveFor.goal.name}".` : `₱${amt.toLocaleString()} taken out of "${moveFor.goal.name}".`);
+      // v4.2.0: currency symbol follows the wallet setting (was a hardcoded ₱),
+      // and an over-full piggy says so instead of quietly eating the difference
+      const sym = currency === 'PHP' ? '₱' : `${currency} `;
+      const recorded = moveFor.dir === 1 ? Math.max(0, Math.min(before + amt, moveFor.goal.target) - before) : amt;
+      const excess = moveFor.dir === 1 && before + amt > moveFor.goal.target;
+      const body = moveFor.dir === 1
+        ? `${sym}${amt.toLocaleString()} tucked into "${moveFor.goal.name}".${excess ? ` The piggy was full — only ${sym}${recorded.toLocaleString()} fit inside.` : ''}`
+        : `${sym}${amt.toLocaleString()} taken out of "${moveFor.goal.name}".`;
+      ui.toast(body);
     }
     setMoveFor(null);
     setMoveAmount('');
@@ -204,7 +217,7 @@ export function GoalsSection() {
 
       {/* add / edit goal modal */}
       <Modal visible={modal !== null} transparent animationType="fade" onRequestClose={() => setModal(null)}>
-        <TouchableOpacity style={styles.modalScrim} activeOpacity={1} onPress={() => setModal(null)}>
+        <TouchableOpacity style={[styles.modalScrim, { paddingBottom: Math.max(insets.bottom, 12) }]} activeOpacity={1} onPress={() => setModal(null)}>
           <TouchableOpacity activeOpacity={1} style={[styles.sheet, { backgroundColor: t.cardSolid }]} onPress={() => {}}>
             <ScrollView keyboardShouldPersistTaps="handled" bounces={false}>
               <Text style={[styles.modalTitle, { color: t.text }]}>{modal?.goal ? 'Edit goal' : 'New savings goal'}</Text>
@@ -256,7 +269,7 @@ export function GoalsSection() {
 
       {/* add / withdraw money sheet */}
       <Modal visible={moveFor !== null} transparent animationType="fade" onRequestClose={() => setMoveFor(null)}>
-        <TouchableOpacity style={styles.modalScrim} activeOpacity={1} onPress={() => setMoveFor(null)}>
+        <TouchableOpacity style={[styles.modalScrim, { paddingBottom: Math.max(insets.bottom, 12) }]} activeOpacity={1} onPress={() => setMoveFor(null)}>
           <TouchableOpacity activeOpacity={1} style={[styles.sheet, styles.sheetSmall, { backgroundColor: t.cardSolid }]} onPress={() => {}}>
             <Text style={[styles.modalTitle, { color: t.text }]}>
               {moveFor?.dir === 1 ? 'Add to' : 'Take out of'} "{moveFor?.goal.name}"

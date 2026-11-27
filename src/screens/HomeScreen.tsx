@@ -86,6 +86,8 @@ export function HomeScreen() {
                 onPress={() => navigation.navigate('Scan' as never)}
                 scaleTo={0.9}
                 style={[styles.actionCircle, { backgroundColor: actionBg }]}
+                accessibilityRole="button"
+                accessibilityLabel="Scan a receipt"
               >
                 <Ionicons name="scan-outline" size={18} color={heroInk} />
               </PressableScale>
@@ -93,6 +95,8 @@ export function HomeScreen() {
                 onPress={() => navigation.navigate('Settings' as never)}
                 scaleTo={0.9}
                 style={[styles.actionCircle, { backgroundColor: actionBg }]}
+                accessibilityRole="button"
+                accessibilityLabel="Open settings"
               >
                 <Ionicons name="settings-outline" size={18} color={heroInk} />
               </PressableScale>
@@ -154,6 +158,7 @@ export function HomeScreen() {
                 ym={ym}
                 transactions={monthTxs}
                 currency={finance.settings.currency}
+                accounts={finance.accounts}
                 onPressTx={(tx) => ui.openEdit(tx)}
               />
             </View>

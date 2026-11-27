@@ -43,8 +43,16 @@ export function WalletsScreen() {
 
   const total = useMemo(
     () => finance.accounts.reduce((sum, a) => sum + accountBalance(a, finance.transactions), 0),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [finance.accounts, finance.transactions]
   );
+  // v4.2.0: one memoized balance pass instead of an O(txs) scan per card per render
+  const balanceById = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const a of finance.accounts) map.set(a.id, accountBalance(a, finance.transactions));
+    return map;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [finance.accounts, finance.transactions]);
 
   const walletTxs = useMemo(
     () =>
@@ -137,7 +145,7 @@ export function WalletsScreen() {
                 >
                   {cards.map((a, i) => {
                     const brand = getBrand(a.logoId);
-                    const bal = accountBalance(a, finance.transactions);
+                    const bal = balanceById.get(a.id) ?? 0;
                     const on = i === clamped;
                     return (
                       <View
@@ -175,6 +183,8 @@ export function WalletsScreen() {
                             haptic="light"
                             scaleTo={0.9}
                             style={[styles.cardEdit, { backgroundColor: on ? 'rgba(255,255,255,0.16)' : t.ice100 }]}
+                            accessibilityRole="button"
+                            accessibilityLabel={`Edit ${a.name}`}
                           >
                             <Ionicons name="pencil" size={14} color={on ? heroInk : t.ocean600} />
                           </PressableScale>
@@ -272,6 +282,7 @@ export function WalletsScreen() {
                   ym={ym}
                   transactions={walletTxs}
                   currency={finance.settings.currency}
+                  accounts={finance.accounts}
                   onPressTx={(tx) => ui.openEdit(tx)}
                   emptyIcon="wallet-outline"
                   emptyTitle={`Nothing in ${active?.name ?? 'this wallet'} this month`}

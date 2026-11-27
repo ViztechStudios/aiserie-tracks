@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, Appearance, Easing } from 'react-native';
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { Appearance } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { darkColors, lightColors, shadowFor, ThemeColors, gradientsFor, auroraFor } from '../theme';
 
@@ -15,9 +15,6 @@ interface ThemeContextValue {
   isDark: boolean;
   /** Snapped palette for the current scheme (text colors, icons, charts). */
   t: ThemeColors;
-  /** 0 -> light, 1 -> dark. Drives every animated surface cross-fade. */
-  progress: Animated.AnimatedInterpolation<number>;
-  rawProgress: Animated.Value;
   gradients: ReturnType<typeof gradientsFor>;
   aurora: ReturnType<typeof auroraFor>;
   shadow: ReturnType<typeof shadowFor>;
@@ -38,7 +35,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     return s === 'dark' || s === 'light' ? s : null;
   });
   const [hydrated, setHydrated] = useState(false);
-  const progress = useRef(new Animated.Value(0)).current; // 0 = light
 
   // hydrate saved preference
   useEffect(() => {
@@ -58,15 +54,16 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   const isDark = resolveIsDark(mode, systemScheme);
 
-  // animate the cross-fade whenever the resolved scheme flips
-  useEffect(() => {
-    Animated.timing(progress, {
-      toValue: isDark ? 1 : 0,
-      duration: 460,
-      easing: Easing.inOut(Easing.cubic),
-      useNativeDriver: false, // color interpolation runs on the JS thread
-    }).start();
-  }, [isDark, progress]);
+  // v4.2.0 stability note: the old shared `progress` Animated.Value lived here
+  // and was interpolated into GlassCard colors app-wide. One tap on a tappable
+  // glass card marked that shared value native (via PressableScale's scale
+  // spring), and the next theme flip then threw "Attempting to run JS driven
+  // animation on animated node that has been moved to 'native'" — the crash in
+  // the v4.1.0 field report. Shared animated values no longer exist: every
+  // animated value is now owned inside the component that renders it
+  // (AuroraBackground keeps its own local cross-fade; glass surfaces snap to
+  // the resolved palette). No cross-component Animated graph = this crash
+  // class cannot return.
 
   // follow the OS when mode === 'system'
   useEffect(() => {
@@ -87,14 +84,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       setMode,
       isDark,
       t: isDark ? darkColors : lightColors,
-      progress,
-      rawProgress: progress,
       gradients: gradientsFor(isDark),
       aurora: auroraFor(isDark),
       shadow: shadowFor(isDark),
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [mode, isDark, systemScheme, progress]
+    [mode, isDark, systemScheme]
   );
 
   if (!hydrated) {

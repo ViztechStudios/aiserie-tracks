@@ -20,9 +20,11 @@ import { GOALS_KEY } from '../store/GoalsContext';
 import { useUI } from '../store/UIContext';
 import { useTheme, ThemeMode } from '../store/ThemeContext';
 import { CURRENCIES } from '../data/currencies';
-import { font, radius, spacing } from '../theme';
+import { font, radius, spacing, brandFern } from '../theme';
 import { formatMoney } from '../utils/money';
 import { useResponsive } from '../hooks/useResponsive';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 import { checkForUpdate, RELEASES_URL } from '../services/updateCheck';
 
 const APP_VERSION = Constants.expoConfig?.version ?? '2.1.0';
@@ -83,6 +85,8 @@ function SegButton({ opt, active, onPick }: { opt: { key: ThemeMode; label: stri
 
 export function SettingsScreen() {
   const finance = useFinance();
+  const insets = useSafeAreaInsets();
+
   const tasks = useTasks();
   const budgets = useBudgets();
   const bills = useBills();
@@ -115,13 +119,32 @@ export function SettingsScreen() {
   };
 
   const reclaim = async () => {
+    if (storageBusy) return;
+    // v4.2.0: compaction DELETES records (broken rows, duplicate ids, done
+    // chores older than 45 days). It now previews what it would drop and asks
+    // first — the only destructive action in the app without a confirmation.
+    const compact = compactData({ transactions: finance.transactions, tasks: tasks.tasks, budgetAlerts: budgets.alertState });
+    const droppedTx = finance.transactions.length - compact.transactions.length;
+    const droppedTasks = tasks.tasks.length - compact.tasks.length;
+    if (droppedTx === 0 && droppedTasks === 0) {
+      ui.toast('Storage is already tidy — nothing to reclaim.');
+      return;
+    }
+    const parts = [
+      droppedTx ? `${droppedTx} broken/duplicate transaction${droppedTx === 1 ? '' : 's'}` : '',
+      droppedTasks ? `${droppedTasks} finished chore${droppedTasks === 1 ? '' : 's'}` : '',
+    ].filter(Boolean);
+    const ok = await ui.confirm({
+      title: 'Reclaim storage space?',
+      message: `This will remove ${parts.join(' and ')} from this device. Broken rows are entries that can no longer be rendered correctly. Finished chores older than 45 days are cleared. This cannot be undone.`,
+      confirmLabel: 'Reclaim',
+      danger: true,
+    });
+    if (!ok) return;
     setStorageBusy(true);
     const before = storageReport?.totalBytes ?? 0;
-    const compact = compactData({ transactions: finance.transactions, tasks: tasks.tasks, budgetAlerts: budgets.alertState });
-    const changedTx = compact.transactions.length !== finance.transactions.length;
-    const changedTasks = compact.tasks.length !== tasks.tasks.length;
-    if (changedTx) finance.replaceTransactions(compact.transactions as never[]);
-    if (changedTasks) tasks.replaceAll(compact.tasks as never[]);
+    if (droppedTx) finance.replaceTransactions(compact.transactions as never[]);
+    if (droppedTasks) tasks.replaceAll(compact.tasks as never[]);
     // fresh measurement after the write settles
     setTimeout(async () => {
       const after = await measureStorage();
@@ -382,7 +405,7 @@ export function SettingsScreen() {
                 <Text style={[styles.rowSub, { color: t.subtext }]}>
                   {lock.config?.enabled
                     ? 'On — Aiserie asks for your pin when the app starts. Tap to turn off.'
-                    : 'Off — ask for a pin when the app starts. Optional, stored as a salted hash, never the pin itself.'}
+                    : 'Off — ask for a pin when the app starts. Optional, stored as a salted, key-stretched hash, never the pin itself. Wrong guesses trigger a cooldown.'}
                 </Text>
               </View>
               <Ionicons name="chevron-forward" size={16} color={t.faint} />
@@ -482,7 +505,7 @@ export function SettingsScreen() {
 
       {/* currency picker */}
       <Modal visible={pickerOpen} transparent animationType="slide" onRequestClose={() => setPickerOpen(false)}>
-        <View style={[styles.pickerBackdrop, { backgroundColor: isDark ? 'rgba(2,10,20,0.6)' : 'rgba(6,38,64,0.45)' }]}>
+        <View style={[styles.pickerBackdrop, { backgroundColor: isDark ? 'rgba(2,10,20,0.6)' : 'rgba(6,38,64,0.45)', paddingBottom: Math.max(insets.bottom, 12) }]}>
           <View style={[styles.pickerSheet, { backgroundColor: t.cardSolid }]}>
             <Text style={[styles.pickerTitle, { color: t.text }]}>Choose currency</Text>
             <ScrollView showsVerticalScrollIndicator={false}>
@@ -653,7 +676,7 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     borderRadius: radius.md - 4,
-    backgroundColor: '#1E7A50',
+    backgroundColor: brandFern,
     borderWidth: 0,
   },
   segLabel: { fontFamily: font.bold, fontSize: 13.5 },
@@ -695,7 +718,7 @@ const styles = StyleSheet.create({
   aboutVersion: { fontFamily: font.bold, fontSize: 11, letterSpacing: 0.6, marginTop: spacing.xs },
   nameInput: { fontFamily: font.bold, fontSize: 16, paddingVertical: 6, paddingHorizontal: 0 },
   hint: { fontFamily: font.medium, fontSize: 11.5, marginTop: spacing.sm, marginBottom: spacing.md },
-  pickerBackdrop: { flex: 1 },
+  pickerBackdrop: { flex: 1, justifyContent: 'flex-end' },
   pickerSheet: {
     borderTopLeftRadius: radius.lg + 8,
     borderTopRightRadius: radius.lg + 8,

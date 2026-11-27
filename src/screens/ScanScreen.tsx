@@ -16,6 +16,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { GradientHeader, GlassCard } from '../components/GradientHeader';
 import { AuroraBackground } from '../components/AuroraBackground';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { railTotalHeight } from '../navigation/RootNavigator';
 import { useFinance } from '../store/FinanceContext';
 import { useUI } from '../store/UIContext';
 import { useTheme } from '../store/ThemeContext';
@@ -45,6 +47,9 @@ export function ScanScreen() {
   const ui = useUI();
   const { t, isDark, gradients } = useTheme();
   const { contentWidth } = useResponsive();
+  const insets = useSafeAreaInsets();
+  // camera buttons must clear the tab rail (v4.1.0 had them buried under it)
+  const railClearance = railTotalHeight(Math.max(insets.bottom, Platform.OS === 'ios' ? 10 : 6));
   const heroInk = isDark ? t.text : '#16382A';
   const cameraRef = useRef<CameraView>(null);
   const [permission, requestPermission] = useCameraPermissions();
@@ -168,12 +173,23 @@ export function ScanScreen() {
       {stage === 'camera' ? (
         <View style={styles.cameraWrap}>
           <CameraView ref={cameraRef} style={styles.camera} facing="back" enableTorch={torch} mode="picture" />
-          <View style={styles.cameraControls}>
-            <TouchableOpacity style={styles.toolBtn} onPress={() => setTorch((v) => !v)}>
+          <View style={[styles.cameraControls, { bottom: railClearance + 44 }]}>
+            <TouchableOpacity
+              style={styles.toolBtn}
+              onPress={() => setTorch((v) => !v)}
+              accessibilityRole="button"
+              accessibilityLabel={torch ? 'Turn torch off' : 'Turn torch on'}
+            >
               <Ionicons name={torch ? 'flash' : 'flash-outline'} size={22} color={t.white} />
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={capture} disabled={busy !== ''} activeOpacity={0.8}>
+            <TouchableOpacity
+              onPress={capture}
+              disabled={busy !== ''}
+              activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel="Capture receipt photo"
+            >
               <View style={styles.captureOuter}>
                 <View style={[styles.captureInner, busy !== '' && { opacity: 0.6 }]}>
                   {busy !== '' ? (
@@ -185,11 +201,11 @@ export function ScanScreen() {
               </View>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.toolBtn} onPress={startManual}>
+            <TouchableOpacity style={styles.toolBtn} onPress={startManual} accessibilityRole="button" accessibilityLabel="Enter the amount manually instead">
               <Ionicons name="create-outline" size={22} color={t.white} />
             </TouchableOpacity>
           </View>
-          <Text style={styles.captureHint}>
+          <Text style={[styles.captureHint, { bottom: railClearance + 16 }]}>
             {busy === 'capturing' ? 'Capturing…' : busy === 'reading' ? 'Reading receipt…' : 'Tap to capture'}
           </Text>
         </View>

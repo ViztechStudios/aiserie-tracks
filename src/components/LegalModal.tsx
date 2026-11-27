@@ -8,6 +8,8 @@ import { PRIVACY_POLICY, TERMS, LegalSection } from '../data/legal';
 import { useTheme } from '../store/ThemeContext';
 import { useUI } from '../store/UIContext';
 import { useResponsive } from '../hooks/useResponsive';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 import { font, radius, spacing } from '../theme';
 
 function DocBody({ sections }: { sections: LegalSection[] }) {
@@ -33,6 +35,8 @@ function DocBody({ sections }: { sections: LegalSection[] }) {
 
 export function LegalModal() {
   const ui = useUI();
+  const insets = useSafeAreaInsets();
+
   const { t, isDark } = useTheme();
   const { sheetWidth } = useResponsive();
   const isPrivacy = ui.legalDoc === 'privacy';
@@ -46,7 +50,7 @@ export function LegalModal() {
           colors={isDark ? ['#03100A', '#082017', '#0D3222'] : ['#0D3B27', '#14503A', '#1E7A50']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1.2, y: 1 }}
-          style={styles.header}
+          style={[styles.header, { paddingTop: Math.max(54, insets.top + 18) }]}
         >
           <View style={styles.headerRow}>
             <Pressable onPress={ui.closeLegal} hitSlop={12}>

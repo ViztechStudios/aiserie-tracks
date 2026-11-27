@@ -15,6 +15,11 @@ interface Props {
   disabled?: boolean;
   /** Light haptic tap on press (default: off). */
   haptic?: boolean | 'light' | 'medium';
+  /** v4.2.0 accessibility pass-through — icon-only buttons MUST set a label. */
+  accessibilityLabel?: string;
+  accessibilityRole?: 'button' | 'tab' | 'imagebutton' | 'none';
+  accessibilityHint?: string;
+  accessibilityState?: { disabled?: boolean; selected?: boolean; checked?: boolean };
 }
 
 /**
@@ -22,7 +27,20 @@ interface Props {
  * overshoot on release (the button visibly bounces back), optional light
  * haptic tick.
  */
-export function PressableScale({ onPress, onLongPress, style, containerStyle, children, scaleTo = 0.95, disabled, haptic }: Props) {
+export function PressableScale({
+  onPress,
+  onLongPress,
+  style,
+  containerStyle,
+  children,
+  scaleTo = 0.95,
+  disabled,
+  haptic,
+  accessibilityLabel,
+  accessibilityRole,
+  accessibilityHint,
+  accessibilityState,
+}: Props) {
   const scale = useRef(new Animated.Value(1)).current;
 
   const pressIn = () => {
@@ -58,6 +76,10 @@ export function PressableScale({ onPress, onLongPress, style, containerStyle, ch
       onPressOut={pressOut}
       disabled={disabled}
       style={containerStyle}
+      accessibilityLabel={accessibilityLabel}
+      accessibilityRole={accessibilityRole}
+      accessibilityHint={accessibilityHint}
+      accessibilityState={disabled || accessibilityState ? { disabled, ...accessibilityState } : undefined}
     >
       <Animated.View style={[style, { transform: [{ scale }] }]}>{children}</Animated.View>
     </Pressable>

@@ -87,16 +87,5 @@ jobs:
         if: ${{ (github.event.inputs.platform || 'android') == 'android' && (github.event.inputs.profile || 'preview') == 'preview' }}
         env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE_NOTES: |
-            Aiserie Tracks v4.1.0 — "Orbit & Frost"
-
-            New identity: the Orbit A monogram now leads the app icon, splash
-            screens and boot experience; cards are frosted glass over a softly
-            lit aurora backdrop; the boot screen is a quiet orbit around the
-            mark; companions redrawn as clean flat illustrations.
-
-            Everything from v4.0 stays: privacy shield, pin lock, backup &
-            restore, reports, recurring transactions, budget alerts, goals.
-
-            Your data carries over automatically — nothing is reset.
+          RELEASE_NOTES_FILE: RELEASE_NOTES.md
         run: node scripts/attach-release.mjs

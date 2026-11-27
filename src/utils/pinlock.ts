@@ -4,12 +4,22 @@
  * The PIN itself is never stored: we store `sha256(salt + pin)` with a random
  * salt (crypto.getRandomValues where available, else a time+random fallback).
  * Pure JS, dependency-free, identical on Android, iOS and web.
+ *
+ * v4.2.0 hardening:
+ *  - The hash is now key-stretched (KDF_ROUNDS sequential SHA-256 runs), so a
+ *    leaked storage file can no longer be brute-forced instantly. Configs
+ *    saved by v4.0/4.1 (kdf: 1) keep working and are transparently upgraded
+ *    to the stretched form after the next successful unlock.
+ *  - Failed-attempt lockout helpers (backoff schedule) live here so the gate,
+ *    Settings and tests share one source of truth.
  */
 
 export interface LockConfig {
   enabled: boolean;
   salt: string;
   hash: string;
+  /** 1 = single SHA-256 (legacy v4.0/4.1), 2 = key-stretched (v4.2.0). */
+  kdf?: 1 | 2;
 }
 
 export const LOCK_KEY = 'aiserie.v1.lock';
@@ -92,9 +102,34 @@ function toHex(bytes: Uint8Array): string {
 
 /* ---------------- public API ---------------- */
 
+/** Sequential SHA-256 rounds — a pure-JS work factor for the 4-digit space. */
+const KDF_ROUNDS = 1200;
+
 /** Salted PIN hash to store. Only the result ever touches AsyncStorage. */
 export function hashPin(pin: string, salt: string): string {
+  let digest = sha256Bytes(`${salt}:${pin}`);
+  for (let round = 1; round < KDF_ROUNDS; round++) {
+    digest = sha256Bytes(toHex(digest));
+  }
+  return toHex(digest);
+}
+
+/** Legacy single-pass hash — exactly what v4.0/4.1 stored. */
+export function hashPinV1(pin: string, salt: string): string {
   return toHex(sha256Bytes(`${salt}:${pin}`));
+}
+
+/**
+ * Verify a PIN against a config of any KDF generation.
+ * Returns whether it matched and whether the stored hash should be
+ * transparently upgraded to the stretched form (legacy configs).
+ */
+export function verifyPin(pin: string, config: LockConfig): { ok: boolean; upgrade: boolean } {
+  if (config.kdf === 2) {
+    return { ok: hashPin(pin, config.salt) === config.hash, upgrade: false };
+  }
+  const ok = hashPinV1(pin, config.salt) === config.hash;
+  return { ok, upgrade: ok };
 }
 
 export function makeSalt(): string {
@@ -109,6 +144,47 @@ export function makeSalt(): string {
   return toHex(bytes);
 }
 
+/**
+ * v4.2.0 crypto-strength record ids where the platform provides one,
+ * with the historic time+random shape as a guaranteed fallback.
+ */
+export function makeId(): string {
+  const c = globalThis.crypto;
+  if (c?.randomUUID) return c.randomUUID();
+  return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 9);
+}
+
+/* ---------------- failed-attempt lockout ---------------- */
+
+/** How long the pad stays disabled after the Nth consecutive failure. */
+export function lockoutMsFor(failedAttempts: number): number {
+  if (failedAttempts < 3) return 0; // two honest typos never punish anyone
+  const step = failedAttempts - 2; // 3rd→30s, 4th→60s, 5th→120s… capped at 5 min
+  return Math.min(300_000, 30_000 * Math.pow(2, step - 1));
+}
+
+export interface LockGuard {
+  /** Consecutive failed attempts since the last success. */
+  attempts: number;
+  /** Epoch ms until which the pad is disabled; 0 = open. */
+  lockedUntil: number;
+}
+
+export const LOCK_GUARD_KEY = 'aiserie.v1.lockguard';
+
+/** Record a failed attempt against the current guard state. */
+export function recordFailedAttempt(guard: LockGuard | null, now: number = Date.now()): LockGuard {
+  const attempts = Math.min(99, (guard?.attempts ?? 0) + 1);
+  const ms = lockoutMsFor(attempts);
+  return { attempts, lockedUntil: ms > 0 ? now + ms : 0 };
+}
+
+/** Whether the pad is currently locked, and for how much longer. */
+export function guardRemainingMs(guard: LockGuard | null | undefined, now: number = Date.now()): number {
+  const until = guard?.lockedUntil ?? 0;
+  return until > now ? until - now : 0;
+}
+
 /** 4 digits, not trivially repeating, not ascending/descending runs. */
 export function isPinAcceptable(pin: string): boolean {
   if (!/^\d{4}$/.test(pin)) return false;
@@ -116,8 +192,4 @@ export function isPinAcceptable(pin: string): boolean {
   const seqs = ['0123', '1234', '2345', '3456', '4567', '5678', '6789', '9876', '8765', '7654', '6543', '5432', '4321', '3210'];
   if (seqs.includes(pin)) return false; // 1234, 4321...
   return true;
-}
-
-export function verifyPin(pin: string, config: LockConfig): boolean {
-  return hashPin(pin, config.salt) === config.hash;
 }

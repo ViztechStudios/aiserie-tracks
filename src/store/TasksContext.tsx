@@ -1,6 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { persistDebounced } from './storage';
+import { loadStoredJson, persistDebouncedLazy } from './storage';
 import { Task } from '../types';
 import { makeId } from '../data/sampleData';
 
@@ -32,11 +32,9 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     (async () => {
       try {
-        const raw = await AsyncStorage.getItem(TASKS_KEY);
-        if (raw) {
-          const parsed = JSON.parse(raw) as Task[];
-          if (Array.isArray(parsed)) setTasks(parsed);
-        }
+        // v4.2.0: per-key parse; a damaged payload is quarantined, not overwritten
+        const parsed = await loadStoredJson<Task[]>(TASKS_KEY);
+        if (Array.isArray(parsed)) setTasks(parsed);
       } catch (e) {
         console.warn('Failed to load tasks', e);
       } finally {
@@ -48,7 +46,7 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
   // persist on change
   useEffect(() => {
     if (!ready) return;
-    persistDebounced(TASKS_KEY, JSON.stringify(tasks));
+    persistDebouncedLazy(TASKS_KEY, tasks);
   }, [tasks, ready]);
 
   const addTask = useCallback((title: string, important = false): Task => {

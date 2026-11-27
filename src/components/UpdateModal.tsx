@@ -51,7 +51,7 @@ export function UpdateModal() {
           style={[
             styles.cardWrap,
             sheetWidth ? { maxWidth: sheetWidth } : null,
-            { marginBottom: insets.top + 40, transform: [{ scale }] },
+            { marginBottom: insets.bottom + 40, transform: [{ scale }] },
           ]}
         >
           <View style={[styles.card, { backgroundColor: t.cardSolid, borderColor: t.glassBorderSoft }, shadow.cardHi]}>

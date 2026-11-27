@@ -1,7 +1,7 @@
 import React from 'react';
-import { Animated, StyleProp, StyleSheet, TextStyle, View, ViewStyle } from 'react-native';
+import { StyleProp, StyleSheet, TextStyle, View, ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { darkColors, glass, lightColors, mix, radius } from '../theme';
+import { glass, radius } from '../theme';
 import { useTheme } from '../store/ThemeContext';
 import { PressableScale } from './PressableScale';
 
@@ -25,15 +25,21 @@ interface Props {
  * sheen — the light source that makes the frost read as glass. Hero cards
  * carry a single gold rule along their top edge — one quiet, crafted
  * signature instead of a rainbow of effects.
+ *
+ * v4.2.0 stability note: the fill/border read the resolved palette directly
+ * instead of animating colors from a shared theme value. Mixing an animated
+ * color interpolation into PressableScale's native-driven style graph is what
+ * crashed v4.1.0 on every theme flip (see ThemeContext). Glass now snaps to
+ * the new scheme instantly while the aurora backdrop keeps its cross-fade.
  */
 export function GlassCard({ children, style, onPress, onLongPress, hi, tint }: Props) {
-  const { progress, isDark, shadow } = useTheme();
-  const surface: Animated.WithAnimatedValue<StyleProp<ViewStyle>> = [
+  const { t, isDark, shadow } = useTheme();
+  const surface: StyleProp<ViewStyle> = [
     styles.base,
     glass.surface,
     {
-      backgroundColor: tint ?? mix(progress, lightColors.card, darkColors.card),
-      borderColor: mix(progress, lightColors.glassBorder, darkColors.glassBorder),
+      backgroundColor: tint ?? t.card,
+      borderColor: t.glassBorder,
     },
     hi ? shadow.cardHi : shadow.card,
     style,
@@ -47,7 +53,7 @@ export function GlassCard({ children, style, onPress, onLongPress, hi, tint }: P
         pointerEvents="none"
         style={styles.sheen}
       />
-      {hi ? <View pointerEvents="none" style={[styles.goldRule, { backgroundColor: isDark ? darkColors.sun500 : lightColors.sun500 }]} /> : null}
+      {hi ? <View pointerEvents="none" style={[styles.goldRule, { backgroundColor: t.sun500 }]} /> : null}
       {children}
     </>
   );
@@ -58,7 +64,7 @@ export function GlassCard({ children, style, onPress, onLongPress, hi, tint }: P
       </PressableScale>
     );
   }
-  return <Animated.View style={surface}>{body}</Animated.View>;
+  return <View style={surface}>{body}</View>;
 }
 
 const styles = StyleSheet.create({

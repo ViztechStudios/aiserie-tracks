@@ -1,7 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { useTheme } from '../store/ThemeContext';
-import { useFinance } from '../store/FinanceContext';
+import { ThemeColors } from '../theme';
 import { font, radius, spacing } from '../theme';
 import { Category, Transaction } from '../types';
 import { formatMoney } from '../utils/money';
@@ -15,20 +14,25 @@ interface Props {
   date: string;
   note?: string;
   currency: string;
+  /** Resolved palette — passed in instead of subscribed, so the row can be
+   *  memoized (v4.2.0: every row used to re-render on ANY ledger change). */
+  t: ThemeColors;
   /** Full transaction — used to render transfer from → to labels. */
   tx?: Transaction;
-  onPress?: () => void;
-  onLongPress?: () => void;
+  fromName?: string;
+  toName?: string;
+  /** v4.2.0: id-based callbacks keep a stable identity across renders so
+   *  React.memo on the row actually skips re-renders. */
+  onPressTxId?: (id: string) => void;
+  onLongPressTxId?: (id: string) => void;
 }
 
-export function TransactionRow({ category, amount, type, date, note, currency, tx, onPress, onLongPress }: Props) {
-  const { t } = useTheme();
-  const finance = useFinance();
+function TransactionRowBase({ category, amount, type, date, note, currency, t, tx, fromName, toName, onPressTxId, onLongPressTxId }: Props) {
   const income = type === 'income';
   const transfer = type === 'transfer';
 
-  const fromName = finance.accounts.find((a) => a.id === tx?.accountId)?.name ?? 'Wallet';
-  const toName = finance.accounts.find((a) => a.id === tx?.toAccountId)?.name ?? 'Wallet';
+  const from = fromName ?? 'Wallet';
+  const to = toName ?? 'Wallet';
 
   const tint = income ? t.income : transfer ? t.ocean600 : t.expense;
   const bg = income ? t.income + '12' : transfer ? t.ocean600 + '12' : t.card;
@@ -44,8 +48,8 @@ export function TransactionRow({ category, amount, type, date, note, currency, t
           borderWidth: 1,
         },
       ]}
-      onPress={onPress}
-      onLongPress={onLongPress}
+      onPress={onPressTxId && tx ? () => onPressTxId(tx.id) : undefined}
+      onLongPress={onLongPressTxId && tx ? () => onLongPressTxId(tx.id) : undefined}
       scaleTo={0.975}
     >
       <View style={[styles.icon, { backgroundColor: category.color + '1E' }]}>
@@ -53,7 +57,7 @@ export function TransactionRow({ category, amount, type, date, note, currency, t
       </View>
       <View style={styles.mid}>
         <Text style={[styles.label, { color: t.text }]} numberOfLines={1}>
-          {transfer ? `${fromName} → ${toName}` : note ? note : category.label}
+          {transfer ? `${from} → ${to}` : note ? note : category.label}
         </Text>
         <Text style={[styles.sub, { color: t.subtext }]} numberOfLines={1}>
           {transfer ? `Transfer · ${dayLabel(date)}` : `${category.label} · ${dayLabel(date)}`}
@@ -66,6 +70,13 @@ export function TransactionRow({ category, amount, type, date, note, currency, t
     </PressableScale>
   );
 }
+
+/**
+ * Memoized ledger row. It reads NO context: everything that can change comes
+ * through props, so an unrelated balance edit no longer re-renders every row
+ * of the ledger (the v4.1.0 hot path).
+ */
+export const TransactionRow = React.memo(TransactionRowBase);
 
 const styles = StyleSheet.create({
   row: {

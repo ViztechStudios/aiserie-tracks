@@ -7,7 +7,7 @@ import { EmptyState } from './EmptyState';
 import { PressableScale } from './PressableScale';
 import { useTasks } from '../store/TasksContext';
 import { useTheme } from '../store/ThemeContext';
-import { brandOcean, font, radius, spacing } from '../theme';
+import { brandOcean, font, radius, spacing, brandFern } from '../theme';
 import { Task } from '../types';
 
 type TaskFilter = 'all' | 'open' | 'done';
@@ -79,10 +79,18 @@ function TaskRow({
           haptic={task.important ? false : 'light'}
           style={styles.iconBtn}
           scaleTo={0.82}
+          accessibilityRole="button"
+          accessibilityLabel={task.important ? 'Remove star' : 'Mark important'}
         >
           <Ionicons name={task.important ? 'star' : 'star-outline'} size={19} color={task.important ? t.warn : t.faint} />
         </PressableScale>
-        <PressableScale onPress={handleDelete} style={styles.iconBtn} scaleTo={0.82}>
+        <PressableScale
+          onPress={handleDelete}
+          style={styles.iconBtn}
+          scaleTo={0.82}
+          accessibilityRole="button"
+          accessibilityLabel="Delete chore"
+        >
           <Ionicons name="trash-outline" size={18} color={t.faint} />
         </PressableScale>
       </GlassCard>
@@ -175,6 +183,8 @@ export function TasksPanel() {
           haptic="light"
           style={styles.starToggle}
           scaleTo={0.85}
+          accessibilityRole="button"
+          accessibilityLabel={markImportant ? 'Unmark important' : 'Mark as important'}
         >
           <Ionicons name={markImportant ? 'star' : 'star-outline'} size={21} color={markImportant ? t.warn : t.faint} />
         </PressableScale>
@@ -296,7 +306,7 @@ const styles = StyleSheet.create({
   trackFill: {
     height: '100%',
     borderRadius: radius.pill,
-    backgroundColor: '#1E7A50',
+    backgroundColor: brandFern,
   },
   progressHint: { fontFamily: font.medium, fontSize: 12, lineHeight: 17, marginTop: spacing.md },
   composer: {

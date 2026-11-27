@@ -57,6 +57,8 @@ const manifest = {
   short_name: shortName,
   description,
   lang: expo.web?.lang || 'en',
+  // v4.2.0: stable identity so the browser ties installs across updates
+  id: `${base || ''}/`,
   start_url: `${base || ''}/`,
   scope: `${base || ''}/`,
   display: 'standalone',
@@ -72,6 +74,28 @@ const manifest = {
 };
 fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
 console.log('patch-pwa-html: manifest.webmanifest written (icons 192/512/maskable, standalone).');
+
+// ---- 1b. service worker cache version -----------------------------------
+// The SW only purges old caches when its own bytes change. Sync its cache
+// name to the app version on every export so the activate handler always
+// clears whatever the previous release cached (v4.2.0 fix — the name had
+// been frozen at v3.0.1 for two releases).
+const swPath = path.join(distDir, 'sw.js');
+if (fs.existsSync(swPath)) {
+  const sw = fs.readFileSync(swPath, 'utf8');
+  const wanted = `aiserie-v${version}`;
+  const patched = sw.replace(/const CACHE_VERSION = '[^']*';/, `const CACHE_VERSION = '${wanted}';`);
+  if (patched !== sw) {
+    fs.writeFileSync(swPath, patched);
+    console.log(`patch-pwa-html: sw.js CACHE_VERSION synced to ${wanted}.`);
+  } else if (sw.includes(wanted)) {
+    console.log(`patch-pwa-html: sw.js CACHE_VERSION already ${wanted}.`);
+  } else {
+    console.warn('patch-pwa-html: sw.js found but CACHE_VERSION pattern not matched — leaving as is.');
+  }
+} else {
+  console.warn('patch-pwa-html: dist/sw.js not found — is public/sw.js present?');
+}
 
 // ---- 2. index.html ------------------------------------------------------
 let html = fs.readFileSync(indexHtmlPath, 'utf8');

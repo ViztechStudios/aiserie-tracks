@@ -1,7 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { persistDebounced } from './storage';
+import { loadStoredJson, persistDebouncedLazy } from './storage';
 import { Recurring, RecurFreq } from '../types';
 import { makeId } from '../data/sampleData';
 import { useFinance } from './FinanceContext';
@@ -40,14 +40,15 @@ export function RecurringProvider({ children }: { children: React.ReactNode }) {
     (async () => {
       try {
         const raw = await AsyncStorage.getItem(RECUR_KEY);
-        if (raw) {
+        // v4.2.0: per-key parse; a damaged payload is quarantined, not overwritten
+        const parsed = await loadStoredJson<Recurring[]>(RECUR_KEY);
+        if (Array.isArray(parsed)) {
           // repair-in-place: rules from older versions or interrupted writes
           // are completed so the engine and cards can trust every field
-          const repaired = sanitizeRules(JSON.parse(raw));
-          setRecurrings(repaired);
+          setRecurrings(sanitizeRules(parsed));
         }
       } catch {
-        // corrupted storage: start fresh
+        // storage read failed: start fresh
       } finally {
         setReady(true);
       }
@@ -56,7 +57,7 @@ export function RecurringProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!ready) return;
-    persistDebounced(RECUR_KEY, JSON.stringify(recurrings));
+    persistDebouncedLazy(RECUR_KEY, recurrings);
   }, [recurrings, ready]);
 
   const addRecurring = useCallback<RecurringContextValue['addRecurring']>((input) => {

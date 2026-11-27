@@ -333,8 +333,14 @@ export function InsightsScreen() {
                       date={tx.date}
                       note={tx.note}
                       currency={finance.settings.currency}
+                      t={t}
                       tx={tx}
-                      onPress={() => ui.openEdit(tx)}
+                      fromName={finance.accounts.find((a) => a.id === tx.accountId)?.name}
+                      toName={finance.accounts.find((a) => a.id === tx.toAccountId)?.name}
+                      onPressTxId={(id) => {
+                        const hit = selectedTxs.find((x) => x.id === id);
+                        if (hit) ui.openEdit(hit);
+                      }}
                     />
                   );
                 })}
@@ -402,8 +408,10 @@ const styles = StyleSheet.create({
   body: { paddingHorizontal: spacing.xl, paddingTop: spacing.md, paddingBottom: 120 },
   safeCard: { borderRadius: radius.lg, padding: spacing.lg },
   safeLabel: { fontFamily: font.bold, fontSize: 11, letterSpacing: 1.2 },
-  safeValue: { fontFamily: font.heavy, fontSize: 30, marginTop: 6, alignSelf: 'flex-start', maxWidth: '70%' },
-  safeBody: { fontFamily: font.medium, fontSize: 12.5, lineHeight: 18, marginTop: 6, maxWidth: '72%' },
+  // v4.2.0: 62% reserve keeps the figure clear of the mascot, whose left
+  // edge reaches ~58% of the card on narrow phones (was 70% — they overlapped)
+  safeValue: { fontFamily: font.heavy, fontSize: 30, marginTop: 6, alignSelf: 'flex-start', maxWidth: '62%' },
+  safeBody: { fontFamily: font.medium, fontSize: 12.5, lineHeight: 18, marginTop: 6, maxWidth: '62%' },
   duoWrap: { position: 'absolute', right: spacing.lg, bottom: spacing.md, alignItems: 'flex-end' },
   duoCard: {},
   duoImg: { width: 98, height: 74 },

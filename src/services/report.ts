@@ -76,7 +76,7 @@ export function buildReportCSV(
   range: ReportRange,
   currency: string
 ): string {
-  const rows = txs.filter((t) => inRange(t, t.type === 'transfer' ? { ...range, to: range.to } : range));
+  const rows = txs.filter((t) => inRange(t, range)); // v4.2.0: removed a no-op ternary that suggested unfinished intent
   const scoped = rows.filter((t) => inRange(t, range));
   const income = scoped.filter((t) => t.type === 'income').reduce((s, t) => s + t.amount, 0);
   const expense = scoped.filter((t) => t.type === 'expense').reduce((s, t) => s + t.amount, 0);

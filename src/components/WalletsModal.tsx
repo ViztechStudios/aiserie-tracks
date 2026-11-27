@@ -11,9 +11,11 @@ import { Account, AccountType } from '../types';
 import { BankDef, CASH_DEF, EWALLETS, BANKS, getBrand } from '../data/banks';
 import { ACCOUNT_TYPE_LABEL, accountBalance, openingForBalance } from '../utils/accounts';
 import { parseWalletMessage } from '../utils/walletDetect';
-import { formatMoney, parseAmount } from '../utils/money';
+import { formatMoney, parseAmountSigned } from '../utils/money';
 import { font, radius, spacing } from '../theme';
 import { useResponsive } from '../hooks/useResponsive';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 import { PressableScale } from './PressableScale';
 
 type Step = 'list' | 'brand' | 'form';
@@ -25,6 +27,8 @@ function BrandTile({ logo, size = 56, style }: { logo: ImageSourcePropType; size
 
 export function WalletsModal() {
   const finance = useFinance();
+  const insets = useSafeAreaInsets();
+
   const ui = useUI();
   const { t, isDark, shadow } = useTheme();
   const { sheetWidth } = useResponsive();
@@ -82,7 +86,9 @@ export function WalletsModal() {
   };
 
   const saveAccount = () => {
-    const amount = parseAmount(balanceRaw) ?? 0;
+    // v4.2.0: signed parse — reconciling an overdrawn wallet to "-500" used to
+    // save +500 because the minus was stripped as noise (a 2x balance error)
+    const amount = parseAmountSigned(balanceRaw) ?? 0;
     const finalName = name.trim() || brand?.name || ACCOUNT_TYPE_LABEL[type];
     if (editing) {
       // if the user corrected the current balance, reconcile the opening value
@@ -92,6 +98,8 @@ export function WalletsModal() {
           ? openingForBalance(editing, finance.transactions, amount)
           : editing.openingBalance;
       finance.updateAccount({ ...editing, name: finalName, type, emoji: editing.emoji, color: brand?.color ?? editing.color, logoId, openingBalance: opening });
+      resetForm();
+      ui.toast(`${finalName} updated — balance set to ${formatMoney(amount, finance.settings.currency)}.`, 'success');
     } else {
       finance.addAccount({
         name: finalName,
@@ -101,8 +109,9 @@ export function WalletsModal() {
         logoId,
         openingBalance: amount,
       });
+      resetForm();
+      ui.toast(`${finalName} is ready to use.`, 'success');
     }
-    resetForm();
   };
 
   const confirmDelete = (account: Account) => {
@@ -114,7 +123,10 @@ export function WalletsModal() {
         danger: true,
       })
       .then((ok) => {
-        if (ok) finance.deleteAccount(account.id);
+        if (ok) {
+          finance.deleteAccount(account.id);
+          ui.toast(`${account.name} removed — its transactions stay in the ledger.`, 'success');
+        }
       });
   };
 
@@ -146,7 +158,7 @@ export function WalletsModal() {
           colors={isDark ? ['#03100A', '#082017', '#0D3222'] : ['#0D3B27', '#14503A', '#1E7A50']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1.2, y: 1 }}
-          style={styles.header}
+          style={[styles.header, { paddingTop: Math.max(54, insets.top + 18) }]}
         >
           <View style={styles.headerRow}>
             <Pressable
@@ -358,7 +370,8 @@ export function WalletsModal() {
                 style={[styles.input, { backgroundColor: t.ice50, borderColor: t.line, color: t.text }]}
                 value={balanceRaw}
                 onChangeText={setBalanceRaw}
-                keyboardType="numeric"
+                keyboardType="numbers-and-punctuation"
+                autoCapitalize="none"
                 placeholder="0.00"
                 placeholderTextColor={t.faint}
               />

@@ -8,18 +8,39 @@ import { font, spacing } from '../theme';
 
 const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del'];
 
+function fmtCountdown(ms: number): string {
+  const total = Math.ceil(ms / 1000);
+  const m = Math.floor(total / 60);
+  const s = total % 60;
+  return m > 0 ? `${m}:${String(s).padStart(2, '0')}` : `0:${String(s).padStart(2, '0')}`;
+}
+
 /**
  * The optional 4-digit PIN gate. Rendered above everything when a lock is
  * configured and the app has not been unlocked yet — asks once per launch,
  * never stores the PIN, and stays friendly: the two companions greet you.
+ *
+ * v4.2.0: failed attempts now earn a lockout (30s doubling to 5 min, persisted
+ * so it survives a restart), the pad announces itself to screen readers, and
+ * the scrim carries zIndex 100 so it always paints ABOVE the privacy shield
+ * (zIndex 90) — the v4.1.0 deadlock where the curtain buried the PIN pad.
  */
 export function AppLockGate() {
   const lock = useLock();
   const [pin, setPin] = useState('');
   const [error, setError] = useState(false);
+  const [nowTick, setNowTick] = useState(Date.now());
   const shake = useRef(new Animated.Value(0)).current;
 
   const active = lock.config?.enabled && !lock.unlocked;
+
+  // count the lockout down while it runs (1s cadence is plenty)
+  useEffect(() => {
+    if (!active) return;
+    if (lock.lockoutRemainingMs() <= 0) return;
+    const iv = setInterval(() => setNowTick(Date.now()), 1000);
+    return () => clearInterval(iv);
+  }, [active, lock, pin, error]);
 
   useEffect(() => {
     if (!active) {
@@ -30,7 +51,11 @@ export function AppLockGate() {
 
   if (!lock.config?.enabled || lock.unlocked) return null;
 
+  const remaining = lock.lockoutRemainingMs();
+  const locked = remaining > 0;
+
   const press = (k: string) => {
+    if (locked) return;
     if (k === 'del') {
       setPin((p) => p.slice(0, -1));
       return;
@@ -42,12 +67,15 @@ export function AppLockGate() {
     setPin(next);
     if (next.length === 4) {
       const cfg = lock.config;
-      // verify against the stored salted hash
-      const ok = cfg ? verifyPin(next, cfg) : false;
+      // verify against the stored salted hash (any kdf generation)
+      const verdict = cfg ? verifyPin(next, cfg) : { ok: false, upgrade: false };
       setTimeout(() => {
-        if (ok) {
+        if (verdict.ok) {
+          lock.noteSuccess();
+          if (verdict.upgrade) lock.upgradeConfig(next); // stretch the legacy hash
           lock.unlock();
         } else {
+          lock.noteFailure();
           setError(true);
           Haptics.notificationAsync?.(Haptics.NotificationFeedbackType.Error).catch(() => {});
           Animated.sequence([
@@ -66,7 +94,7 @@ export function AppLockGate() {
   };
 
   return (
-    <View style={styles.scrim}>
+    <View style={[styles.scrim, { zIndex: 100, elevation: 100 }]}>
       <View style={styles.inner}>
         <View style={styles.mascotBubble}>
           <Image source={require('../../assets/mascot-wave.png')} style={styles.mascot} resizeMode="contain" />
@@ -84,17 +112,37 @@ export function AppLockGate() {
             />
           ))}
         </Animated.View>
-        {error ? <Text style={styles.errorText}>That pin did not match — try again.</Text> : null}
+        {locked ? (
+          <Text style={styles.errorText}>Too many tries — wait {fmtCountdown(remaining)}.</Text>
+        ) : error ? (
+          <Text style={styles.errorText}>That pin did not match — try again.</Text>
+        ) : null}
         <View style={styles.pad}>
           {KEYS.map((k, i) =>
             k === '' ? (
               <View key={i} style={styles.keyBlank} />
             ) : k === 'del' ? (
-              <PressableScale key={i} onPress={() => press(k)} scaleTo={0.9} style={styles.keyRound}>
+              <PressableScale
+                key={i}
+                onPress={() => press(k)}
+                scaleTo={0.9}
+                style={[styles.keyRound, locked && styles.keyLocked]}
+                accessibilityRole="button"
+                accessibilityLabel="Delete last digit"
+                disabled={locked}
+              >
                 <Text style={[styles.keyDel, { color: 'rgba(240,248,243,0.8)' }]}>⌫</Text>
               </PressableScale>
             ) : (
-              <PressableScale key={i} onPress={() => press(k)} scaleTo={0.9} style={styles.keyRound}>
+              <PressableScale
+                key={i}
+                onPress={() => press(k)}
+                scaleTo={0.9}
+                style={[styles.keyRound, locked && styles.keyLocked]}
+                accessibilityRole="button"
+                accessibilityLabel={`Key ${k}`}
+                disabled={locked}
+              >
                 <Text style={[styles.keyText, { color: '#FFFFFF' }]}>{k}</Text>
               </PressableScale>
             )
@@ -127,6 +175,7 @@ const styles = StyleSheet.create({
     width: 68, height: 62, borderRadius: 20, alignItems: 'center', justifyContent: 'center',
     backgroundColor: 'rgba(255,255,255,0.10)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.14)',
   },
+  keyLocked: { opacity: 0.45 },
   keyText: { fontFamily: font.heavy, fontSize: 22 },
   keyDel: { fontSize: 18 },
 });

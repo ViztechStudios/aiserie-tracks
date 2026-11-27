@@ -64,20 +64,10 @@ jobs:
       - name: Publish GitHub release with APK
         env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE_NOTES: |
-            Aiserie Tracks v4.1.0 — "Orbit & Frost"
-
-            New identity: the Orbit A monogram now leads the app icon, splash
-            screens and boot experience; cards are frosted glass over a softly
-            lit aurora backdrop; the boot screen is a quiet orbit around the
-            mark; companions redrawn as clean flat illustrations.
-
-            Everything from v4.0 stays: privacy shield, pin lock, backup &
-            restore, reports, recurring transactions, budget alerts, goals.
-
-            Your data carries over automatically — nothing is reset.
         run: |
+          # v4.2.0: release notes live in RELEASE_NOTES.md (updated with each
+          # release) — the hardcoded YAML notes went stale every version
           gh release view "v${APP_VERSION}" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 || \
-            gh release create "v${APP_VERSION}" --repo "$GITHUB_REPOSITORY" --title "Aiserie Tracks v${APP_VERSION}" --notes "$RELEASE_NOTES"
+            gh release create "v${APP_VERSION}" --repo "$GITHUB_REPOSITORY" --title "Aiserie Tracks v${APP_VERSION}" --notes-file RELEASE_NOTES.md
           gh release upload "v${APP_VERSION}" "$APK_NAME" --repo "$GITHUB_REPOSITORY" --clobber
           echo "Release v${APP_VERSION} updated with $APK_NAME"

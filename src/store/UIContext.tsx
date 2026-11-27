@@ -4,6 +4,9 @@ import { UpdateInfo } from '../services/updateCheck';
 
 export type LegalDoc = 'privacy' | 'terms';
 
+/** v4.2.0: toasts carry a tone — success lands green, errors land red. */
+export type ToastKind = 'info' | 'success' | 'error';
+
 export interface ConfirmOptions {
   title: string;
   message?: string;
@@ -54,8 +57,9 @@ interface UIContextValue extends ModalState {
    * every destructive action on the PWA). Resolves true when confirmed.
    */
   confirm: (opts: ConfirmOptions) => Promise<boolean>;
-  /** In-app notice (validation, confirmations) — Alert.alert is a no-op on web. */
-  toast: (message: string) => void;
+  /** In-app notice (validation, confirmations) — Alert.alert is a no-op on web.
+   *  v4.2.0: optional tone — 'success' | 'error' tint the pill accordingly. */
+  toast: (message: string, kind?: ToastKind) => void;
 }
 
 interface ConfirmState extends ConfirmOptions {
@@ -66,6 +70,7 @@ interface ConfirmState extends ConfirmOptions {
 interface ToastState {
   id: number;
   message: string;
+  kind: ToastKind;
 }
 
 const UIContext = createContext<UIContextValue | null>(null);
@@ -94,8 +99,8 @@ export function UIProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  const toast = useCallback((message: string) => {
-    setToastState({ id: Date.now(), message });
+  const toast = useCallback((message: string, kind: ToastKind = 'info') => {
+    setToastState({ id: Date.now(), message, kind });
   }, []);
 
   const openAdd = useCallback((preset?: ModalPreset) => {
@@ -174,8 +179,8 @@ export function useUI():
       confirm: (opts: ConfirmOptions) => Promise<boolean>;
       confirmState: (ConfirmState & ConfirmOptions) | null;
       settleConfirm: (v: boolean) => void;
-      toast: (message: string) => void;
-      toastState: { id: number; message: string } | null;
+      toast: (message: string, kind?: ToastKind) => void;
+      toastState: { id: number; message: string; kind: ToastKind } | null;
     } {
   const ctx = useContext(UIContext);
   if (!ctx) throw new Error('useUI must be used inside UIProvider');
@@ -188,7 +193,7 @@ export function useUI():
     confirm: (opts: ConfirmOptions) => Promise<boolean>;
     confirmState: (ConfirmState & ConfirmOptions) | null;
     settleConfirm: (v: boolean) => void;
-    toast: (message: string) => void;
-    toastState: { id: number; message: string } | null;
+    toast: (message: string, kind?: ToastKind) => void;
+    toastState: { id: number; message: string; kind: ToastKind } | null;
   };
 }

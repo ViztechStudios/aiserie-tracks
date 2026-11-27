@@ -15,7 +15,7 @@ interface Props {
   onDone: () => void;
 }
 
-const INTRO_MIN_MS = 2200;
+const INTRO_MIN_MS = 1500;
 /** If hydration somehow stalls, the curtain still offers a way in. */
 const WATCHDOG_MS = 8500;
 const APP_VERSION = Constants.expoConfig?.version ?? '';
@@ -32,6 +32,8 @@ const KNOWN_KEYS = [
   'aiserie.v1.budgetAlerts',
   'aiserie.v1.goals',
   'aiserie.v1.lock',
+  'aiserie.v1.lockguard',
+  'aiserie.v1.themeMode',
   'aiserie.v1.updateDismissed',
 ];
 
@@ -65,41 +67,57 @@ export function LoadingScreen({ ready, onDone }: Props) {
   const out = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    Animated.sequence([
+    const seq = Animated.sequence([
       Animated.timing(tile, { toValue: 1, duration: 640, easing: Easing.out(Easing.back(1.4)), useNativeDriver: true }),
       Animated.timing(word, { toValue: 1, duration: 480, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
       Animated.timing(tag, { toValue: 1, duration: 420, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
       Animated.timing(ticks, { toValue: 1, duration: 560, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
-    ]).start();
+    ]);
     // the satellite: one lap every 2.6 s, forever
-    Animated.loop(
+    const orbitLoop = Animated.loop(
       Animated.timing(orbit, { toValue: 1, duration: 2600, easing: Easing.linear, useNativeDriver: true })
-    ).start();
+    );
     // the tile breathes on a slow sine
-    Animated.loop(
+    const floatLoop = Animated.loop(
       Animated.sequence([
         Animated.timing(float, { toValue: 1, duration: 1700, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
         Animated.timing(float, { toValue: 0, duration: 1700, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
       ])
-    ).start();
+    );
     // honest staged progress: fonts & shell, then data
-    Animated.sequence([
+    const barSeq = Animated.sequence([
       Animated.timing(bar, { toValue: 0.3, duration: 900, easing: Easing.out(Easing.cubic), useNativeDriver: false }),
       Animated.timing(bar, { toValue: 0.34, duration: 160, useNativeDriver: false }),
       Animated.timing(bar, { toValue: 0.66, duration: 1300, easing: Easing.out(Easing.cubic), useNativeDriver: false }),
-    ]).start();
-    Animated.loop(
+    ]);
+    const sheenLoop = Animated.loop(
       Animated.sequence([
         Animated.timing(sheen, { toValue: 1, duration: 1400, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
         Animated.timing(sheen, { toValue: 0, duration: 0, useNativeDriver: true }),
         Animated.timing(sheen, { toValue: 0, duration: 900, useNativeDriver: true }),
       ])
-    ).start();
+    );
+    try {
+      seq.start();
+      orbitLoop.start();
+      floatLoop.start();
+      barSeq.start();
+      sheenLoop.start();
+    } catch {
+      /* a stalled boot animation must never crash the boot itself */
+    }
     const timer = setTimeout(() => setIntroDone(true), INTRO_MIN_MS);
     const watchdog = setTimeout(() => setStalled(true), WATCHDOG_MS);
     return () => {
+      // v4.2.0: loops are stopped explicitly so nothing keeps ticking after
+      // the curtain dissolves (was: only unmount-detach stopped them)
       clearTimeout(timer);
       clearTimeout(watchdog);
+      for (const a of [seq, orbitLoop, floatLoop, barSeq, sheenLoop]) {
+        try {
+          a.stop();
+        } catch {}
+      }
     };
   }, [tile, orbit, word, tag, ticks, float, bar, sheen]);
 

@@ -2,16 +2,17 @@
 
 A jungle-green **personal finance tracker** that runs as a **native Android app (APK)**, an **iPhone/iPad app**, and an **installable PWA** — built with [Expo](https://expo.dev), React Native and TypeScript.
 
-v4.1.0 "Orbit & Frost" completes the product identity: the **Orbit A monogram** now leads every icon, splash and boot moment, cards are **frosted glass** over a softly lit aurora backdrop, and the boot screen is a quiet orbit around the mark — on top of v4.0.0's privacy shield and the crash-proofing work from v3.x–v4.0.
+v4.2.0 is the **stability & security refinement** of the Orbit & Frost release: the v4.1.0 field crash is fixed at its root (shared animated theme value removed), the PIN lock gains real failed-attempt lockouts and a key-stretched hash, corrupted storage is quarantined instead of overwritten, backups restore every preference, and the ledger got faster (memoized rows, off-hot-path serialization). Same identity, same glass — everything just works better.
 
 ![stack](https://img.shields.io/badge/Expo-SDK%2058-0EA5E9) ![platform](https://img.shields.io/badge/Android%20%7C%20iOS%20%7C%20Web-Expo%20EAS%20%2B%20PWA-22D3EE) ![cost](https://img.shields.io/badge/distribution-%240-success)
 
 ## Features
 
-- **🫧 Glassmorphism, done tastefully** — every card is a frosted pane: translucent fill, hairline edge, soft top sheen, real depth from the aurora orbs behind it. Dark mode included, cross-fading live
+- **🫧 Glassmorphism, done tastefully** — every card is a frosted pane: translucent fill, hairline edge, soft top sheen, real depth from the aurora orbs behind it. Dark mode included
 - **🅰️ One mark everywhere** — the Orbit A monogram (letter, orbit ring, ascending bars, spark) drives the app icon, Android adaptive layers, favicon, PWA icons and every launch screen; `scripts/brand_sync.py` regenerates the whole set from one master SVG
 - **🐾 Two companions, redrawn** — the pup and tabby are now clean flat illustrations (no sticker outlines); they wave from the lock gate, recovery screen and empty states
 - **🫥 Privacy shield** — balances hide behind a branded curtain whenever you leave the app; lifts on return, under the optional PIN pad. Toggle in Settings → Privacy & storage
+- **🔒 PIN lock with lockout** — wrong attempts earn a cooldown (30 s → 5 min, persisted); the PIN is stored as a salted, key-stretched hash and old v4.0/4.1 hashes upgrade transparently
 - ** Income & expense log** — categories, wallets, dates, notes; tap to edit, long-press to delete
 - **👛 Wallets & balances, one tap each** — 22 official brand tiles (GCash, Maya, Coins.ph, GrabPay, ShopeePay, BPI, BDO, Metrobank, AUB, UnionBank, Security Bank, Landbank, RCBC, PNB, China Bank, EastWest, PSBank, Maribank, GoTyme, CIMB, Tonik, Cash). The logo, name and color fill in automatically — just type the balance. Custom wallets still supported
 - **🔔 Purchase detection** — paste any e-wallet/bank SMS or notification text and Aiserie reads the amount + direction on-device, then pre-fills a transaction. No message access, no monitoring
@@ -19,17 +20,39 @@ v4.1.0 "Orbit & Frost" completes the product identity: the **Orbit A monogram** 
 - **🧠 Finance advisor** — safe-to-spend per day, month-end projections, savings rate, category concentration warnings, momentum and recurring-bill reminders
 - **✅ Things-to-do** — money chores with springy check-offs, star pinning, progress ring
 - **🐷 Savings goals** — piggy banks with progress, contributions and withdrawals
-- **🚀 Update nudges** — on boot the app checks GitHub Releases; when a newer version exists, a glass "Update available" card deep-links to `releases/latest` (3-day snooze, manual check in Settings)
 - **📊 Visual reports** — category donut chart, 6-month income/expense bars, month-by-month navigation
+- **📊 Reports (CSV & PDF)** — income, expenses, category breakdown, wallet balances and every transaction for any period
+- **🔁 Recurring transactions** — daily/weekly/monthly/yearly schedules with deterministic ids so re-runs never duplicate money, and monthly rules keep their anchor day across short months
+- **🔔 Budget alerts** — envelopes notify once at 50 / 75 / 90 / 100% (configurable), reset each month
+- **🚀 Update nudges** — on boot the app checks GitHub Releases; when a newer version exists, a glass "Update available" card deep-links to `releases/latest` (3-day snooze, manual check in Settings)
 - **₱ Philippine-first** — default currency is **PHP**, switchable to USD, EUR, GBP, JPY, SGD and more
 - **💙 Personal** — greets the user by name (default **Aiserie**, editable in Settings)
 - **🔒 Private by design** — all data on-device (AsyncStorage on native, localStorage on web). No account, no cloud, no tracking. Privacy Policy & T&C included in-app
 - **📱 Responsive** — phones and tablets, with a mobile-first web layout and real `<input type="date">` on web
-- **💾 Backup & restore** — one JSON file with everything, exported on-device; import validates first, then merges without duplicating — or replaces everything after a double confirmation
-- **📊 Reports (CSV & PDF)** — income, expenses, category breakdown, wallet balances and every transaction for any period
-- **🔁 Recurring transactions** — daily/weekly/monthly/yearly schedules with deterministic ids so re-runs never duplicate money
-- **🔔 Budget alerts** — envelopes notify once at 50 / 75 / 90 / 100% (configurable), reset each month
-- **🛡️ Crash-proof by design** — malformed records are repaired at load or paused, never fatal; a root error boundary swaps any render bug for a branded recovery screen; the boot curtain has a *Continue anyway* escape; every money counter runs on disjoint animation-driver graphs
+- **💾 Backup & restore** — one JSON file with everything; import validates first, merges without duplicating, or replaces everything after a double confirmation — and rolls your old data back if a replace fails midway
+- **🛡️ Crash-proof by design** — malformed records are repaired at load or paused, never fatal; damaged storage payloads are quarantined to disk before any fresh state is written; a root error boundary swaps any render bug for a branded recovery screen; the boot curtain has a *Continue anyway* escape; no animated value is ever shared across components
+
+## Backup & recovery
+
+**Create a backup** — Settings → Backup & restore → *Export backup*. One JSON file (transactions, wallets, budgets, bills, recurring rules, savings goals, tasks, budget-alert history, your name, currency and privacy-shield preference) is written to your device or share sheet. Nothing is uploaded. Keep the file somewhere safe — it is plain JSON, unencrypted, so anyone holding it can read your records.
+
+**Restore on a new phone / after reinstall** — install Aiserie, open Settings → Backup & restore → *Import backup*, pick the file. It validates first (schema, every row sanitized, corrupt entries dropped, ids deduped), then offers:
+
+- **Merge** — keeps what is on the device and adds only records that are missing; never overwrites or duplicates. Warns if a recurring rule from the file already exists here by name, amount and frequency.
+- **Replace** — erases this device first, then restores the file; asks for confirmation twice, and if anything fails midway the previous data is put back automatically.
+
+**Recovery when things go wrong** — a boot that stalls shows *Continue anyway* / *Reset app data*; the recovery screen (after a crash) offers the same escape; damaged storage payloads are copied to `aiserie.v1.<key>.corrupt-…` before anything overwrites them, so records are never silently destroyed. Every version update keeps data intact — installs upgrade in place with no reset.
+
+## Changelog
+
+| Version | Highlights |
+| --- | --- |
+| **v4.2.0** | Root-cause fix of the v4.1.0 animation crash · PIN lockout + key-stretched hash · storage quarantine · backup fidelity (privacy shield, true merge counts, duplicate-rule warnings, rollback on failed replace) · signed balance input · recurring anchor-day fix · memoized ledger rows · overlap fixes (rail, camera controls, sheets) · toast tones · boot ~1.2 s faster |
+| v4.1.0 | "Orbit & Frost" — Orbit A monogram identity, glassmorphism surfaces, redesigned boot screen, clean vector companions |
+| v4.0.0 | Privacy shield · fixed the add-balance crash (disjoint animation driver graphs) |
+| v3.0.1 | Launch-crash recovery — never a white screen again |
+| v3.0.0 | Piggy banks, animated counters, search & filters, optional PIN lock, storage meter |
+| v2.x | Wallet deck with brand tiles, receipt OCR, purchase detection, advisor, reports (CSV/PDF), recurring engine, budget alerts |
 
 ## Project structure
 
@@ -126,17 +149,19 @@ python3 scripts/mascot_sync.py    # mascot-wave / mascot-duo / mascot-advisor
 
 ## Tests
 
-Pure logic (balances, transfers, monthly totals, recurring scheduling, backup validation, budget alerts, PIN hashing) is covered by a dependency-free test suite:
+Pure logic (balances, transfers, monthly totals, recurring scheduling + anchor recovery, backup validation & fidelity, budget alerts, PIN hashing + lockout schedule, amount parsing) is covered by a dependency-free test suite:
 
 ```bash
-npm test        # 40 assertions — exits non-zero on any failure
+npm test        # 48 assertions — exits non-zero on any failure
 ```
 
 ## Security & privacy notes
 
 - All data stays in AsyncStorage on-device; the only network call is the GitHub releases update check (public version number only). Backup files and reports are written locally or shared via the system share sheet — nothing is uploaded.
-- Backup import validates structure and sanitizes every entry (drops corrupt rows, dedupes ids, clamps values) before anything is written.
+- Backup import validates structure and sanitizes every entry (drops corrupt rows, dedupes ids, clamps values) before anything is written; failed replace-restores roll back to the previous state.
+- The optional PIN lock keeps only a salted, key-stretched hash on the device and cools down after repeated wrong attempts.
 - Permissions are minimal: camera (receipt scanning) only.
+- The in-app privacy policy (Settings → Privacy) documents all of the above in plain language.
 
 ## Receipt scanning notes
 

@@ -1,6 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { persistDebounced } from './storage';
+import { loadStoredJson, persistDebouncedLazy } from './storage';
 import { Bill } from '../types';
 import { makeId } from '../data/sampleData';
 
@@ -26,13 +26,11 @@ export function BillsProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     (async () => {
       try {
-        const raw = await AsyncStorage.getItem(BILLS_KEY);
-        if (raw) {
-          const parsed = JSON.parse(raw) as Bill[];
-          if (Array.isArray(parsed)) setBills(parsed);
-        }
+        // v4.2.0: per-key parse; a damaged payload is quarantined, not overwritten
+        const parsed = await loadStoredJson<Bill[]>(BILLS_KEY);
+        if (Array.isArray(parsed)) setBills(parsed);
       } catch {
-        // corrupted storage: start fresh
+        // storage read failed: start fresh
       } finally {
         setReady(true);
       }
@@ -41,7 +39,7 @@ export function BillsProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!ready) return;
-    persistDebounced(BILLS_KEY, JSON.stringify(bills));
+    persistDebouncedLazy(BILLS_KEY, bills);
   }, [bills, ready]);
 
   const addBill = useCallback((input: Omit<Bill, 'id' | 'createdAt'>) => {

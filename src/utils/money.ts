@@ -42,11 +42,61 @@ export function formatCompact(amount: number, currency: string = DEFAULT_CURRENC
   return `${symbol}${Math.round(amount)}`;
 }
 
-/** Parses user input like "1,250.50" or "1250" into a number. */
+/** Parses user input like "1,250.50" or "1250" into a positive number. */
 export function parseAmount(raw: string): number | null {
-  const cleaned = raw.replace(/[^0-9.]/g, '');
-  if (!cleaned || cleaned === '.') return null;
-  const value = Number(cleaned);
-  if (!Number.isFinite(value) || value <= 0) return null;
+  const value = parseAmountSigned(raw);
+  if (value === null || value <= 0) return null;
+  return value;
+}
+
+/**
+ * v4.2.0 — signed, separator-aware amount parser.
+ *
+ * Fixes two silent-misentry classes from v4.1.0:
+ *  - "-500" parsed as 500 (the minus was stripped with the rest of the noise),
+ *    so reconciling an overdrawn wallet DOUBLED the error instead of fixing it;
+ *  - "1.250,50" parsed as 1.25 (a thousand-fold error) because commas were
+ *    dropped before the dot was ever questioned.
+ *
+ * Rules: if both "." and "," appear, the LAST one is the decimal separator
+ * and the other is a thousands grouping sign; if only one kind appears, it is
+ * a decimal separator when followed by 1-2 digits at the end, otherwise a
+ * grouping separator. A leading "-" survives as the sign.
+ */
+export function parseAmountSigned(raw: string): number | null {
+  if (!raw) return null;
+  const trimmed = raw.trim();
+  const negative = /^-\s*\d/.test(trimmed) || (/^\(\s*\d.*\)\s*$/.test(trimmed)); // "-500" or "(500)"
+  const body = trimmed.replace(/[^0-9.,]/g, '');
+  if (!body) return null;
+
+  const lastDot = body.lastIndexOf('.');
+  const lastComma = body.lastIndexOf(',');
+  let normalized = body;
+
+  if (lastDot !== -1 && lastComma !== -1) {
+    // both present — whichever comes last is the decimal mark
+    if (lastComma > lastDot) {
+      normalized = body.replace(/\./g, '').replace(',', '.');
+    } else {
+      normalized = body.replace(/,/g, '');
+    }
+  } else if (lastComma !== -1) {
+    // commas only: one comma with a 1-2 digit tail is a decimal mark ("1,5"),
+    // anything else reads as thousands grouping ("1,250" → 1250)
+    const commaCount = (body.match(/,/g) || []).length;
+    const tail = body.length - lastComma - 1;
+    normalized = commaCount === 1 && tail > 0 && tail <= 2 ? body.replace(',', '.') : body.replace(/,/g, '');
+  } else if (lastDot !== -1) {
+    // dots only (the Filipino home convention): a single dot is ALWAYS a
+    // decimal mark — "1.250" stays ₱1.25 as it behaved in v4.1 — while
+    // repeated dots are thousands grouping ("1.250.000" → 1250000)
+    const dotCount = (body.match(/\./g) || []).length;
+    if (dotCount > 1) normalized = body.replace(/\./g, '');
+  }
+
+  if (!normalized || normalized === '.' || normalized === '-.') return null;
+  const value = Number(negative ? `-${normalized}` : normalized);
+  if (!Number.isFinite(value)) return null;
   return Math.round(value * 100) / 100;
 }

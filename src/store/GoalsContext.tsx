@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Goal } from '../types';
 import { makeId } from '../data/sampleData';
 import { applyGoalChange, completesGoal } from '../utils/goals';
-import { persistDebounced } from './storage';
+import { loadStoredJson, persistDebouncedLazy } from './storage';
 
 export const GOALS_KEY = 'aiserie.v1.goals';
 
@@ -31,13 +31,11 @@ export function GoalsProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     (async () => {
       try {
-        const raw = await AsyncStorage.getItem(GOALS_KEY);
-        if (raw) {
-          const parsed = JSON.parse(raw) as Goal[];
-          if (Array.isArray(parsed)) setGoals(parsed);
-        }
+        // v4.2.0: per-key parse; a damaged payload is quarantined, not overwritten
+        const parsed = await loadStoredJson<Goal[]>(GOALS_KEY);
+        if (Array.isArray(parsed)) setGoals(parsed);
       } catch {
-        // corrupted storage: start fresh rather than crash
+        // storage read failed: start fresh rather than crash
       } finally {
         setReady(true);
       }
@@ -47,7 +45,7 @@ export function GoalsProvider({ children }: { children: React.ReactNode }) {
   // coalesced write — see storage.ts
   useEffect(() => {
     if (!ready) return;
-    persistDebounced(GOALS_KEY, JSON.stringify(goals));
+    persistDebouncedLazy(GOALS_KEY, goals);
   }, [goals, ready]);
 
   const addGoal = useCallback((input: Omit<Goal, 'id' | 'createdAt' | 'completedAt'>): Goal => {

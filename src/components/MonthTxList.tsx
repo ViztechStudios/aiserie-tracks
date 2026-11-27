@@ -1,9 +1,9 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../store/ThemeContext';
 import { font, spacing } from '../theme';
-import { Transaction } from '../types';
+import { Account, Transaction } from '../types';
 import { getCategory } from '../data/categories';
 import { formatMoney } from '../utils/money';
 import { groupByDay } from '../utils/stats';
@@ -21,6 +21,8 @@ interface Props {
   ym: string;
   transactions: Transaction[];
   currency: string;
+  /** Wallets — used for transfer from → to labels (v4.2.0). */
+  accounts?: Account[];
   onPressTx?: (tx: Transaction) => void;
   onLongPressTx?: (tx: Transaction) => void;
   /** ISO date — when set, only that day is listed. */
@@ -70,6 +72,7 @@ export function MonthTxList({
   ym,
   transactions,
   currency,
+  accounts,
   onPressTx,
   onLongPressTx,
   dayFilter,
@@ -81,6 +84,13 @@ export function MonthTxList({
   const { t } = useTheme();
   const [query, setQuery] = useState('');
   const [kind, setKind] = useState<'all' | 'expense' | 'income' | 'transfer'>('all');
+
+  // wallet names for transfer labels — a stable Map identity keeps row props stable
+  const nameOf = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const a of accounts ?? []) map.set(a.id, a.name);
+    return (id?: string) => (id ? map.get(id) ?? undefined : undefined);
+  }, [accounts]);
 
   const filtered = useMemo(() => {
     if (dayFilter) return transactions;
@@ -102,6 +112,24 @@ export function MonthTxList({
 
   const [year, month] = ym.split('-').map((n) => parseInt(n, 10));
   const monthTitle = `${MONTH_NAMES[month - 1]} ${year}`;
+
+  // v4.2.0: id-based, memo-stable row callbacks — inline closures here would
+  // defeat React.memo on TransactionRow for the whole ledger on every change
+  const txById = useMemo(() => new Map(transactions.map((tx) => [tx.id, tx])), [transactions]);
+  const pressTx = useCallback(
+    (id: string) => {
+      const tx = txById.get(id);
+      if (tx) onPressTx?.(tx);
+    },
+    [txById, onPressTx]
+  );
+  const longPressTx = useCallback(
+    (id: string) => {
+      const tx = txById.get(id);
+      if (tx) onLongPressTx?.(tx);
+    },
+    [txById, onLongPressTx]
+  );
 
   return (
     <View>
@@ -200,9 +228,12 @@ export function MonthTxList({
                     date={tx.date}
                     note={tx.note}
                     currency={currency}
+                    t={t}
                     tx={tx}
-                    onPress={onPressTx ? () => onPressTx(tx) : undefined}
-                    onLongPress={onLongPressTx ? () => onLongPressTx(tx) : undefined}
+                    fromName={nameOf(tx.accountId)}
+                    toName={nameOf(tx.toAccountId)}
+                    onPressTxId={onPressTx ? pressTx : undefined}
+                    onLongPressTxId={onLongPressTx ? longPressTx : undefined}
                   />
                 );
               })}

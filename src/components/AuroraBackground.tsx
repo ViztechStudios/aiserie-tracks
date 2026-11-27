@@ -1,5 +1,5 @@
-import React from 'react';
-import { Animated, Image, Platform, StyleSheet, View, ViewStyle } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { Animated, Easing, Image, Platform, StyleSheet, View, ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../store/ThemeContext';
 
@@ -16,9 +16,25 @@ interface Props {
  * and a faint warm light at the top edge. Material, not decoration.
  */
 export function AuroraBackground({ intensity = 1 }: Props) {
-  const { progress, aurora } = useTheme();
-  const lightOpacity = progress.interpolate({ inputRange: [0, 1], outputRange: [1, 0] });
-  const darkOpacity = progress.interpolate({ inputRange: [0, 1], outputRange: [0, 1] });
+  const { isDark, aurora } = useTheme();
+  // v4.2.0: the cross-fade value lives here now — local to this component,
+  // single-driver (opacity, native), and never shared with anything that
+  // could attach a JS animation to it (the v4.1.0 crash shape).
+  const fade = useRef(new Animated.Value(isDark ? 1 : 0)).current; // 0 = light
+  useEffect(() => {
+    try {
+      Animated.timing(fade, {
+        toValue: isDark ? 1 : 0,
+        duration: 460,
+        easing: Easing.inOut(Easing.cubic),
+        useNativeDriver: true, // opacity only — the sole driver this graph ever sees
+      }).start();
+    } catch {
+      /* never let a backdrop animation take the app down */
+    }
+  }, [isDark, fade]);
+  const lightOpacity = fade.interpolate({ inputRange: [0, 1], outputRange: [1, 0] });
+  const darkOpacity = fade.interpolate({ inputRange: [0, 1], outputRange: [0, 1] });
   const style: ViewStyle = { ...ABS_FILL, overflow: 'hidden' };
   return (
     <View pointerEvents="none" style={style}>

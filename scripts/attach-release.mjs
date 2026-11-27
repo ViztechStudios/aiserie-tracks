@@ -15,7 +15,7 @@
  *   GITHUB_REPOSITORY — owner/name (provided by Actions)
  */
 import { execFileSync } from 'node:child_process';
-import { readFileSync, writeFileSync, unlinkSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync, unlinkSync } from 'node:fs';
 
 function sh(cmd, args, opts = {}) {
   return execFileSync(cmd, args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'inherit'], ...opts }).trim();
@@ -68,8 +68,17 @@ async function main() {
   writeFileSync(apkName, buf);
   console.log(`Downloaded ${apkName} (${(buf.length / 1024 / 1024).toFixed(1)} MB)`);
 
-  // 3. release notes (workflow provides the text; fall back to a generic note)
-  const notes = process.env.RELEASE_NOTES || `Aiserie Tracks ${tag}`;
+  // 3. release notes — v4.2.0: read RELEASE_NOTES.md (kept current with each
+  // release); RELEASE_NOTES env still wins if a workflow supplies it inline
+  let notes = process.env.RELEASE_NOTES || `Aiserie Tracks ${tag}`;
+  try {
+    const notesFile = process.env.RELEASE_NOTES_FILE || 'RELEASE_NOTES.md';
+    if (!process.env.RELEASE_NOTES && existsSync(notesFile)) {
+      notes = readFileSync(notesFile, 'utf8').trim();
+    }
+  } catch {
+    /* fall back to the generic note */
+  }
 
   // 4. create or reuse the release, then upload the asset
   const gh = (...args) => sh('gh', args, { env: { ...process.env, GH_TOKEN: process.env.GH_TOKEN } });

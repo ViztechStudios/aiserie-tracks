@@ -1,6 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { persistDebounced } from './storage';
+import { loadStoredJson, persistDebouncedLazy } from './storage';
 import { Budget } from '../types';
 import { makeId } from '../data/sampleData';
 import { AlertState } from '../utils/budgetAlerts';
@@ -36,18 +36,14 @@ export function BudgetsProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     (async () => {
       try {
-        const raw = await AsyncStorage.getItem(BUDGETS_KEY);
-        if (raw) {
-          const parsed = JSON.parse(raw) as Budget[];
-          if (Array.isArray(parsed)) setBudgets(parsed);
-        }
-        const aRaw = await AsyncStorage.getItem(ALERTS_KEY);
-        if (aRaw) {
-          const parsed = JSON.parse(aRaw) as AlertState;
-          if (parsed && typeof parsed === 'object') setAlertStateRaw(parsed);
-        }
+        // v4.2.0: per-key parse; a damaged payload is quarantined, not overwritten —
+        // one broken alerts file can no longer take the budgets list down with it
+        const parsed = await loadStoredJson<Budget[]>(BUDGETS_KEY);
+        if (Array.isArray(parsed)) setBudgets(parsed);
+        const alerts = await loadStoredJson<AlertState>(ALERTS_KEY);
+        if (alerts && typeof alerts === 'object') setAlertStateRaw(alerts);
       } catch {
-        // corrupted storage: start fresh
+        // storage read failed: start fresh
       } finally {
         setReady(true);
       }
@@ -56,12 +52,12 @@ export function BudgetsProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!ready) return;
-    persistDebounced(BUDGETS_KEY, JSON.stringify(budgets));
+    persistDebouncedLazy(BUDGETS_KEY, budgets);
   }, [budgets, ready]);
 
   useEffect(() => {
     if (!ready) return;
-    persistDebounced(ALERTS_KEY, JSON.stringify(alertState));
+    persistDebouncedLazy(ALERTS_KEY, alertState);
   }, [alertState, ready]);
 
   const upsertBudget = useCallback((categoryId: string, cap: number, alerts?: number[]) => {

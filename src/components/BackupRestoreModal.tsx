@@ -1,3 +1,4 @@
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import React, { useEffect, useRef, useState } from 'react';
 import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,11 +17,13 @@ import {
   BackupData,
   backupFileName,
   buildBackup,
+  findDuplicateRecurringSignatures,
+  planRestore,
   validateBackup,
   Validation,
 } from '../services/backup';
 import { pickTextFile, saveTextFile } from '../services/files';
-import { font, radius, spacing } from '../theme';
+import { font, radius, spacing, brandFern } from '../theme';
 
 const APP_VERSION = Constants.expoConfig?.version ?? '';
 
@@ -35,6 +38,8 @@ type Phase = 'menu' | 'preview';
  */
 export function BackupRestoreModal() {
   const finance = useFinance();
+  const insets = useSafeAreaInsets();
+
   const tasks = useTasks();
   const budgets = useBudgets();
   const bills = useBills();
@@ -158,6 +163,21 @@ export function BackupRestoreModal() {
       if (!second) return;
     }
     setBusy(true);
+    // v4.2.0: snapshot the in-memory state first. In replace mode the wipe
+    // runs BEFORE the file is applied — if anything throws in between, the
+    // snapshot is re-applied instead of leaving the device empty (v4.1.0
+    // toasted "your data is safe" precisely when it wasn't).
+    const snapshot = {
+      transactions: finance.transactions,
+      accounts: finance.accounts,
+      settings: finance.settings,
+      tasks: tasks.tasks,
+      budgets: budgets.budgets,
+      bills: bills.bills,
+      recurring: recurring.recurrings,
+      goals: goals.goals,
+      alerts: budgets.alertState,
+    };
     try {
       if (mode === 'replace') {
         // wipe in-memory stores, then write the backup in
@@ -170,6 +190,7 @@ export function BackupRestoreModal() {
       if (d.settings) {
         finance.setCurrency(d.settings.currency);
         finance.setUserName(d.settings.userName);
+        if (typeof d.settings.privacyShield === 'boolean') finance.setPrivacyShield(d.settings.privacyShield);
       }
       if (mode === 'replace') {
         tasks.replaceAll(d.tasks);
@@ -192,19 +213,44 @@ export function BackupRestoreModal() {
         budgets.setAlertState({ ...d.budgetAlerts, ...budgets.alertState });
       }
       ui.closeBackup();
-      ui.toast(`Restore complete — ${d.transactions.length} transactions and ${d.accounts.length} wallets from ${fileName}.`);
+      const freshTx = mode === 'merge' ? d.transactions.filter((tx) => !snapshot.transactions.some((s) => s.id === tx.id)).length : d.transactions.length;
+      ui.toast(`Restore complete — ${freshTx} transaction${freshTx === 1 ? '' : 's'} added from ${fileName}.`);
     } catch {
-      ui.toast('Restore failed midway — your data is safe; try importing the file again.');
+      if (mode === 'replace') {
+        // put the user's own data back — the wipe already happened
+        try {
+          finance.replaceTransactions(snapshot.transactions);
+          finance.mergeAccounts(snapshot.accounts);
+          finance.setCurrency(snapshot.settings.currency);
+          finance.setUserName(snapshot.settings.userName);
+          finance.setPrivacyShield(snapshot.settings.privacyShield !== false);
+          tasks.replaceAll(snapshot.tasks);
+          budgets.replaceAll(snapshot.budgets);
+          bills.replaceAll(snapshot.bills);
+          recurring.replaceAll(snapshot.recurring);
+          goals.replaceGoals(snapshot.goals);
+          budgets.setAlertState(snapshot.alerts);
+        } catch {
+          /* even the rollback failing must not crash the app */
+        }
+        ui.toast('Restore failed midway — your previous data was restored. Try importing the file again.');
+      } else {
+        ui.toast('Restore failed midway — nothing was changed; try importing the file again.');
+      }
     } finally {
       setBusy(false);
     }
   };
 
   const askMerge = () => {
+    // v4.2.0: the confirm speaks in true net-new counts, not raw file totals
+    const plan = validation?.data ? planRestore(validation.data, new Set(finance.transactions.map((tx) => tx.id)), 'merge') : null;
+    const freshTotal = plan ? Object.values(plan.fresh).reduce((a, b) => a + b, 0) : 0;
+    const dupes = validation?.data ? findDuplicateRecurringSignatures(validation.data.recurring, recurring.recurrings) : [];
     ui
       .confirm({
         title: 'Add the backup to this device?',
-        message: `New records are ADDED — ${validation?.counts ? Object.values(validation.counts).reduce((a, b) => a + b, 0) : 0} records in the file. Existing transactions are never overwritten or duplicated.`,
+        message: `New records are ADDED — ${freshTotal} record${freshTotal === 1 ? '' : 's'} that are not on this device yet (${validation?.counts ? Object.values(validation.counts).reduce((a, b) => a + b, 0) : 0} in the file). Existing transactions are never overwritten or duplicated.${dupes.length ? ` Note: ${dupes.length} recurring rule${dupes.length === 1 ? '' : 's'} already exist here by name, amount and frequency — merging will keep both copies.` : ''}`,
         confirmLabel: 'Merge',
       })
       .then((ok) => {
@@ -221,7 +267,7 @@ export function BackupRestoreModal() {
 
   return (
     <Modal visible={open} transparent animationType="slide" onRequestClose={ui.closeBackup}>
-      <View style={styles.backdrop}>
+      <View style={[styles.backdrop, { paddingBottom: Math.max(insets.bottom, 10) }]}>
         <View style={[styles.sheet, { backgroundColor: t.cardSolid }]}>
           {phase === 'menu' && !validation && (
             <>
@@ -238,7 +284,7 @@ export function BackupRestoreModal() {
                 </Text>
               </View>
 
-              <PressableScale onPress={askExport} disabled={busy} haptic="medium" style={[styles.bigBtn, { backgroundColor: '#1E7A50' }, busy && { opacity: 0.6 }]} containerStyle={styles.btnWrap}>
+              <PressableScale onPress={askExport} disabled={busy} haptic="medium" style={[styles.bigBtn, { backgroundColor: brandFern }, busy && { opacity: 0.6 }]} containerStyle={styles.btnWrap}>
                 <Ionicons name="cloud-download-outline" size={18} color="#FFFFFF" />
                 <Text style={[styles.bigBtnText, { color: '#FFFFFF' }]}>{busy ? 'Preparing…' : 'Export backup'}</Text>
               </PressableScale>
@@ -275,13 +321,13 @@ export function BackupRestoreModal() {
               <View style={[styles.infoCard, { backgroundColor: t.ice50 }]}>
                 <Text style={[styles.infoLine, { color: t.text }]}>
                   {c?.transactions} transactions · {c?.accounts} wallets · {c?.tasks} tasks · {c?.budgets} budgets ·{' '}
-                  {c?.bills} bills · {c?.recurring} recurring
+                  {c?.bills} bills · {c?.recurring} recurring · {c?.goals} goals
                 </Text>
                 <Text style={[styles.infoLine, { color: t.subtext }]}>File: {fileName}</Text>
               </View>
               <Text style={[styles.sub, { color: t.subtext }]}>Choose how to apply it:</Text>
 
-              <PressableScale onPress={askMerge} disabled={busy} haptic="medium" style={[styles.bigBtn, { backgroundColor: '#1E7A50' }, busy && { opacity: 0.6 }]} containerStyle={styles.btnWrap}>
+              <PressableScale onPress={askMerge} disabled={busy} haptic="medium" style={[styles.bigBtn, { backgroundColor: brandFern }, busy && { opacity: 0.6 }]} containerStyle={styles.btnWrap}>
                 <Ionicons name="git-merge-outline" size={18} color="#FFFFFF" />
                 <Text style={[styles.bigBtnText, { color: '#FFFFFF' }]}>Merge — keep mine, add theirs</Text>
               </PressableScale>

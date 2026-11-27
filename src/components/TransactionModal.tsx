@@ -24,6 +24,8 @@ import { font, radius, spacing } from '../theme';
 import { formatMoney, parseAmount } from '../utils/money';
 import { todayISO } from '../utils/stats';
 import { useResponsive } from '../hooks/useResponsive';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 
 function toISODate(d: Date): string {
   const y = d.getFullYear();
@@ -52,6 +54,8 @@ function WebDateInput({ valueISO, onChangeISO, style }: { valueISO: string; onCh
 
 export function TransactionModal() {
   const ui = useUI();
+  const insets = useSafeAreaInsets();
+
   const finance = useFinance();
   const { t, gradients, isDark } = useTheme();
   const { sheetWidth } = useResponsive();
@@ -135,6 +139,9 @@ export function TransactionModal() {
         toAccountId: type === 'transfer' ? (toAccountId ?? undefined) : undefined,
       };
       finance.updateTransaction(updated);
+      ui.close();
+      // v4.2.0: the manual path used to be silent while Scan toasted — one voice now
+      ui.toast('Entry updated.', 'success');
     } else {
       finance.addTransaction({
         type,
@@ -146,8 +153,9 @@ export function TransactionModal() {
         accountId: accountId ?? undefined,
         toAccountId: type === 'transfer' ? (toAccountId ?? undefined) : undefined,
       });
+      ui.close();
+      ui.toast(`${type === 'income' ? 'Income' : type === 'transfer' ? 'Transfer' : 'Expense'} of ${formatMoney(amount, finance.settings.currency)} logged.`, 'success');
     }
-    ui.close();
   };
 
   const confirmDelete = () => {
@@ -161,18 +169,19 @@ export function TransactionModal() {
       if (ok) {
         finance.deleteTransaction(editing.id);
         ui.close();
+        ui.toast('Entry deleted — balances updated.', 'success');
       }
     });
   };
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={ui.close}>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.backdrop}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={[styles.backdrop, { paddingBottom: Math.max(insets.bottom, 10) }]}>
         <Pressable style={styles.pressAway} onPress={ui.close} />
         <View
           style={[
             styles.sheet,
-            { backgroundColor: isDark ? 'rgba(10,26,50,0.98)' : 'rgba(255,255,255,0.97)' },
+            { backgroundColor: isDark ? 'rgba(10,31,21,0.98)' : 'rgba(255,255,255,0.97)' },
             sheetWidth ? { alignSelf: 'center', width: '100%', maxWidth: sheetWidth + 20 } : null,
           ]}
         >

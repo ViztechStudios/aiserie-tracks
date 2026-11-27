@@ -42,6 +42,14 @@ export type RootTabParamList = {
   Settings: undefined;
 };
 
+/** Height of the rail body (before the bottom safe-area inset is added). */
+export const RAIL_BASE_HEIGHT = 62;
+/** Total bottom coverage of the tab rail: body + the device's bottom inset.
+ *  Screens and floating controls use this to stay clear of the rail. */
+export function railTotalHeight(bottomInset: number): number {
+  return RAIL_BASE_HEIGHT + bottomInset;
+}
+
 const TAB_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
   Home: 'paw',
   Wallets: 'wallet',
@@ -77,7 +85,15 @@ function TabSlot({
   }, [focused, pop]);
   return (
     <View style={styles.slot}>
-      <PressableScale onPress={onPress} scaleTo={0.9} style={styles.slotPress} haptic={focused ? false : 'light'}>
+      <PressableScale
+        onPress={onPress}
+        scaleTo={0.9}
+        style={styles.slotPress}
+        haptic={focused ? false : 'light'}
+        accessibilityRole="tab"
+        accessibilityLabel={label}
+        accessibilityState={{ selected: focused }}
+      >
         <Animated.View
           style={[
             styles.plate,
@@ -117,6 +133,8 @@ function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
           {
             backgroundColor: t.card,
             borderTopColor: t.line,
+            // additive: body height + safe-area inset (see styles.rail note)
+            height: railTotalHeight(bottomInset),
             paddingBottom: bottomInset,
           },
           isDark ? null : shadow.card,
@@ -146,7 +164,14 @@ function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
             ? [
                 slot,
                 <View key="add-slot" style={styles.slot}>
-                  <PressableScale onPress={() => ui.openAdd()} scaleTo={0.88} haptic="medium" style={styles.slotPress}>
+                  <PressableScale
+                    onPress={() => ui.openAdd()}
+                    scaleTo={0.88}
+                    haptic="medium"
+                    style={styles.slotPress}
+                    accessibilityRole="button"
+                    accessibilityLabel="Add a transaction"
+                  >
                     <LinearGradient
                       colors={gradients.fab}
                       start={{ x: 0, y: 0 }}
@@ -210,7 +235,12 @@ const styles = StyleSheet.create({
   rail: {
     flexDirection: 'row',
     alignItems: 'stretch',
+    // v4.2.0: the bottom safe-area inset is ADDED to the rail height instead
+    // of being carved out of it — on notched iPhones the old fixed 62pt left
+    // only ~28pt for a ~44pt tab slot, so icon plates poked over the rail's
+    // top edge and labels sat in the home-indicator zone.
     height: RAIL_HEIGHT,
+    minHeight: RAIL_HEIGHT,
     borderTopWidth: StyleSheet.hairlineWidth,
   },
   slot: { flex: 1, justifyContent: 'center' },

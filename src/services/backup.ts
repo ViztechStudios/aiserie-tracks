@@ -87,7 +87,11 @@ export function backupFileName(now: Date = new Date()): string {
   const d = String(now.getDate()).padStart(2, '0');
   const h = String(now.getHours()).padStart(2, '0');
   const mi = String(now.getMinutes()).padStart(2, '0');
-  return `aiserie-backup-${y}${m}${d}-${h}${mi}.json`;
+  const sec = String(now.getSeconds()).padStart(2, '0');
+  // v4.2.0: seconds + a random tail — two exports in the same minute used to
+  // collide on the same filename and silently overwrite each other on disk.
+  const tail = Math.random().toString(36).slice(2, 6);
+  return `aiserie-backup-${y}${m}${d}-${h}${mi}${sec}-${tail}.json`;
 }
 
 /* ---------------------------- validate ----------------------------- */
@@ -277,6 +281,9 @@ export function validateBackup(raw: string): Validation {
     settings = {
       currency: sanitizeString(s.currency, 'PHP').toUpperCase().slice(0, 3),
       userName: sanitizeString(s.userName, 'Aiserie').trim().slice(0, 24) || 'Aiserie',
+      // v4.2.0: the privacy-shield preference travels with the file instead of
+      // being silently dropped on restore (v4.1.0 exported it but never read it)
+      privacyShield: typeof s.privacyShield === 'boolean' ? s.privacyShield : undefined,
     };
   }
 
@@ -321,4 +328,28 @@ export function planRestore(data: BackupData, existingTxIds: Set<string>, mode: 
     goals: data.goals.length,
   };
   return { mode, data, fresh };
+}
+
+/**
+ * v4.2.0 — cross-device recurring-rule collision detector. Merge dedupes by
+ * id only, but ids are random per device: the SAME rule ("Salary", monthly,
+ * ₱26,000) created on two phones has different ids, and merging both makes
+ * the engine double-generate its occurrences. Returns the incoming rules
+ * whose (name + type + amount + frequency) signature already exists here.
+ */
+export function findDuplicateRecurringSignatures(
+  incoming: Recurring[],
+  existing: Recurring[]
+): Recurring[] {
+  const sig = (r: Recurring) => `${r.name.trim().toLowerCase()}|${r.type}|${r.amount.toFixed(2)}|${r.freq}`;
+  const have = new Set(existing.map(sig));
+  const seen = new Set<string>();
+  return incoming.filter((r) => {
+    const s = sig(r);
+    if (have.has(s) && !seen.has(s)) {
+      seen.add(s);
+      return true;
+    }
+    return false;
+  });
 }

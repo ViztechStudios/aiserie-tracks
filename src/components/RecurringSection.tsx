@@ -5,6 +5,8 @@ import { PressableScale } from './PressableScale';
 import { useFinance } from '../store/FinanceContext';
 import { useRecurring } from '../store/RecurringContext';
 import { useUI } from '../store/UIContext';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 import { useTheme } from '../store/ThemeContext';
 import { RecurFreq, Recurring } from '../types';
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES, getCategory } from '../data/categories';
@@ -12,7 +14,7 @@ import { formatMoney, parseAmount } from '../utils/money';
 import { upcomingFor } from '../utils/recurring';
 import { daysUntil } from '../utils/bills';
 import { todayISO } from '../utils/stats';
-import { font, radius, spacing } from '../theme';
+import { font, radius, spacing, brandFern } from '../theme';
 
 const FREQS: { key: RecurFreq; label: string }[] = [
   { key: 'daily', label: 'Daily' },
@@ -44,6 +46,8 @@ function fmtDate(iso: string | undefined | null): string {
  */
 export function RecurringSection() {
   const finance = useFinance();
+  const insets = useSafeAreaInsets();
+
   const recurring = useRecurring();
   const ui = useUI();
   const { t, shadow } = useTheme();
@@ -156,7 +160,7 @@ export function RecurringSection() {
               Salary every payday? Internet every month? Schedule it once and Aiserie records it automatically — no more
               forgetting, no double entries.
             </Text>
-            <PressableScale onPress={() => openFor()} haptic="medium" style={[styles.primaryBtn, { backgroundColor: '#1E7A50' }]}>
+            <PressableScale onPress={() => openFor()} haptic="medium" style={[styles.primaryBtn, { backgroundColor: brandFern }]}>
               <Ionicons name="repeat" size={16} color="#FFFFFF" />
               <Text style={styles.primaryBtnText}>Add a recurring</Text>
             </PressableScale>
@@ -219,7 +223,7 @@ export function RecurringSection() {
       {/* add / edit modal */}
       <Modal visible={modal !== null} transparent animationType="slide" onRequestClose={() => setModal(null)}>
         <View style={styles.modalBackdrop}>
-          <View style={[styles.modalSheet, { backgroundColor: t.cardSolid }]}>
+          <View style={[styles.modalSheet, { backgroundColor: t.cardSolid, paddingBottom: Math.max(insets.bottom, 12) + 28 }]}>
             <Text style={[styles.modalTitle, { color: t.text }]}>{modal?.rule ? 'Edit recurring' : 'New recurring'}</Text>
 
             <Text style={[styles.modalSection, { color: t.subtext }]}>NAME</Text>
@@ -304,7 +308,7 @@ export function RecurringSection() {
             <Text style={[styles.modalSection, { color: t.subtext }]}>REPEATS</Text>
             <View style={styles.chipRow}>
               {FREQS.map((f) => (
-                <TouchableOpacity key={f.key} onPress={() => setFreq(f.key)} style={[styles.chip, { backgroundColor: t.ice50, borderColor: t.line }, freq === f.key && { backgroundColor: '#1E7A50', borderColor: '#1E7A50' }]}>
+                <TouchableOpacity key={f.key} onPress={() => setFreq(f.key)} style={[styles.chip, { backgroundColor: t.ice50, borderColor: t.line }, freq === f.key && { backgroundColor: brandFern, borderColor: brandFern }]}>
                   <Text style={[styles.chipText, { color: freq === f.key ? '#FFFFFF' : t.text }]}>{f.label}</Text>
                 </TouchableOpacity>
               ))}
@@ -323,7 +327,7 @@ export function RecurringSection() {
               <PressableScale onPress={() => setModal(null)} haptic="light" style={[styles.modalBtn, { backgroundColor: t.ice100 }]} containerStyle={styles.modalBtnContainer}>
                 <Text style={[styles.modalBtnText, { color: t.text }]}>Cancel</Text>
               </PressableScale>
-              <PressableScale onPress={submit} haptic="medium" style={[styles.modalBtn, { backgroundColor: '#1E7A50' }]} containerStyle={styles.modalBtnContainer}>
+              <PressableScale onPress={submit} haptic="medium" style={[styles.modalBtn, { backgroundColor: brandFern }]} containerStyle={styles.modalBtnContainer}>
                 <Text style={[styles.modalBtnText, { color: '#FFFFFF' }]}>{modal?.rule ? 'Save' : 'Schedule'}</Text>
               </PressableScale>
             </View>

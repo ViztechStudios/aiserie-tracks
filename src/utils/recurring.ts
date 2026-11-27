@@ -39,8 +39,17 @@ function toISO(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
-/** Next calendar date strictly after `dateISO`, matching the frequency. */
-export function nextAfter(freq: RecurFreq, dateISO: string): string {
+/** Day-of-month of an ISO date (the anchor a monthly schedule holds onto). */
+export function anchorDayOf(dateISO: string): number {
+  if (!isISODate(dateISO)) return 0;
+  return Number(dateISO.split('-')[2]);
+}
+
+/** Next calendar date strictly after `dateISO`, matching the frequency.
+ *  For monthly rules, pass `anchorDay` (the rule's start day) so a short
+ *  month's clamp (Jan 31 → Feb 28) does not permanently drag the schedule
+ *  down to the 28th — March returns to the 31st (v4.2.0 drift fix). */
+export function nextAfter(freq: RecurFreq, dateISO: string, anchorDay?: number): string {
   // Defensive stop: a malformed/missing date (old data, hand-edited backup)
   // must never crash a render — restart from today instead of throwing.
   if (!isISODate(dateISO)) return toISO(new Date());
@@ -51,7 +60,10 @@ export function nextAfter(freq: RecurFreq, dateISO: string): string {
   if (known === 'monthly') {
     const nd = new Date(y, m - 1 + 1, 1); // first of next month
     const dim = new Date(nd.getFullYear(), nd.getMonth() + 1, 0).getDate();
-    nd.setDate(Math.min(d, dim));
+    // hold onto the anchored day when one was supplied; otherwise keep the
+    // cursor's day (preserves the old behaviour for direct callers)
+    const wanted = anchorDay && anchorDay >= 1 && anchorDay <= 31 ? anchorDay : d;
+    nd.setDate(Math.min(wanted, dim));
     return toISO(nd);
   }
   // yearly: same month/day next year, clamped to Feb 28 on leap years
@@ -63,8 +75,9 @@ const FREQS: RecurFreq[] = ['daily', 'weekly', 'monthly', 'yearly'];
 
 /** First occurrence on/after `startDate` (i.e. the schedule anchor). */
 export function firstOccurrence(freq: RecurFreq, startDate: string, anchorDay?: number): string {
-  // For monthly/yearly the anchor day-of-month comes from the start date and
-  // is preserved (clamped) for shorter months.
+  // The anchor day-of-month comes from the start date and is preserved
+  // (clamped) for shorter months via nextAfter's anchorDay parameter.
+  void freq;
   void anchorDay;
   return startDate;
 }
@@ -107,13 +120,16 @@ export function generateDue(rules: Recurring[], existingTxIds: Set<string>, toda
     // the amount first (the card is paused and prompts them to edit)
     if (!(typeof rule.amount === 'number' && Number.isFinite(rule.amount) && rule.amount > 0)) continue;
     if (!isISODate(rule.startDate) || !isISODate(rule.nextRun)) continue;
+    // v4.2.0: the rule's start day is the permanent anchor — short months
+    // clamp one occurrence but the schedule recovers on the next long month
+    const anchor = anchorDayOf(rule.startDate);
     let cursor = rule.nextRun;
     let lastRun = rule.lastRun;
     let attempts = 0;
     while (cursor <= todayISO) {
       if (cursor < horizon) {
         // dead zone — fast-forward without writing or counting toward the cap
-        cursor = nextAfter(rule.freq, cursor);
+        cursor = nextAfter(rule.freq, cursor, anchor);
         continue;
       }
       const txId = `${REC_TX_ID_PREFIX}${rule.id}${cursor}`;
@@ -135,7 +151,7 @@ export function generateDue(rules: Recurring[], existingTxIds: Set<string>, toda
       } else {
         lastRun = cursor;
       }
-      cursor = nextAfter(rule.freq, cursor);
+      cursor = nextAfter(rule.freq, cursor, anchor);
       attempts += 1;
       if (attempts >= MAX_CATCH_UP) break;
     }
@@ -158,9 +174,10 @@ export function upcomingFor(rule: Recurring, count: number = 3): string[] {
     : isISODate(rule?.startDate)
       ? rule.startDate
       : toISO(new Date());
+  const anchor = isISODate(rule?.startDate) ? anchorDayOf(rule.startDate) : undefined;
   while (out.length < count) {
     out.push(cursor);
-    cursor = nextAfter(rule?.freq ?? 'monthly', cursor);
+    cursor = nextAfter(rule?.freq ?? 'monthly', cursor, anchor);
   }
   return out;
 }
