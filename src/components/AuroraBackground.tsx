@@ -12,8 +12,8 @@ interface Props {
 
 /**
  * Fixed backdrop behind every screen: capiz-paper in light, midnight ink in
- * dark, both with a barely-there woven texture and a faint warm light at the
- * top edge. Material, not decoration.
+ * dark — with a woven texture, two soft light orbs the glass cards refract,
+ * and a faint warm light at the top edge. Material, not decoration.
  */
 export function AuroraBackground({ intensity = 1 }: Props) {
   const { progress, aurora } = useTheme();
@@ -29,6 +29,15 @@ export function AuroraBackground({ intensity = 1 }: Props) {
           resizeMode="cover"
           style={[styles.weaveFill, { opacity: aurora.weaveOpacity }]}
         />
+        {/* the light the glass refracts: one leaf orb, one warm orb */}
+        <LinearGradient
+          colors={['rgba(151,199,168,0.34)', 'rgba(151,199,168,0)']}
+          style={styles.orbA}
+        />
+        <LinearGradient
+          colors={['rgba(217,161,59,0.16)', 'rgba(217,161,59,0)']}
+          style={styles.orbB}
+        />
         <LinearGradient
           colors={[aurora.glow, 'rgba(0,0,0,0)']}
           locations={[0, 1]}
@@ -42,6 +51,14 @@ export function AuroraBackground({ intensity = 1 }: Props) {
           resizeMode="cover"
           style={[styles.weaveFill, { opacity: aurora.weaveOpacity }]}
         />
+        <LinearGradient
+          colors={['rgba(46,94,66,0.42)', 'rgba(46,94,66,0)']}
+          style={styles.orbA}
+        />
+        <LinearGradient
+          colors={['rgba(229,185,92,0.10)', 'rgba(229,185,92,0)']}
+          style={styles.orbB}
+        />
       </Animated.View>
       {/* keeps Android overflow clipping happy without extra layers */}
       {Platform.OS === 'android' ? <View style={styles.spacer} /> : null}
@@ -51,6 +68,9 @@ export function AuroraBackground({ intensity = 1 }: Props) {
 
 const styles = StyleSheet.create({
   spacer: { width: 1, height: 1 },
+  // soft light orbs — big radial fades the frosted cards appear to refract
+  orbA: { position: 'absolute', top: -140, right: -120, width: 460, height: 460, borderRadius: 230 },
+  orbB: { position: 'absolute', bottom: -120, left: -100, width: 380, height: 380, borderRadius: 190 },
   // Web note: with bare absoluteFill insets, react-native-web keeps the Image
   // at its intrinsic 480px size, which split wide screens with a seam. Percent
   // sizing stretches the texture to the real viewport on web and native alike.

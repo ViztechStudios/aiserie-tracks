@@ -1,20 +1,18 @@
 /**
- * Aiserie Tracks v2.3.0 — "Fern & Bark" design system.
+ * Aiserie Tracks v4.1.0 — "Orbit & Frost" design system.
  *
- * One idea carries the whole app: a friendly ledger kept in a fern house —
- * deep jungle green, paper-white cards, and two small companions (a pup and
- * a tabby) who greet you on every page. Restraint does the rest:
+ * One idea carries the whole app: your money, kept in orbit — a geometric
+ * monogram (the Orbit A), deep pine ink on a soft mint field, and glass
+ * surfaces that pick up the light behind them. Restraint does the rest:
  *
- *  - Cards are white and quiet; depth comes from hairlines and small,
- *    directional shadows — never from glow or sheen.
+ *  - Cards are frosted, not painted: a translucent fill, a hairline edge and
+ *    a top sheen — the aurora backdrop glows through them (glassmorphism).
  *  - Fern ink (#0D3B27) is the only "brand surface": page headers and the
  *    primary action. One mango-gold accent (#D9A13B) marks focus, craft
  *    edges and the active tab. Nothing else competes for attention.
  *  - Type has a fixed voice: Lora (serif) for page titles only, Manrope
  *    everywhere else — Medium for body, Bold for labels and amounts,
  *    ExtraBold reserved for the single hero number on a screen.
- *  - The woven texture stays almost subliminal, so surfaces read as
- *    material rather than decoration.
  *
  * Light: fern paper / pine ink. Dark: jungle night / warm gold.
  * ThemeContext drives a 0->1 progress value so every surface cross-fades.
@@ -79,9 +77,10 @@ export const lightColors: ThemeColors = {
   ice100: '#E3F0E7',
 
   bg: '#F4F8F1',
-  card: '#FFFFFF',
+  /** Frosted glass fill — the aurora backdrop glows through it. */
+  card: 'rgba(255,255,255,0.74)',
   cardSolid: '#FFFFFF',
-  glassBorder: 'rgba(19,54,36,0.14)',
+  glassBorder: 'rgba(255,255,255,0.95)',
   glassBorderSoft: 'rgba(19,54,36,0.08)',
   line: 'rgba(19,54,36,0.10)',
   text: '#16382A',
@@ -120,10 +119,11 @@ export const darkColors: ThemeColors = {
   ice100: 'rgba(240,247,242,0.10)',
 
   bg: '#0A1912',
-  card: '#112719',
+  /** Frosted glass fill — the aurora backdrop glows through it. */
+  card: 'rgba(22,48,32,0.58)',
   cardSolid: '#112719',
-  glassBorder: 'rgba(157,196,175,0.16)',
-  glassBorderSoft: 'rgba(157,196,175,0.10)',
+  glassBorder: 'rgba(255,255,255,0.16)',
+  glassBorderSoft: 'rgba(255,255,255,0.09)',
   line: 'rgba(157,196,175,0.10)',
   text: '#E9F3EB',
   subtext: '#9DB8A7',
@@ -213,9 +213,9 @@ export const font = {
 } as const;
 
 export const radius = {
-  sm: 8,
-  md: 12,
-  lg: 16,
+  sm: 10,
+  md: 14,
+  lg: 20,
   pill: 999,
 };
 
@@ -229,7 +229,7 @@ export const spacing = {
 };
 
 /**
- * Shared surface recipe. Spread into any card style so every paper surface
+ * Shared surface recipe. Spread into any card style so every frosted surface
  * picks up the same hairline edge treatment.
  */
 export const glass = {
@@ -251,20 +251,20 @@ export interface ShadowPalette {
 }
 
 const shadowLight = {
-  /** Resting paper card: close, directional, quiet. */
+  /** Resting glass card: close, directional, quiet. */
   card: {
     shadowColor: '#173B2A',
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.07,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
     elevation: 2,
   },
   /** Hero cards (balance, safe-to-spend). */
   cardHi: {
     shadowColor: '#0D3B27',
-    shadowOpacity: 0.14,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.13,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 7 },
     elevation: 5,
   },
   fab: {

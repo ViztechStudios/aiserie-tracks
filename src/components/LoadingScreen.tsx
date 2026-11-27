@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Image, Platform, StyleSheet, Text, View, ViewStyle } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
@@ -37,12 +36,16 @@ const KNOWN_KEYS = [
 ];
 
 /**
- * Official boot experience — a short, confident overture:
- * the badge rises on its gold plate, a ring ripple breathes behind it, the
- * wordmark settles, Fern & Bark's paw trail walks in, and the progress bar
- * moves in honest stages (fonts, then your data) before the curtain dissolves
- * into the app. If opening takes unusually long, a quiet escape row appears
- * so the app is never a dead end.
+ * Official boot experience (v4.1.0 "Orbit & Frost"):
+ * the monogram rises on a frosted glass tile while a quiet satellite traces
+ * its orbit; the wordmark settles, three refined ticks land, and the
+ * progress line moves in honest stages (fonts, then your data) before the
+ * curtain dissolves into the app. If opening takes unusually long, a quiet
+ * escape row appears so the app is never a dead end.
+ *
+ * Animation rule (the v4.0.0 lesson): every animated props graph carries
+ * ONE driver only — transforms/opacity run native; the progress width,
+ * which needs a layout prop, is the sole JS-driven graph.
  */
 export function LoadingScreen({ ready, onDone }: Props) {
   const [mount, setMount] = React.useState(true);
@@ -51,41 +54,32 @@ export function LoadingScreen({ ready, onDone }: Props) {
   const [forced, setForced] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
 
-  const logo = useRef(new Animated.Value(0)).current;
-  const ring = useRef(new Animated.Value(0)).current;
+  const tile = useRef(new Animated.Value(0)).current;
+  const orbit = useRef(new Animated.Value(0)).current;
   const float = useRef(new Animated.Value(0)).current;
-  const breathe = useRef(new Animated.Value(0)).current;
   const word = useRef(new Animated.Value(0)).current;
   const tag = useRef(new Animated.Value(0)).current;
-  const paws = useRef(new Animated.Value(0)).current;
+  const ticks = useRef(new Animated.Value(0)).current;
   const bar = useRef(new Animated.Value(0)).current;
   const sheen = useRef(new Animated.Value(0)).current;
   const out = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     Animated.sequence([
-      Animated.timing(logo, { toValue: 1, duration: 640, easing: Easing.out(Easing.back(1.5)), useNativeDriver: true }),
+      Animated.timing(tile, { toValue: 1, duration: 640, easing: Easing.out(Easing.back(1.4)), useNativeDriver: true }),
       Animated.timing(word, { toValue: 1, duration: 480, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
       Animated.timing(tag, { toValue: 1, duration: 420, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
-      Animated.timing(paws, { toValue: 1, duration: 620, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+      Animated.timing(ticks, { toValue: 1, duration: 560, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
     ]).start();
+    // the satellite: one lap every 2.6 s, forever
     Animated.loop(
-      Animated.sequence([
-        Animated.timing(ring, { toValue: 1, duration: 1500, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
-        Animated.timing(ring, { toValue: 0, duration: 300, useNativeDriver: true }),
-        Animated.timing(ring, { toValue: 0, duration: 700, useNativeDriver: true }),
-      ])
+      Animated.timing(orbit, { toValue: 1, duration: 2600, easing: Easing.linear, useNativeDriver: true })
     ).start();
+    // the tile breathes on a slow sine
     Animated.loop(
       Animated.sequence([
-        Animated.timing(float, { toValue: 1, duration: 1600, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
-        Animated.timing(float, { toValue: 0, duration: 1600, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
-      ])
-    ).start();
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(breathe, { toValue: 1, duration: 1800, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
-        Animated.timing(breathe, { toValue: 0, duration: 1800, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+        Animated.timing(float, { toValue: 1, duration: 1700, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+        Animated.timing(float, { toValue: 0, duration: 1700, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
       ])
     ).start();
     // honest staged progress: fonts & shell, then data
@@ -107,7 +101,7 @@ export function LoadingScreen({ ready, onDone }: Props) {
       clearTimeout(timer);
       clearTimeout(watchdog);
     };
-  }, [logo, ring, word, tag, paws, float, breathe, bar, sheen]);
+  }, [tile, orbit, word, tag, ticks, float, bar, sheen]);
 
   // last beat: finish the bar when the app is actually ready
   const shouldDissolve = (ready || forced) && introDone;
@@ -163,46 +157,41 @@ export function LoadingScreen({ ready, onDone }: Props) {
         pointerEvents="none"
         style={[StyleSheet.absoluteFill, { opacity: 0.06, tintColor: '#9BD9B8' }]}
       />
-      {/* soft glow behind the badge */}
-      <View style={styles.glowWrap} pointerEvents="none">
-        <View style={styles.glow} />
+      {/* soft light the glass refracts */}
+      <View style={styles.orbWrap} pointerEvents="none">
+        <LinearGradient colors={['rgba(159,231,192,0.14)', 'rgba(159,231,192,0)']} style={styles.orbA} />
+        <LinearGradient colors={['rgba(233,196,106,0.10)', 'rgba(233,196,106,0)']} style={styles.orbB} />
       </View>
       <View style={styles.center}>
+        {/* frosted tile + orbiting satellite */}
         <Animated.View
           style={{
-            opacity: logo,
+            opacity: tile,
             transform: [
-              { scale: logo.interpolate({ inputRange: [0, 1], outputRange: [0.55, 1] }) },
+              { scale: tile.interpolate({ inputRange: [0, 1], outputRange: [0.6, 1] }) },
               { translateY: float.interpolate({ inputRange: [0, 1], outputRange: [0, -7] }) },
-              {
-                scale: breathe.interpolate({ inputRange: [0, 1], outputRange: [1, 1.025] }),
-              },
             ],
           }}
         >
-          {/* one breathing ring ripple behind the badge */}
-          <Animated.View
-            pointerEvents="none"
-            style={[
-              styles.ring,
-              {
-                opacity: ring.interpolate({ inputRange: [0, 0.55, 1], outputRange: [0, 0.34, 0] }),
-                transform: [{ scale: ring.interpolate({ inputRange: [0, 1], outputRange: [0.86, 1.22] }) }],
-              },
-            ]}
-          />
-          <LinearGradient
-            colors={['rgba(233,196,106,0.26)', 'rgba(233,196,106,0.05)']}
-            start={{ x: 0.5, y: 0 }}
-            end={{ x: 0.5, y: 1 }}
-            style={styles.halo}
-          >
-            <Animated.Image
-              source={require('../../assets/splash-icon.png')}
-              style={styles.logo}
-              resizeMode="cover"
-            />
-          </LinearGradient>
+          <View style={styles.orbitFrame}>
+            {/* the orbit ring */}
+            <View pointerEvents="none" style={styles.orbitRing} />
+            {/* the satellite: one glowing dot on the ring, carried by rotation */}
+            <Animated.View
+              pointerEvents="none"
+              style={[styles.orbitSpin, { transform: [{ rotate: orbit.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] }) }] }]}
+            >
+              <View style={styles.satelliteArm}>
+                <View style={styles.satellite} />
+              </View>
+            </Animated.View>
+            {/* the monogram on its frost pane */}
+            <Animated.View
+              style={[styles.pane, { opacity: tile.interpolate({ inputRange: [0, 1], outputRange: [0, 1] }) }]}
+            >
+              <Image source={require('../../assets/splash-icon.png')} style={styles.logo} resizeMode="cover" />
+            </Animated.View>
+          </View>
         </Animated.View>
 
         <Animated.View style={{ opacity: word, transform: [{ translateY: word.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }] }}>
@@ -212,21 +201,22 @@ export function LoadingScreen({ ready, onDone }: Props) {
           <Text style={styles.tagline}>Your money, beautifully tracked</Text>
         </Animated.View>
 
-        {/* Fern & Bark's paw trail — three soft prints walking in */}
-        <Animated.View style={[styles.pawRow, { opacity: paws }]}>
+        {/* three refined ticks — quieter than any mascot */}
+        <Animated.View style={[styles.tickRow, { opacity: ticks }]}>
           {[0, 1, 2].map((i) => (
             <Animated.View
               key={i}
               style={{
-                opacity: paws.interpolate({ inputRange: [i * 0.28, Math.min(1, i * 0.28 + 0.42)], outputRange: [0, 1], extrapolate: 'clamp' }),
+                opacity: ticks.interpolate({ inputRange: [i * 0.28, Math.min(1, i * 0.28 + 0.42)], outputRange: [0, 1], extrapolate: 'clamp' }),
                 transform: [
                   {
-                    translateY: paws.interpolate({ inputRange: [i * 0.28, Math.min(1, i * 0.28 + 0.42)], outputRange: [8, 0], extrapolate: 'clamp' }),
+                    translateY: ticks.interpolate({ inputRange: [i * 0.28, Math.min(1, i * 0.28 + 0.42)], outputRange: [8, 0], extrapolate: 'clamp' }),
                   },
+                  { rotate: '45deg' },
                 ],
               }}
             >
-              <Ionicons name="paw" size={13} color={i === 2 ? 'rgba(233,196,106,0.95)' : 'rgba(233,196,106,0.5)'} />
+              <View style={[styles.tick, i === 2 && styles.tickLast]} />
             </Animated.View>
           ))}
         </Animated.View>
@@ -289,36 +279,54 @@ export function LoadingScreen({ ready, onDone }: Props) {
 const ABS_FILL: ViewStyle = { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 };
 
 const styles = StyleSheet.create({
-  glowWrap: { ...ABS_FILL, alignItems: 'center', justifyContent: 'center' },
-  glow: {
-    width: 320,
-    height: 320,
-    borderRadius: 160,
-    backgroundColor: 'rgba(233,196,106,0.10)',
-    transform: [{ scaleY: 0.82 }],
-  },
+  orbWrap: { ...ABS_FILL, alignItems: 'center', justifyContent: 'center' },
+  orbA: { position: 'absolute', top: '6%', right: '-12%', width: 440, height: 440, borderRadius: 220 },
+  orbB: { position: 'absolute', bottom: '4%', left: '-14%', width: 400, height: 400, borderRadius: 200 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 48 },
-  ring: {
+  orbitFrame: { width: 236, height: 236, alignItems: 'center', justifyContent: 'center' },
+  orbitRing: {
     ...ABS_FILL,
-    borderRadius: 38,
-    borderWidth: 1.5,
-    borderColor: 'rgba(233,196,106,0.55)',
+    borderRadius: 118,
+    borderWidth: 1,
+    borderColor: 'rgba(233,196,106,0.22)',
   },
-  halo: {
-    width: 152,
-    height: 152,
-    borderRadius: 38,
+  orbitSpin: { ...ABS_FILL },
+  satelliteArm: {
+    position: 'absolute',
+    top: 0,
+    left: '50%',
+    marginLeft: -4,
+    width: 8,
+    height: 8,
+  },
+  satellite: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+    backgroundColor: '#E9C46A',
+    shadowColor: '#E9C46A',
+    shadowOpacity: 0.9,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 0,
+  },
+  pane: {
+    width: 156,
+    height: 156,
+    borderRadius: 40,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.10)',
     borderWidth: 1,
-    borderColor: 'rgba(233,196,106,0.36)',
+    borderColor: 'rgba(255,255,255,0.22)',
     shadowColor: '#E9C46A',
-    shadowOpacity: 0.18,
-    shadowRadius: 22,
-    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.14,
+    shadowRadius: 24,
+    shadowOffset: { width: 0, height: 8 },
     elevation: 8,
+    overflow: 'hidden',
   },
-  logo: { width: 124, height: 124, borderRadius: 30, overflow: 'hidden' },
+  logo: { width: 132, height: 132, borderRadius: 34 },
   title: { color: '#FFFFFF', fontFamily: font.displayBold, fontSize: 26, letterSpacing: 0.3, marginTop: 26, textAlign: 'center' },
   tagline: {
     color: 'rgba(233,196,106,0.85)',
@@ -328,13 +336,15 @@ const styles = StyleSheet.create({
     marginTop: 7,
     textAlign: 'center',
   },
-  pawRow: { flexDirection: 'row', gap: 14, marginTop: 16, alignItems: 'center' },
+  tickRow: { flexDirection: 'row', gap: 16, marginTop: 18, alignItems: 'center' },
+  tick: { width: 8, height: 8, borderRadius: 2.5, backgroundColor: 'rgba(233,196,106,0.45)' },
+  tickLast: { backgroundColor: 'rgba(233,196,106,0.95)' },
   track: {
     marginTop: 26,
     width: 168,
     height: 3,
     borderRadius: 1.5,
-    backgroundColor: 'rgba(233,196,106,0.16)',
+    backgroundColor: 'rgba(255,255,255,0.14)',
     overflow: 'hidden',
   },
   fill: { height: '100%', borderRadius: 1.5, backgroundColor: '#E9C46A' },

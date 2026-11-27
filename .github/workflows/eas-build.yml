@@ -88,19 +88,15 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_NOTES: |
-            Aiserie Tracks v4.0.0 — "Privacy & peace of mind"
+            Aiserie Tracks v4.1.0 — "Orbit & Frost"
 
-            Fixes the crash when adding a balance (animated money counters used
-            two animation drivers on the same view — the exact cause of the
-            "Aiserie hit a snag" screen).
+            New identity: the Orbit A monogram now leads the app icon, splash
+            screens and boot experience; cards are frosted glass over a softly
+            lit aurora backdrop; the boot screen is a quiet orbit around the
+            mark; companions redrawn as clean flat illustrations.
 
-            New: privacy shield — balances hide behind a branded curtain whenever
-            you leave the app (Settings -> Privacy & storage to toggle). Works
-            together with the optional 4-digit pin lock.
-
-            Everything from v3.0.x stays: backup & restore, CSV/PDF reports,
-            recurring transactions, budget alerts, savings goals, storage meter,
-            receipt scanning, purchase detection, dark mode.
+            Everything from v4.0 stays: privacy shield, pin lock, backup &
+            restore, reports, recurring transactions, budget alerts, goals.
 
             Your data carries over automatically — nothing is reset.
         run: node scripts/attach-release.mjs
