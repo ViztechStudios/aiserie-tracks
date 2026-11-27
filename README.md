@@ -2,13 +2,15 @@
 
 A jungle-green **personal finance tracker** that runs as a **native Android app (APK)**, an **iPhone/iPad app**, and an **installable PWA** — built with [Expo](https://expo.dev), React Native and TypeScript.
 
-v4.2.0 is the **stability & security refinement** of the Orbit & Frost release: the v4.1.0 field crash is fixed at its root (shared animated theme value removed), the PIN lock gains real failed-attempt lockouts and a key-stretched hash, corrupted storage is quarantined instead of overwritten, backups restore every preference, and the ledger got faster (memoized rows, off-hot-path serialization). Same identity, same glass — everything just works better.
+v4.3.0 is the **showroom match**: the app now looks exactly like the mockups on [our website](https://aiserie-tracks-site.onrender.com/) — a deep jungle-night canvas with a moonlit aurora glow, frosted glass panes floating straight on it, the safe-to-spend hero with in/out chips, balance & savings tiles, the advisor line, a compact RECENT pane, and a quiet wordmark tab rail. The website itself is now one tap away in Settings. Same identity, every feature kept.
+
+**Explore the site:** [aiserie-tracks-site.onrender.com](https://aiserie-tracks-site.onrender.com/) · **Get the APK:** [Releases → latest](https://github.com/ViztechStudios/aiserie-tracks/releases/latest) · **Install the PWA:** [viztechstudios.github.io/aiserie-tracks](https://viztechstudios.github.io/aiserie-tracks/)
 
 ![stack](https://img.shields.io/badge/Expo-SDK%2058-0EA5E9) ![platform](https://img.shields.io/badge/Android%20%7C%20iOS%20%7C%20Web-Expo%20EAS%20%2B%20PWA-22D3EE) ![cost](https://img.shields.io/badge/distribution-%240-success)
 
 ## Features
 
-- **🫧 Glassmorphism, done tastefully** — every card is a frosted pane: translucent fill, hairline edge, soft top sheen, real depth from the aurora orbs behind it. Dark mode included
+- **🫧 Glassmorphism, done tastefully** — every card is a frosted pane: translucent fill, hairline edge, soft top sheen, real depth from the aurora orbs behind it. Jungle night (deep green canvas) is the default scheme; light mint stays one tap away
 - **🅰️ One mark everywhere** — the Orbit A monogram (letter, orbit ring, ascending bars, spark) drives the app icon, Android adaptive layers, favicon, PWA icons and every launch screen; `scripts/brand_sync.py` regenerates the whole set from one master SVG
 - **🐾 Two companions, redrawn** — the pup and tabby are now clean flat illustrations (no sticker outlines); they wave from the lock gate, recovery screen and empty states
 - **🫥 Privacy shield** — balances hide behind a branded curtain whenever you leave the app; lifts on return, under the optional PIN pad. Toggle in Settings → Privacy & storage
@@ -31,6 +33,7 @@ v4.2.0 is the **stability & security refinement** of the Orbit & Frost release: 
 - **📱 Responsive** — phones and tablets, with a mobile-first web layout and real `<input type="date">` on web
 - **💾 Backup & restore** — one JSON file with everything; import validates first, merges without duplicating, or replaces everything after a double confirmation — and rolls your old data back if a replace fails midway
 - **🛡️ Crash-proof by design** — malformed records are repaired at load or paused, never fatal; damaged storage payloads are quarantined to disk before any fresh state is written; a root error boundary swaps any render bug for a branded recovery screen; the boot curtain has a *Continue anyway* escape; no animated value is ever shared across components
+- **🌐 The showroom site, in-app** — Settings → Updates → *Visit the Aiserie website* (and a link pill on the About card) opens [aiserie-tracks-site.onrender.com](https://aiserie-tracks-site.onrender.com/): the feature tour, wallet catalog and install guides
 
 ## Backup & recovery
 
@@ -47,7 +50,8 @@ v4.2.0 is the **stability & security refinement** of the Orbit & Frost release: 
 
 | Version | Highlights |
 | --- | --- |
-| **v4.2.0** | Root-cause fix of the v4.1.0 animation crash · PIN lockout + key-stretched hash · storage quarantine · backup fidelity (privacy shield, true merge counts, duplicate-rule warnings, rollback on failed replace) · signed balance input · recurring anchor-day fix · memoized ledger rows · overlap fixes (rail, camera controls, sheets) · toast tones · boot ~1.2 s faster |
+| **v4.3.0** | "Showroom match" — the UI now mirrors the site mockups: jungle-night canvas by default, moonlit aurora glow, frosted panes on an open canvas (no painted header blocks), safe-to-spend hero with in/out chips, balance & savings tiles, advisor line, RECENT pane with expandable month ledger, wordmark tab rail with active dot, tab-bleed fix · website link in Settings + About · bright mint-teal accents, coral expenses |
+| v4.2.0 | Root-cause fix of the v4.1.0 animation crash · PIN lockout + key-stretched hash · storage quarantine · backup fidelity (privacy shield, true merge counts, duplicate-rule warnings, rollback on failed replace) · signed balance input · recurring anchor-day fix · memoized ledger rows · overlap fixes (rail, camera controls, sheets) · toast tones · boot ~1.2 s faster |
 | v4.1.0 | "Orbit & Frost" — Orbit A monogram identity, glassmorphism surfaces, redesigned boot screen, clean vector companions |
 | v4.0.0 | Privacy shield · fixed the add-balance crash (disjoint animation driver graphs) |
 | v3.0.1 | Launch-crash recovery — never a white screen again |

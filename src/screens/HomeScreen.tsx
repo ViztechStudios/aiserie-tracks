@@ -7,7 +7,6 @@ import { AuroraBackground } from '../components/AuroraBackground';
 import { Entrance } from '../components/Entrance';
 import { MascotWiggle } from '../components/MascotWiggle';
 import { MonthChips } from '../components/MonthChips';
-import { MonthSummary } from '../components/MonthSummary';
 import { MonthTxList } from '../components/MonthTxList';
 import { AccountsStrip } from '../components/AccountsStrip';
 import { GlassCard } from '../components/GlassCard';
@@ -18,17 +17,19 @@ import { useFinance } from '../store/FinanceContext';
 import { useUI } from '../store/UIContext';
 import { useTheme } from '../store/ThemeContext';
 import { accountBalance } from '../utils/accounts';
-import { font, spacing } from '../theme';
-import { currentMonthKey, monthKey, monthLabel, totalsForMonth } from '../utils/stats';
+import { getCategory } from '../data/categories';
+import { font, radius, spacing } from '../theme';
+import { buildAdvisorReport, currentMonthKey, monthKey, monthLabel, totalsForMonth } from '../utils/stats';
 import { formatMoney } from '../utils/money';
 import { useResponsive } from '../hooks/useResponsive';
+import { Transaction } from '../types';
 
 /**
- * Balance — the main page. A deep fern header greets you with the two small
- * companions (a waving tabby by your name), the month balance in ink-white,
- * the wallet pill, month chips and the income/expense pair. Below, the
- * wallet strip, the day-by-day ledger, and the Advisor card with the coach
- * duo. Every block stacks vertically — nothing floats over anything else.
+ * Balance — the main page, drawn the way the showroom mockups draw it
+ * (v4.3.0): an open aurora canvas, and floating frosted panes — the
+ * safe-to-spend hero with its in/out chips, the balance & savings tiles,
+ * the advisor line, and the recent ledger. The full month trail stays one
+ * tap away behind "See all", and the wallet strip + streak close the page.
  */
 export function HomeScreen() {
   const finance = useFinance();
@@ -37,8 +38,14 @@ export function HomeScreen() {
   const { t, isDark } = useTheme();
   const { contentWidth } = useResponsive();
   const [ym, setYm] = useState(currentMonthKey());
+  const [showAll, setShowAll] = useState(false);
 
-  const totals = useMemo(() => totalsForMonth(finance.transactions, ym), [finance.transactions, ym]);
+  const curYm = currentMonthKey();
+  const totals = useMemo(() => totalsForMonth(finance.transactions, curYm), [finance.transactions, curYm]);
+  const report = useMemo(
+    () => buildAdvisorReport(finance.transactions, curYm, finance.settings.currency),
+    [finance.transactions, curYm, finance.settings.currency]
+  );
   const monthTxs = useMemo(
     () => finance.transactions.filter((tx) => monthKey(tx.date) === ym),
     [finance.transactions, ym]
@@ -47,6 +54,15 @@ export function HomeScreen() {
     () => finance.accounts.reduce((sum, a) => sum + accountBalance(a, finance.transactions), 0),
     [finance.accounts, finance.transactions]
   );
+  const savingsRate = totals.income > 0 ? Math.round(((totals.income - totals.expense) / totals.income) * 100) : 0;
+  const kept = totals.income - totals.expense;
+
+  /** The five most recent entries, newest first — the mockup's RECENT pane. */
+  const recent = useMemo(() => {
+    return [...finance.transactions]
+      .sort((a, b) => (a.date === b.date ? b.createdAt - a.createdAt : a.date < b.date ? 1 : -1))
+      .slice(0, 5);
+  }, [finance.transactions]);
 
   const greeting = useMemo(() => {
     const h = new Date().getHours();
@@ -56,17 +72,25 @@ export function HomeScreen() {
     return 'Good evening,';
   }, []);
 
-  const heroInk = '#FFFFFF';
-  const heroSub = 'rgba(240,248,243,0.72)';
-  const actionBg = 'rgba(255,255,255,0.14)';
-  const balanceTone = totals.net >= 0 ? heroInk : '#FFC9CD';
+  // veil header inks — theme-aware since v4.3.0 (no more painted fern block)
+  const heroInk = isDark ? '#FFFFFF' : '#12331F';
+  const heroSub = isDark ? 'rgba(240,248,243,0.72)' : 'rgba(22,56,42,0.72)';
+  const actionBg = isDark ? 'rgba(255,255,255,0.14)' : 'rgba(19,54,36,0.08)';
+
+  const safe = report.safeToSpendPerDay;
+  const advisorLine =
+    safe !== null
+      ? `Advisor: on track — ${formatMoney(safe, finance.settings.currency)}/day to payday`
+      : report.insights.length > 0
+        ? `Advisor: ${report.insights[0].title}`
+        : 'Advisor: add this month’s income to unlock daily guidance';
 
   return (
     <View style={styles.root}>
       <AuroraBackground />
       <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
         <GradientHeader bare tone="deep">
-          {/* greeting row — avatar, name, quick actions */}
+          {/* greeting row — mascot, name, quick actions */}
           <View style={styles.topRow}>
             <View style={styles.mascotBubble}>
               <MascotWiggle bob={2.5} tilt={2.6} duration={1900}>
@@ -102,83 +126,128 @@ export function HomeScreen() {
               </PressableScale>
             </View>
           </View>
-
-          {/* month balance — single column, never collides */}
-          <View style={styles.balanceBlock}>
-            <Text style={[styles.balanceLabel, { color: '#F0D492' }]}>
-              {monthLabel(ym, false).toUpperCase()} NET BALANCE
-            </Text>
-            <AnimatedNumber
-              value={totals.net}
-              flash="auto"
-              restingColor={balanceTone}
-              flashUpColor="#9FE7C0"
-              flashDownColor="#FFC9CD"
-              style={[styles.balanceValue, { color: balanceTone }]}
-              format={(n) => `${totals.net >= 0 ? '+' : '−'}${formatMoney(Math.abs(n), finance.settings.currency)}`}
-            />
-          </View>
-
-          {/* wallets pill — one full-width row */}
-          <PressableScale onPress={() => ui.openWallets()} scaleTo={0.97} style={styles.walletsPill}>
-            <View style={[styles.walletsIcon, { backgroundColor: 'rgba(255,255,255,0.16)' }]}>
-              <Ionicons name="wallet-outline" size={15} color={heroInk} />
-            </View>
-            <Text style={[styles.walletsLabel, { color: heroInk }]}>All wallets</Text>
-            <View style={styles.walletsSpacer} />
-            <AnimatedNumber
-              value={walletsTotal}
-              flash="auto"
-              restingColor={heroInk}
-              flashUpColor="#F0D492"
-              flashDownColor="#FFC9CD"
-              style={[styles.walletsValue, { color: heroInk }]}
-              format={(n) => formatMoney(n, finance.settings.currency)}
-            />
-            <Ionicons name="chevron-forward" size={14} color={heroSub} />
-          </PressableScale>
-
-          {/* month chips */}
-          <View style={styles.chipsWrap}>
-            <MonthChips ym={ym} onChange={setYm} variant="onGreen" />
-          </View>
-
-          {/* income / expenses summary */}
-          <MonthSummary income={totals.income} expense={totals.expense} currency={finance.settings.currency} />
         </GradientHeader>
 
         <View style={[styles.body, contentWidth ? { alignSelf: 'center', width: '100%', maxWidth: contentWidth } : null]}>
-          <Entrance delay={120}>
-            <AccountsStrip />
+          {/* hero — safe to spend today (falls back to the month net when
+              there is no income yet to pace against) */}
+          <Entrance delay={60}>
+            <GlassCard hi style={styles.heroCard}>
+              <Text style={[styles.heroLabel, { color: heroSub }]}>
+                {safe !== null ? 'SAFE TO SPEND TODAY' : `${monthLabel(curYm, false).toUpperCase()} NET`}
+              </Text>
+              <AnimatedNumber
+                value={safe !== null ? safe : totals.net}
+                flash="auto"
+                restingColor={heroInk}
+                flashUpColor="#9FE7C0"
+                flashDownColor="#FFC9CD"
+                style={[styles.heroValue, { color: heroInk }]}
+                format={(n) => (safe !== null ? formatMoney(n, finance.settings.currency) : `${totals.net >= 0 ? '+' : '−'}${formatMoney(Math.abs(n), finance.settings.currency)}`)}
+              />
+              {/* the in / out chips */}
+              <View style={styles.chipRow}>
+                <View style={[styles.chip, { backgroundColor: t.income + '1F' }]}>
+                  <Text style={[styles.chipText, { color: t.income }]}>
+                    +{formatMoney(totals.income, finance.settings.currency)} in
+                  </Text>
+                </View>
+                <View style={[styles.chip, { backgroundColor: t.expense + '1F' }]}>
+                  <Text style={[styles.chipText, { color: t.expense }]}>
+                    −{formatMoney(totals.expense, finance.settings.currency)} out
+                  </Text>
+                </View>
+              </View>
+            </GlassCard>
           </Entrance>
 
-          <Entrance delay={180}>
-            <View style={styles.ledger}>
-              <MonthTxList
-                ym={ym}
-                transactions={monthTxs}
-                currency={finance.settings.currency}
-                accounts={finance.accounts}
-                onPressTx={(tx) => ui.openEdit(tx)}
-              />
+          {/* the two showroom tiles — total balance · savings rate */}
+          <Entrance delay={110}>
+            <View style={styles.tileRow}>
+              <PressableScale onPress={() => navigation.navigate('Wallets' as never)} scaleTo={0.96} style={styles.tilePress}>
+                <GlassCard style={styles.tile}>
+                  <View style={[styles.tileIcon, { backgroundColor: t.ocean600 + '1C' }]}>
+                    <Ionicons name="wallet-outline" size={16} color={t.ocean600} />
+                  </View>
+                  <AnimatedNumber
+                    value={walletsTotal}
+                    flash="auto"
+                    restingColor={heroInk}
+                    flashUpColor="#9FE7C0"
+                    flashDownColor="#FFC9CD"
+                    style={[styles.tileValue, { color: heroInk }]}
+                    format={(n) => formatMoney(n, finance.settings.currency)}
+                  />
+                  <Text style={[styles.tileLabel, { color: heroSub }]}>Total balance</Text>
+                </GlassCard>
+              </PressableScale>
+              <PressableScale onPress={() => navigation.navigate('Insights' as never)} scaleTo={0.96} style={styles.tilePress}>
+                <GlassCard style={styles.tile}>
+                  <View style={[styles.tileIcon, { backgroundColor: t.ocean600 + '1C' }]}>
+                    <Ionicons name="trending-up" size={16} color={t.ocean600} />
+                  </View>
+                  <Text style={[styles.tileValue, { color: heroInk }]}>
+                    {totals.income > 0 ? `${Math.max(savingsRate, 0)}%` : '—'}
+                  </Text>
+                  <Text style={[styles.tileLabel, { color: heroSub }]}>Savings rate</Text>
+                </GlassCard>
+              </PressableScale>
             </View>
           </Entrance>
 
-          {/* insights teaser with the coach duo */}
-          <Entrance delay={240}>
+          {/* the advisor line */}
+          <Entrance delay={150}>
             <GlassCard style={styles.advisorRow} onPress={() => navigation.navigate('Insights' as never)}>
-              <View style={[styles.advisorIcon, { backgroundColor: 'rgba(30,122,80,0.12)' }]}>
-                <Ionicons name="bulb-outline" size={17} color={t.ocean600} />
+              <View style={[styles.advisorIcon, { backgroundColor: t.ocean600 + '1C' }]}>
+                <Ionicons name="add" size={15} color={t.ocean600} />
               </View>
-              <View style={styles.advisorMid}>
-                <Text style={[styles.advisorTitle, { color: t.text }]}>Insights</Text>
-                <Text style={[styles.advisorSub, { color: t.subtext }]} numberOfLines={1}>
-                  Plain answers, safe-to-spend and your day-by-day trail.
-                </Text>
-              </View>
-              <Image source={require('../../assets/mascot-advisor.png')} style={styles.advisorMascot} resizeMode="contain" />
-              <Ionicons name="chevron-forward" size={15} color={t.faint} />
+              <Text style={[styles.advisorText, { color: isDark ? '#BFF0D9' : '#1E5C3C' }]} numberOfLines={2}>
+                {advisorLine}
+              </Text>
             </GlassCard>
+          </Entrance>
+
+          {/* recent — five latest entries, expandable to the full month */}
+          <Entrance delay={190}>
+            <GlassCard style={styles.recentCard}>
+              <View style={styles.recentHead}>
+                <Text style={[styles.recentLabel, { color: heroSub }]}>RECENT</Text>
+                <PressableScale
+                  onPress={() => setShowAll((v) => !v)}
+                  scaleTo={0.94}
+                  accessibilityRole="button"
+                  accessibilityLabel={showAll ? 'Show only recent entries' : 'See all entries this month'}
+                >
+                  <Text style={[styles.seeAll, { color: t.ocean600 }]}>{showAll ? 'Show less' : 'See all'}</Text>
+                </PressableScale>
+              </View>
+
+              {recent.map((tx) => (
+                <RecentRow key={tx.id} tx={tx} currency={finance.settings.currency} onPress={() => ui.openEdit(tx)} />
+              ))}
+              {recent.length === 0 ? (
+                <Text style={[styles.recentEmpty, { color: t.subtext }]}>
+                  Nothing logged yet — tap + to add your first entry.
+                </Text>
+              ) : null}
+
+              {showAll ? (
+                <View style={styles.ledgerWrap}>
+                  <MonthChips ym={ym} onChange={setYm} variant="onGreen" />
+                  <MonthTxList
+                    ym={ym}
+                    transactions={monthTxs}
+                    currency={finance.settings.currency}
+                    accounts={finance.accounts}
+                    onPressTx={(tx) => ui.openEdit(tx)}
+                  />
+                </View>
+              ) : null}
+            </GlassCard>
+          </Entrance>
+
+          <Entrance delay={240}>
+            <AccountsStrip />
           </Entrance>
 
           {/* daily streak with the tabby */}
@@ -190,6 +259,30 @@ export function HomeScreen() {
         </View>
       </ScrollView>
     </View>
+  );
+}
+
+/**
+ * One compact recent row — the mockup's dot + label + amount line. Reads no
+ * context beyond what it is handed, so the pane stays cheap to render.
+ */
+function RecentRow({ tx, currency, onPress }: { tx: Transaction; currency: string; onPress: () => void }) {
+  const { t } = useTheme();
+  const cat = getCategory(tx.categoryId);
+  const transfer = tx.type === 'transfer';
+  const tint = tx.type === 'income' ? t.income : transfer ? t.ocean600 : t.expense;
+  const label = transfer ? 'Transfer' : tx.note ? tx.note : cat?.label ?? 'Entry';
+  return (
+    <PressableScale onPress={onPress} scaleTo={0.97} style={styles.recentRow} accessibilityRole="button" accessibilityLabel={`Edit ${label}`}>
+      <View style={[styles.recentDot, { backgroundColor: transfer ? t.ocean600 : cat?.color ?? t.faint }]} />
+      <Text style={[styles.recentName, { color: t.text }]} numberOfLines={1}>
+        {label}
+      </Text>
+      <Text style={[styles.recentAmount, { color: tint }]}>
+        {tx.type === 'income' ? '+' : transfer ? '' : '−'}
+        {formatMoney(tx.amount, currency)}
+      </Text>
+    </PressableScale>
   );
 }
 
@@ -209,7 +302,7 @@ const styles = StyleSheet.create({
   mascotImg: { width: 46, height: 46, marginTop: 3 },
   topMid: { flex: 1, marginLeft: spacing.md, marginRight: spacing.sm },
   hello: { fontFamily: font.medium, fontSize: 12.5 },
-  userName: { fontFamily: font.display, fontSize: 20, marginTop: 1 },
+  userName: { fontFamily: font.display, fontSize: 24, marginTop: 1 },
   actions: { flexDirection: 'row', gap: spacing.sm },
   actionCircle: {
     width: 38,
@@ -218,59 +311,90 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  balanceBlock: { marginTop: spacing.xl },
-  balanceLabel: { fontFamily: font.bold, fontSize: 10, letterSpacing: 1.4 },
-  balanceValue: {
+  body: { paddingHorizontal: spacing.xl, paddingTop: spacing.xs, paddingBottom: 132 },
+
+  // hero pane
+  heroCard: { borderRadius: radius.lg + 2, padding: spacing.xl - 2 },
+  heroLabel: { fontFamily: font.bold, fontSize: 10.5, letterSpacing: 1.6 },
+  heroValue: {
     fontFamily: font.heavy,
-    fontSize: 36,
-    marginTop: 6,
+    fontSize: 38,
+    marginTop: 8,
     letterSpacing: 0.2,
     flexShrink: 1,
     alignSelf: 'flex-start',
     maxWidth: '100%',
   },
-  walletsPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: spacing.lg,
-    paddingVertical: 10,
+  chipRow: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md + 2 },
+  chip: {
+    paddingVertical: 6,
     paddingHorizontal: 12,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.16)',
+    borderRadius: radius.pill,
   },
-  walletsIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 9,
+  chipText: { fontFamily: font.bold, fontSize: 12 },
+
+  // showroom tiles
+  tileRow: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.md },
+  tilePress: { flex: 1 },
+  tile: { flex: 1, padding: spacing.lg - 2 },
+  tileIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 11,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: spacing.sm,
+    marginBottom: spacing.md,
   },
-  walletsLabel: { fontFamily: font.bold, fontSize: 12.5, flexShrink: 1 },
-  walletsSpacer: { flex: 1, width: 8 },
-  walletsValue: { fontFamily: font.heavy, fontSize: 13.5, marginRight: 6, maxWidth: '55%' },
-  chipsWrap: { marginTop: spacing.md },
-  body: { paddingHorizontal: spacing.xl, paddingTop: spacing.md, paddingBottom: 120 },
-  ledger: { marginTop: spacing.sm },
+  tileValue: {
+    fontFamily: font.heavy,
+    fontSize: 21,
+    flexShrink: 1,
+    alignSelf: 'flex-start',
+    maxWidth: '100%',
+  },
+  tileLabel: { fontFamily: font.medium, fontSize: 11.5, marginTop: 3 },
+
+  // advisor line
   advisorRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 12,
     paddingHorizontal: spacing.md,
     borderRadius: 16,
-    marginTop: spacing.lg,
+    marginTop: spacing.md,
   },
   advisorIcon: {
-    width: 34,
-    height: 34,
-    borderRadius: 12,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  advisorMid: { flex: 1, marginHorizontal: spacing.md },
-  advisorTitle: { fontFamily: font.bold, fontSize: 14.5 },
-  advisorSub: { fontFamily: font.medium, fontSize: 12, marginTop: 1 },
-  advisorMascot: { width: 58, height: 44, marginLeft: spacing.sm },
+  advisorText: { flex: 1, fontFamily: font.bold, fontSize: 12.5, marginLeft: spacing.sm + 2 },
+
+  // recent pane
+  recentCard: { marginTop: spacing.md, borderRadius: radius.lg + 2 },
+  recentHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing.sm + 2,
+  },
+  recentLabel: { fontFamily: font.bold, fontSize: 10.5, letterSpacing: 1.6 },
+  seeAll: { fontFamily: font.bold, fontSize: 12.5 },
+  recentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 9.5,
+  },
+  recentDot: {
+    width: 9,
+    height: 9,
+    borderRadius: 4.5,
+    marginRight: spacing.md + 2,
+  },
+  recentName: { flex: 1, fontFamily: font.medium, fontSize: 13.5, marginRight: spacing.sm },
+  recentAmount: { fontFamily: font.bold, fontSize: 13.5 },
+  recentEmpty: { fontFamily: font.medium, fontSize: 12.5, paddingVertical: spacing.sm },
+  ledgerWrap: { marginTop: spacing.md, borderTopWidth: 1, borderTopColor: 'rgba(157,196,175,0.14)', paddingTop: spacing.md },
 });

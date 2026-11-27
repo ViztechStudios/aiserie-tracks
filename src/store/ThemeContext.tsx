@@ -29,7 +29,11 @@ function resolveIsDark(mode: ThemeMode, system: 'light' | 'dark' | null): boolea
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [mode, setModeState] = useState<ThemeMode>('system');
+  // v4.3.0: first-run default is now "jungle night" — the showroom look the
+  // brand is built around (deep green canvas, frosted glass). Users who have
+  // picked light/system keep their saved choice; only the pristine install
+  // starts dark.
+  const [mode, setModeState] = useState<ThemeMode>('dark');
   const [systemScheme, setSystemScheme] = useState<'light' | 'dark' | null>(() => {
     const s = Appearance.getColorScheme();
     return s === 'dark' || s === 'light' ? s : null;

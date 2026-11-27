@@ -62,14 +62,10 @@ export function MonthChips({
                 backgroundColor: on
                   ? isDark
                     ? t.sun500
-                    : onGreen
-                      ? '#FFFFFF'
-                      : '#0D3B27'
+                    : '#0D3B27'
                   : isDark
                     ? 'rgba(255,255,255,0.10)'
-                    : onGreen
-                      ? 'rgba(255,255,255,0.16)'
-                      : 'rgba(19,54,36,0.08)',
+                    : 'rgba(19,54,36,0.08)',
               },
             ]}
           >
@@ -80,14 +76,10 @@ export function MonthChips({
                   color: on
                     ? isDark
                       ? '#05130C'
-                      : onGreen
-                        ? '#0D3B27'
-                        : '#FFFFFF'
+                      : '#FFFFFF'
                     : isDark
                       ? t.subtext
-                      : onGreen
-                        ? 'rgba(255,255,255,0.85)'
-                        : '#4E6A5B',
+                      : '#4E6A5B',
                 },
               ]}
             >

@@ -79,7 +79,7 @@ function Shell() {
   useEffect(() => {
     installStorageFlushHooks();
   }, []);
-  const { t } = useTheme();
+  const { t, isDark } = useTheme();
   const ui = useUI();
   const [fontsLoaded] = useFonts({ Manrope_500Medium, Manrope_700Bold, Manrope_800ExtraBold, Lora_600SemiBold, Lora_700Bold });
   const [booting, setBooting] = useState(true);
@@ -125,7 +125,10 @@ function Shell() {
 
   return (
     <NavigationContainer theme={navTheme}>
-      <StatusBar style="light" />
+      {/* v4.3.0: headers are now transparent veils on the aurora, so the
+          status bar ink must follow the scheme (white on jungle night,
+          pine on mint paper) instead of always-white. */}
+      <StatusBar style={isDark ? 'light' : 'dark'} />
       <RootNavigator />
       <TransactionModal />
       <WalletsModal />

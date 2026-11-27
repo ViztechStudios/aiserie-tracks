@@ -58,65 +58,72 @@ const TAB_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
 };
 
 /**
- * One tab slot: a compact icon plate with the label pinned beneath it. The
- * active tab tints its plate and carries a small gold mark — the accent
- * thread of the whole app. Every dimension is explicit and centered.
+ * One tab slot — v4.3.0 showroom rail: a quiet uppercase wordmark, the way
+ * the site mockups draw navigation. The active tab turns mint-teal and a
+ * small dot springs in beneath it; nothing else competes for attention.
  */
 function TabSlot({
   routeKey,
-  icon,
   label,
   focused,
   onPress,
 }: {
   routeKey: string;
-  icon: keyof typeof Ionicons.glyphMap;
   label: string;
   focused: boolean;
   onPress: () => void;
 }) {
   const { t } = useTheme();
-  // the active icon pops in with a spring — tabs feel alive, not static
-  const pop = useRef(new Animated.Value(focused ? 1 : 0.92)).current;
+  // the active dot pops in with a spring — tabs feel alive, not static
+  const dot = useRef(new Animated.Value(focused ? 1 : 0)).current;
   useEffect(() => {
-    if (!focused) return;
-    pop.setValue(0.68);
-    Animated.spring(pop, { toValue: 1, friction: 4.2, tension: 240, useNativeDriver: true }).start();
-  }, [focused, pop]);
+    try {
+      Animated.spring(dot, {
+        toValue: focused ? 1 : 0,
+        friction: 5,
+        tension: 260,
+        useNativeDriver: true, // transform only — sole driver on this value
+      }).start();
+    } catch {
+      /* a tab dot can never take the app down */
+    }
+  }, [focused, dot]);
   return (
     <View style={styles.slot}>
       <PressableScale
         onPress={onPress}
-        scaleTo={0.9}
+        scaleTo={0.94}
         style={styles.slotPress}
         haptic={focused ? false : 'light'}
         accessibilityRole="tab"
         accessibilityLabel={label}
         accessibilityState={{ selected: focused }}
       >
-        <Animated.View
-          style={[
-            styles.plate,
-            focused && { backgroundColor: t.ice100 },
-            { transform: [{ scale: pop }] },
-          ]}
+        <Text
+          numberOfLines={1}
+          style={[styles.label, { color: focused ? t.ocean600 : t.faint }, focused && styles.labelOn]}
         >
-          <Ionicons name={focused ? icon : (`${icon}-outline` as keyof typeof Ionicons.glyphMap)} size={20} color={focused ? t.ocean600 : t.faint} />
-          {focused ? <View style={[styles.plateMark, { backgroundColor: t.sun500 }]} /> : null}
-        </Animated.View>
-        <Text numberOfLines={1} style={[styles.label, { color: focused ? t.text : t.faint }, focused && styles.labelOn]}>
-          {label}
+          {label.toUpperCase()}
         </Text>
+        {focused ? (
+          <Animated.View
+            style={[
+              styles.dot,
+              { backgroundColor: t.ocean600, opacity: dot, transform: [{ scale: dot }] },
+            ]}
+          />
+        ) : null}
       </PressableScale>
     </View>
   );
 }
 
 /**
- * The bottom rail — Home · Wallets · [+ add] · Insights · Finance — on a
- * solid paper surface. The big green + lives in the rail itself, so no
- * floating button ever covers the page content. Anchored insets keep
- * everything clear of the home indicator on notched iPhones.
+ * The bottom rail — HOME · WALLETS · [+ add] · REPORTS · FINANCE — a frosted
+ * strip floating on the aurora. Labels only, like the site mockups; the big
+ * green + lives in the rail itself, so no floating button ever covers the
+ * page content. Anchored insets keep everything clear of the home indicator
+ * on notched iPhones.
  */
 function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const { t, isDark, shadow } = useTheme();
@@ -124,6 +131,12 @@ function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const bottomInset = Math.max(insets.bottom, Platform.OS === 'ios' ? 10 : 6);
   const gradients = gradientsFor(isDark);
+  // v4.3.0: the rail now floats over the aurora with page content scrolling
+  // beneath it — a near-transparent glass fill let the ledger read straight
+  // through the tab labels (the "overlapping tabs" report). The fill is a
+  // solid ink of the canvas so nothing ever ghosts through the labels; the
+  // hairline + shadow still read as a pane.
+  const railFill = isDark ? '#0A1F15' : '#F6FBF7';
 
   return (
     <View style={styles.railWrap} pointerEvents="box-none">
@@ -131,13 +144,13 @@ function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
         style={[
           styles.rail,
           {
-            backgroundColor: t.card,
+            backgroundColor: railFill,
             borderTopColor: t.line,
             // additive: body height + safe-area inset (see styles.rail note)
             height: railTotalHeight(bottomInset),
             paddingBottom: bottomInset,
           },
-          isDark ? null : shadow.card,
+          shadow.card,
         ]}
       >
         {state.routes.map((route, index) => {
@@ -150,7 +163,6 @@ function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
             <TabSlot
               key={route.key}
               routeKey={route.key}
-              icon={icon}
               label={label}
               focused={focused}
               onPress={() => {
@@ -206,7 +218,7 @@ export function RootNavigator() {
     >
       <Tab.Screen name="Home" component={HomeScreen} options={{ title: 'Home' }} />
       <Tab.Screen name="Wallets" component={WalletsScreen} options={{ title: 'Wallets' }} />
-      <Tab.Screen name="Insights" component={suspend(InsightsScreen)} options={{ title: 'Insights' }} />
+      <Tab.Screen name="Insights" component={suspend(InsightsScreen)} options={{ title: 'Reports' }} />
       <Tab.Screen name="Finance" component={suspend(FinanceScreen)} options={{ title: 'Finance' }} />
       <Tab.Screen name="Scan" component={suspend(ScanScreen)} options={{ title: 'Scan' }} />
       <Tab.Screen name="Settings" component={suspend(SettingsScreen)} options={{ title: 'Settings' }} />
@@ -248,30 +260,21 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 3,
-    paddingTop: 4,
+    gap: 5,
+    paddingTop: 6,
   },
-  plate: {
-    width: 34,
-    height: 24,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  plateMark: {
-    position: 'absolute',
-    top: -3,
-    right: 3,
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
+  dot: {
+    width: 4.5,
+    height: 4.5,
+    borderRadius: 2.25,
   },
   label: {
     fontFamily: font.medium,
     fontSize: 10,
-    letterSpacing: 0.1,
+    letterSpacing: 1.6,
   },
   labelOn: {
     fontFamily: font.bold,
+    letterSpacing: 1.8,
   },
 });

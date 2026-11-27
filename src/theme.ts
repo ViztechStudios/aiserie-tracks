@@ -1,5 +1,5 @@
 /**
- * Aiserie Tracks v4.1.0 — "Orbit & Frost" design system.
+ * Aiserie Tracks v4.3.0 — "Orbit & Frost", showroom match.
  *
  * One idea carries the whole app: your money, kept in orbit — a geometric
  * monogram (the Orbit A), deep pine ink on a soft mint field, and glass
@@ -107,34 +107,37 @@ export const brandFern = '#1E7A50';
 export const brandOcean = brandFern;
 
 export const darkColors: ThemeColors = {
+  // v4.3.0 showroom match: the canvas is a richer jungle green (not
+  // near-black) so the frosted panes read as glass against it, and the
+  // accent is the site's bright mint-teal for links / active marks.
   ocean900: '#05130C',
   ocean800: '#0A2418',
-  ocean600: '#6FCB97',
-  ocean500: '#8FD9AE',
-  aqua400: '#3F9B6C',
-  aqua300: '#79B993',
+  ocean600: '#4FCF9E',
+  ocean500: '#6FDCAB',
+  aqua400: '#3ECFA0',
+  aqua300: '#8FDFBC',
   sun500: '#E5B95C',
   sun300: '#EFD492',
   goldWash: 'rgba(229,185,92,0.12)',
-  ice50: 'rgba(240,247,242,0.06)',
-  ice100: 'rgba(240,247,242,0.10)',
+  ice50: 'rgba(240,247,242,0.07)',
+  ice100: 'rgba(240,247,242,0.12)',
 
-  bg: '#0A1912',
-  /** Frosted glass fill — the aurora backdrop glows through it. */
-  card: 'rgba(22,48,32,0.58)',
-  cardSolid: '#112719',
-  glassBorder: 'rgba(255,255,255,0.16)',
+  bg: '#0B241A',
+  /** Frosted glass fill — lighter than the canvas, aurora glows through. */
+  card: 'rgba(255,255,255,0.07)',
+  cardSolid: '#102B1E',
+  glassBorder: 'rgba(255,255,255,0.17)',
   glassBorderSoft: 'rgba(255,255,255,0.09)',
-  line: 'rgba(157,196,175,0.10)',
+  line: 'rgba(157,196,175,0.12)',
   text: '#E9F3EB',
   subtext: '#9DB8A7',
   faint: '#6B8577',
 
-  expense: '#E8929C',
-  income: '#57C98F',
+  expense: '#F0776B',
+  income: '#43D68C',
   warn: '#E5B95C',
-  risk: '#E8929C',
-  good: '#57C98F',
+  risk: '#F0776B',
+  good: '#43D68C',
 
   white: '#FFFFFF',
 };
@@ -176,15 +179,17 @@ export const auroraLight = {
   /** Tint applied to the woven-paper texture. */
   weave: '#7FA98B',
   weaveOpacity: 0.07,
-  /** Soft leaf-light at the top edge, kept faint. */
-  glow: 'rgba(151,199,168,0.18)',
+  /** Soft leaf-light at the top edge — a touch stronger since v4.3.0 so the
+   *  glass panes have light to refract on the mint canvas too. */
+  glow: 'rgba(151,199,168,0.26)',
 } as const;
 
 export const auroraDark = {
-  base: '#0A1912',
+  base: '#0B241A',
   weave: '#2E5240',
-  weaveOpacity: 0.10,
-  glow: 'rgba(229,185,92,0.06)',
+  weaveOpacity: 0.08,
+  /** Moonlit mint at the top edge — the showroom glow. */
+  glow: 'rgba(98,214,166,0.10)',
 } as const;
 
 export function gradientsFor(isDark: boolean): Palette {

@@ -28,6 +28,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { checkForUpdate, RELEASES_URL } from '../services/updateCheck';
 
 const APP_VERSION = Constants.expoConfig?.version ?? '2.1.0';
+/** The showroom site — feature tour, wallet catalog, install guides. */
+const SITE_URL = 'https://aiserie-tracks-site.onrender.com/';
 
 const MODE_OPTIONS: { key: ThemeMode; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
   { key: 'system', label: 'System', icon: 'phone-portrait-outline' },
@@ -337,6 +339,23 @@ export function SettingsScreen() {
               </View>
               <Ionicons name="open-outline" size={16} color={t.faint} />
             </PressableScale>
+            {/* v4.3.0 — the showroom site, one tap away */}
+            <PressableScale
+              onPress={() => {
+                Linking.openURL(SITE_URL).catch(() => {});
+              }}
+              style={[styles.row, { backgroundColor: t.card, borderColor: t.glassBorderSoft }]}
+              haptic="light"
+            >
+              <RowIcon name="globe-outline" tint={t.ocean600} />
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.rowTitle, { color: t.text }]}>Visit the Aiserie website</Text>
+                <Text style={[styles.rowSub, { color: t.subtext }]}>
+                  Feature tour, the wallet catalog and install guides — aiserie-tracks-site.onrender.com
+                </Text>
+              </View>
+              <Ionicons name="open-outline" size={16} color={t.faint} />
+            </PressableScale>
           </Entrance>
 
           <Entrance delay={160}>
@@ -496,8 +515,22 @@ export function SettingsScreen() {
                 which is why a pup and a tabby keep your ledger company instead of dashboards and jargon.
               </Text>
               <Text style={[styles.aboutVersion, { color: t.faint }]}>
-                Aiserie Tracks v{APP_VERSION} · Fern &amp; Bark
+                Aiserie Tracks v{APP_VERSION} · Orbit &amp; Frost
               </Text>
+              <PressableScale
+                onPress={() => {
+                  Linking.openURL(SITE_URL).catch(() => {});
+                }}
+                style={[styles.aboutSiteLink, { backgroundColor: t.ice50 }]}
+                haptic="light"
+                accessibilityRole="button"
+                accessibilityLabel="Open the Aiserie Tracks website"
+              >
+                <Ionicons name="globe-outline" size={14} color={t.ocean600} />
+                <Text style={[styles.aboutSiteText, { color: t.ocean600 }]} numberOfLines={1}>
+                  aiserie-tracks-site.onrender.com
+                </Text>
+              </PressableScale>
             </View>
           </Entrance>
         </View>
@@ -716,6 +749,17 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   aboutVersion: { fontFamily: font.bold, fontSize: 11, letterSpacing: 0.6, marginTop: spacing.xs },
+  aboutSiteLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 6,
+    paddingVertical: 7,
+    paddingHorizontal: 12,
+    borderRadius: radius.pill,
+    marginTop: spacing.md,
+  },
+  aboutSiteText: { fontFamily: font.bold, fontSize: 12 },
   nameInput: { fontFamily: font.bold, fontSize: 16, paddingVertical: 6, paddingHorizontal: 0 },
   hint: { fontFamily: font.medium, fontSize: 11.5, marginTop: spacing.sm, marginBottom: spacing.md },
   pickerBackdrop: { flex: 1, justifyContent: 'flex-end' },

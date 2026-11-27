@@ -2,7 +2,7 @@ import React from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { font, gradientsDark, gradientsLight, gradientsFor, spacing } from '../theme';
+import { font, gradientsDark, gradientsLight, spacing } from '../theme';
 import { useTheme } from '../store/ThemeContext';
 
 interface Props {
@@ -12,37 +12,46 @@ interface Props {
   /** Hides the built-in title block (for hero layouts that roll their own). */
   bare?: boolean;
   /**
-   * 'hero' (default) — soft mint-to-gold dawn gradient with dark ink text.
-   * 'deep' — full fern-ink gradient with white text (Tarsi-style green page top).
+   * 'deep' (default in call sites) — v4.3.0 showroom veil: no painted block,
+   * the page opens straight onto the aurora canvas and the glass cards float
+   * on it, exactly like the site mockups. 'hero' — the legacy soft mint-to-
+   * gold dawn gradient, kept for surfaces that still want a painted top.
    */
   tone?: 'hero' | 'deep';
 }
 
 /**
- * Page header — morning in the fern house. Two moods: the soft mint "hero"
- * for inner pages, and the deep pine "green room" for the home top. A
- * whisper of woven paper and a pale sun disc keep it warm; the color does
- * the work, no ornaments.
+ * Page header. The deep tone IS the mockup look now: transparent, title set
+ * in the display serif, inks theme-aware (white on jungle night, pine on
+ * mint paper). No weave, no sun disc — the backdrop component owns the
+ * atmosphere, the header just stands on it.
  */
 export function GradientHeader({ title, subtitle, children, bare, tone = 'hero' }: Props) {
   const insets = useSafeAreaInsets();
   const { isDark } = useTheme();
   const deep = tone === 'deep';
-  const colors = deep
-    ? isDark
-      ? gradientsFor(true).header
-      : gradientsLight.header
-    : isDark
-      ? gradientsDark.hero
-      : gradientsLight.hero;
-  const titleColor = deep ? '#FFFFFF' : isDark ? '#F2F8F3' : '#16382A';
-  const eyebrowColor = deep
-    ? isDark
-      ? '#EFD492'
-      : '#F0D492'
-    : isDark
-      ? '#EFD492'
-      : '#3E7A57';
+
+  if (deep) {
+    const titleColor = isDark ? '#FFFFFF' : '#12331F';
+    const eyebrowColor = isDark ? '#8FD6B0' : '#3E7A57';
+    return (
+      <View style={[styles.wrap, { paddingTop: insets.top + spacing.lg }]}>
+        <View style={styles.content}>
+          {!bare && subtitle ? (
+            <Text style={[styles.subtitle, { color: eyebrowColor }]}>{subtitle.toUpperCase()}</Text>
+          ) : null}
+          {!bare && title ? (
+            <Text style={[styles.title, { color: titleColor }]}>{title}</Text>
+          ) : null}
+          {children}
+        </View>
+      </View>
+    );
+  }
+
+  const colors = isDark ? gradientsDark.hero : gradientsLight.hero;
+  const titleColor = isDark ? '#F2F8F3' : '#16382A';
+  const eyebrowColor = isDark ? '#EFD492' : '#3E7A57';
 
   return (
     <View style={[styles.wrap, { paddingTop: insets.top + spacing.lg, backgroundColor: colors[0] }]}>
@@ -55,7 +64,7 @@ export function GradientHeader({ title, subtitle, children, bare, tone = 'hero' 
         }
         resizeMode="cover"
         pointerEvents="none"
-        style={[styles.weaveFill, { opacity: isDark ? 0.10 : deep ? 0.10 : 0.14 }]}
+        style={[styles.weaveFill, { opacity: isDark ? 0.10 : 0.14 }]}
       />
       {/* pale sun through the leaves */}
       <View
@@ -63,11 +72,7 @@ export function GradientHeader({ title, subtitle, children, bare, tone = 'hero' 
         style={[
           styles.sun,
           {
-            backgroundColor: deep
-              ? 'rgba(255,255,255,0.10)'
-              : isDark
-                ? 'rgba(239,212,146,0.08)'
-                : 'rgba(255,255,255,0.45)',
+            backgroundColor: isDark ? 'rgba(239,212,146,0.08)' : 'rgba(255,255,255,0.45)',
           },
         ]}
       />

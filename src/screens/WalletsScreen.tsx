@@ -76,8 +76,20 @@ export function WalletsScreen() {
     if (i !== index && i >= 0 && i < cards.length) setIndex(i);
   };
 
-  const heroInk = '#FFFFFF';
-  const heroSub = 'rgba(240,248,243,0.72)';
+  const heroInk = isDark ? '#FFFFFF' : '#12331F';
+  const heroSub = isDark ? 'rgba(240,248,243,0.72)' : 'rgba(22,56,42,0.72)';
+
+  /** Month delta for the active wallet — expenses, income and transfers
+   *  touching it, the way accountBalance moves. Shown as +₱X this month. */
+  const walletDelta = useMemo(() => {
+    let sum = 0;
+    for (const tx of walletTxs) {
+      if (tx.type === 'income') sum += tx.amount;
+      else if (tx.type === 'expense') sum -= tx.amount;
+      else sum += tx.toAccountId === active?.id ? tx.amount : -tx.amount;
+    }
+    return sum;
+  }, [walletTxs, active?.id]);
 
   const actionFor = (type: 'expense' | 'income' | 'transfer') => {
     if (!active) return;
@@ -95,18 +107,12 @@ export function WalletsScreen() {
         <GradientHeader title="Wallets" subtitle="Everything you own, in one place" tone="deep">
           {/* total */}
           <View style={styles.totalBlock}>
-            <Text style={[styles.totalLabel, { color: '#F0D492' }]}>TOTAL ACROSS WALLETS</Text>
-            <AnimatedNumber
-              value={total}
-              flash="auto"
-              restingColor={heroInk}
-              flashUpColor="#9FE7C0"
-              flashDownColor="#FFC9CD"
-              style={[styles.totalValue, { color: heroInk }]}
-              format={(n) => formatMoney(n, finance.settings.currency)}
-            />
+            <Text style={[styles.totalLabel, { color: isDark ? '#EFD492' : '#3E7A57' }]}>TOTAL ACROSS WALLETS</Text>
+            <Text style={[styles.totalValue, { color: heroInk }]}>
+              {formatMoney(total, finance.settings.currency)}
+            </Text>
             <Text style={[styles.totalSub, { color: heroSub }]}>
-              {cards.length} wallet{cards.length === 1 ? '' : 's'} · swipe the cards to browse
+              Across {cards.length} wallet{cards.length === 1 ? '' : 's'} · synced on-device
             </Text>
           </View>
 
@@ -271,12 +277,21 @@ export function WalletsScreen() {
               {/* history for the selected wallet */}
               <Entrance delay={160}>
                 <View style={styles.historyHead}>
-                  <Text style={[styles.historyTitle, { color: t.text }]} numberOfLines={1}>
-                    {active?.name} · {monthLabel(ym, true)}
-                  </Text>
-                  <Text style={[styles.historySub, { color: t.subtext }]}>
-                    {walletTxs.length} entr{walletTxs.length === 1 ? 'y' : 'ies'} touching this wallet
-                  </Text>
+                  <View style={styles.historyHeadText}>
+                    <Text style={[styles.historyTitle, { color: t.text }]} numberOfLines={1}>
+                      {active?.name} · {monthLabel(ym, true)}
+                    </Text>
+                    <Text style={[styles.historySub, { color: t.subtext }]}>
+                      {walletTxs.length} entr{walletTxs.length === 1 ? 'y' : 'ies'} touching this wallet
+                    </Text>
+                  </View>
+                  {walletDelta !== 0 ? (
+                    <View style={[styles.deltaChip, { backgroundColor: (walletDelta > 0 ? t.income : t.expense) + '1C' }]}>
+                      <Text style={[styles.deltaText, { color: walletDelta > 0 ? t.income : t.expense }]} numberOfLines={1}>
+                        {walletDelta > 0 ? '+' : '−'}{formatMoney(Math.abs(walletDelta), finance.settings.currency)} this month
+                      </Text>
+                    </View>
+                  ) : null}
                 </View>
                 <MonthTxList
                   ym={ym}
@@ -319,7 +334,7 @@ const styles = StyleSheet.create({
   },
   totalSub: { fontFamily: font.medium, fontSize: 12, marginTop: 6 },
   chipsWrap: { marginTop: spacing.lg },
-  body: { paddingHorizontal: spacing.xl, paddingTop: spacing.md, paddingBottom: 120 },
+  body: { paddingHorizontal: spacing.xl, paddingTop: spacing.md, paddingBottom: 132 },
   deck: { paddingHorizontal: 2, paddingVertical: spacing.sm, gap: spacing.md, paddingRight: spacing.xl },
   card: {
     width: CARD_W,
@@ -394,7 +409,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   actionLabel: { fontFamily: font.bold, fontSize: 12 },
-  historyHead: { marginTop: spacing.xl, marginBottom: spacing.sm },
+  historyHead: { marginTop: spacing.xl, marginBottom: spacing.sm, flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  historyHeadText: { flex: 1 },
+  deltaChip: { paddingVertical: 5, paddingHorizontal: 10, borderRadius: radius.pill },
+  deltaText: { fontFamily: font.bold, fontSize: 11 },
   historyTitle: { fontFamily: font.bold, fontSize: 15.5 },
   historySub: { fontFamily: font.medium, fontSize: 11.5, marginTop: 2 },
   emptyWrap: {

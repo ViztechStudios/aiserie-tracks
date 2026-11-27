@@ -554,7 +554,7 @@ const styles = StyleSheet.create({
   planFill: { height: '100%', borderRadius: radius.pill },
   planLegendRow: { marginTop: spacing.md },
   planLegend: { fontFamily: font.medium, fontSize: 11.5, lineHeight: 16 },
-  body: { paddingHorizontal: spacing.xl, paddingTop: spacing.md, paddingBottom: 120 },
+  body: { paddingHorizontal: spacing.xl, paddingTop: spacing.md, paddingBottom: 132 },
   sectionHead: { marginTop: spacing.sm, marginBottom: spacing.md },
   sectionSpacing: { marginTop: spacing.xl },
   sectionTitle: { fontFamily: font.display, fontSize: 18 },

@@ -125,8 +125,10 @@ export function InsightsScreen() {
     return `You spent ${fmt(totals.expense)} ${when} — right on pace with last month.`;
   }, [finance.transactions, ym, totals.expense, finance.settings.currency]);
 
-  const heroInk = '#FFFFFF';
-  const heroSub = 'rgba(240,248,243,0.72)';
+  const heroInk = isDark ? '#FFFFFF' : '#12331F';
+  const heroSub = isDark ? 'rgba(240,248,243,0.72)' : 'rgba(22,56,42,0.72)';
+  const trioBg = isDark ? 'rgba(255,255,255,0.10)' : 'rgba(19,54,36,0.06)';
+  const trioBorder = isDark ? 'rgba(255,255,255,0.16)' : 'rgba(19,54,36,0.12)';
   const kept = totals.income - totals.expense;
   const keptPct = totals.income > 0 ? Math.round((kept / totals.income) * 100) : 0;
   /** Fixed heatmap cell size from the measured grid width (percent widths
@@ -149,21 +151,21 @@ export function InsightsScreen() {
           {/* IN / OUT / kept trio — web can't auto-shrink text, so long
               amounts step down a size instead of truncating */}
           <View style={styles.trio}>
-            <View style={[styles.trioCard, { backgroundColor: 'rgba(255,255,255,0.10)', borderColor: 'rgba(255,255,255,0.16)' }]}>
+            <View style={[styles.trioCard, { backgroundColor: trioBg, borderColor: trioBorder }]}>
               <Text style={[styles.trioLabel, { color: heroSub }]}>IN</Text>
               <Text style={[styles.trioValue, { color: heroInk }, formatMoney(totals.income, finance.settings.currency).length >= 9 && styles.trioValueLong]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>
                 {formatMoney(totals.income, finance.settings.currency)}
               </Text>
             </View>
-            <View style={[styles.trioCard, { backgroundColor: 'rgba(255,255,255,0.10)', borderColor: 'rgba(255,255,255,0.16)' }]}>
+            <View style={[styles.trioCard, { backgroundColor: trioBg, borderColor: trioBorder }]}>
               <Text style={[styles.trioLabel, { color: heroSub }]}>OUT</Text>
               <Text style={[styles.trioValue, { color: heroInk }, formatMoney(totals.expense, finance.settings.currency).length >= 9 && styles.trioValueLong]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>
                 {formatMoney(totals.expense, finance.settings.currency)}
               </Text>
             </View>
-            <View style={[styles.trioCard, { backgroundColor: 'rgba(255,255,255,0.10)', borderColor: 'rgba(255,255,255,0.16)' }]}>
+            <View style={[styles.trioCard, { backgroundColor: trioBg, borderColor: trioBorder }]}>
               <Text style={[styles.trioLabel, { color: heroSub }]}>KEPT</Text>
-              <Text style={[styles.trioValue, { color: kept >= 0 ? '#BFF0D3' : '#FFC9CD' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>
+              <Text style={[styles.trioValue, { color: totals.income > 0 ? (kept >= 0 ? t.income : t.expense) : heroInk }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>
                 {totals.income > 0 ? `${keptPct}%` : '—'}
               </Text>
             </View>
@@ -262,7 +264,7 @@ export function InsightsScreen() {
                     const on = metric === m;
                     return (
                       <PressableScale key={m} onPress={() => setMetric(m)} haptic={on ? false : 'light'} scaleTo={0.94} style={styles.heatToggleBtn}>
-                        <Text style={[styles.heatToggleText, { color: on ? '#FFFFFF' : t.subtext }, on && styles.heatToggleOn]}>
+                        <Text style={[styles.heatToggleText, { color: on ? (isDark ? '#FFFFFF' : '#0D3B27') : t.subtext }, on && styles.heatToggleOn]}>
                           {m === 'spending' ? 'Spending' : 'Net'}
                         </Text>
                       </PressableScale>
@@ -405,7 +407,7 @@ const styles = StyleSheet.create({
   trioLabel: { fontFamily: font.bold, fontSize: 10, letterSpacing: 1.4 },
   trioValue: { fontFamily: font.heavy, fontSize: 17, marginTop: 5 },
   trioValueLong: { fontSize: 13.5, letterSpacing: -0.2 },
-  body: { paddingHorizontal: spacing.xl, paddingTop: spacing.md, paddingBottom: 120 },
+  body: { paddingHorizontal: spacing.xl, paddingTop: spacing.md, paddingBottom: 132 },
   safeCard: { borderRadius: radius.lg, padding: spacing.lg },
   safeLabel: { fontFamily: font.bold, fontSize: 11, letterSpacing: 1.2 },
   // v4.2.0: 62% reserve keeps the figure clear of the mascot, whose left

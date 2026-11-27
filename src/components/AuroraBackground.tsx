@@ -47,11 +47,11 @@ export function AuroraBackground({ intensity = 1 }: Props) {
         />
         {/* the light the glass refracts: one leaf orb, one warm orb */}
         <LinearGradient
-          colors={['rgba(151,199,168,0.34)', 'rgba(151,199,168,0)']}
+          colors={['rgba(151,199,168,0.40)', 'rgba(151,199,168,0)']}
           style={styles.orbA}
         />
         <LinearGradient
-          colors={['rgba(217,161,59,0.16)', 'rgba(217,161,59,0)']}
+          colors={['rgba(217,161,59,0.18)', 'rgba(217,161,59,0)']}
           style={styles.orbB}
         />
         <LinearGradient
@@ -60,7 +60,8 @@ export function AuroraBackground({ intensity = 1 }: Props) {
           style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 220 } as ViewStyle}
         />
       </Animated.View>
-      {/* midnight ink */}
+      {/* jungle night — v4.3.0 showroom glows: a wide mint moon up top, a
+          deep leaf orb below, and a whisper of gold so warm tones survive */}
       <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { opacity: darkOpacity, backgroundColor: aurora.base }]}>
         <Animated.Image
           source={require('../../assets/textures/weave-dark.png')}
@@ -68,12 +69,21 @@ export function AuroraBackground({ intensity = 1 }: Props) {
           style={[styles.weaveFill, { opacity: aurora.weaveOpacity }]}
         />
         <LinearGradient
-          colors={['rgba(46,94,66,0.42)', 'rgba(46,94,66,0)']}
+          colors={['rgba(62,207,160,0.20)', 'rgba(62,207,160,0)']}
           style={styles.orbA}
         />
         <LinearGradient
-          colors={['rgba(229,185,92,0.10)', 'rgba(229,185,92,0)']}
+          colors={['rgba(46,94,66,0.38)', 'rgba(46,94,66,0)']}
           style={styles.orbB}
+        />
+        <LinearGradient
+          colors={['rgba(229,185,92,0.07)', 'rgba(229,185,92,0)']}
+          style={styles.orbC}
+        />
+        <LinearGradient
+          colors={[aurora.glow, 'rgba(0,0,0,0)']}
+          locations={[0, 1]}
+          style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 260 } as ViewStyle}
         />
       </Animated.View>
       {/* keeps Android overflow clipping happy without extra layers */}
@@ -85,8 +95,9 @@ export function AuroraBackground({ intensity = 1 }: Props) {
 const styles = StyleSheet.create({
   spacer: { width: 1, height: 1 },
   // soft light orbs — big radial fades the frosted cards appear to refract
-  orbA: { position: 'absolute', top: -140, right: -120, width: 460, height: 460, borderRadius: 230 },
-  orbB: { position: 'absolute', bottom: -120, left: -100, width: 380, height: 380, borderRadius: 190 },
+  orbA: { position: 'absolute', top: -160, right: -110, width: 500, height: 500, borderRadius: 250 },
+  orbB: { position: 'absolute', bottom: -130, left: -110, width: 400, height: 400, borderRadius: 200 },
+  orbC: { position: 'absolute', top: 180, left: -90, width: 320, height: 320, borderRadius: 160 },
   // Web note: with bare absoluteFill insets, react-native-web keeps the Image
   // at its intrinsic 480px size, which split wide screens with a seam. Percent
   // sizing stretches the texture to the real viewport on web and native alike.
