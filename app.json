@@ -2,7 +2,7 @@
   "expo": {
     "name": "Aiserie Tracks",
     "slug": "aiserie-tracks",
-    "version": "4.4.0",
+    "version": "4.5.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -16,9 +16,9 @@
     },
     "android": {
       "package": "com.aiserie.tracks",
-      "versionCode": 20,
+      "versionCode": 21,
       "adaptiveIcon": {
-        "backgroundColor": "#0D3B27",
+        "backgroundColor": "#0B241A",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -47,9 +47,9 @@
         "expo-splash-screen",
         {
           "image": "./assets/splash-icon.png",
-          "imageWidth": 200,
+          "imageWidth": 230,
           "resizeMode": "contain",
-          "backgroundColor": "#0D3B27"
+          "backgroundColor": "#0B241A"
         }
       ],
       [

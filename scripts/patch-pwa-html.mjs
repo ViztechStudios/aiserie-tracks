@@ -155,6 +155,70 @@ if (html.includes(MARKER)) {
         : `<meta name="viewport" content="${content}, viewport-fit=cover" />`
   );
 
+  // ---- boot splash (v4.5.0) ------------------------------------------------
+  // The SPA used to sit on a bare background colour while the JS bundle
+  // downloaded — the "loading screen looks shit" report. This paints the
+  // Ledger A mark + wordmark immediately (theme-aware, read from the same
+  // localStorage key the app persists), then dissolves the moment React
+  // mounts. Pure inline CSS/SVG — zero extra network requests.
+  const bootCss = `  <style>
+#aiserie-boot{position:fixed;inset:0;z-index:2147483000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;background:#0B241A;color:#EAF6EE;transition:opacity .45s ease;opacity:1}
+#aiserie-boot.light{background:#F4F8F1;color:#12331F}
+#aiserie-boot svg{opacity:.95}
+#aiserie-boot .ab-word{font:600 11px/1 -apple-system,'Segoe UI',Roboto,'Helvetica Neue',sans-serif;letter-spacing:3.6px;text-transform:uppercase;opacity:.75}
+#aiserie-boot .ab-track{width:132px;height:3px;border-radius:2px;background:rgba(127,140,132,.28);overflow:hidden;position:relative}
+#aiserie-boot .ab-fill{position:absolute;top:0;bottom:0;width:40%;border-radius:2px;background:#E9C46A;animation:ab-slide 1.15s ease-in-out infinite}
+@keyframes ab-slide{0%{left:-40%}100%{left:100%}}
+#aiserie-boot.done{opacity:0;pointer-events:none}
+  </style>`;
+  const bootMarkup = `<div id="aiserie-boot" aria-hidden="true">
+    <svg width="66" height="66" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <g stroke="currentColor" stroke-width="70" stroke-linecap="round">
+        <path d="M512 292 L350 762"/><path d="M512 292 L674 762"/><path d="M436 588 L588 588"/>
+      </g>
+      <circle cx="512" cy="206" r="28" fill="#E9C46A"/>
+    </svg>
+    <div class="ab-word">Aiserie Tracks</div>
+    <div class="ab-track"><div class="ab-fill"></div></div>
+  </div>`;
+  const bootScript = [
+    '<script>',
+    '  (function () {',
+    '    try {',
+    "      var boot = document.getElementById('aiserie-boot');",
+    '      if (!boot) return;',
+    "      var mode = null;",
+    '      try { mode = localStorage.getItem("aiserie.v1.themeMode"); } catch (e) {}',
+    "      if (mode === 'light') boot.classList.add('light');",
+    "      else if (mode !== 'dark') {",
+    "        if (!window.matchMedia || !window.matchMedia('(prefers-color-scheme: dark)').matches) boot.classList.add('light');",
+    '      }',
+    '      var finished = false;',
+    '      var finish = function () {',
+    '        if (finished) return;',
+    '        finished = true;',
+    "        boot.classList.add('done');",
+    '        setTimeout(function () { if (boot.parentNode) boot.parentNode.removeChild(boot); }, 480);',
+    '      };',
+    "      var root = document.getElementById('root');",
+    '      if (root && root.firstElementChild) { finish(); }',
+    '      else {',
+    '        var obs = new MutationObserver(function () {',
+    '          if (root && root.firstElementChild) { obs.disconnect(); finish(); }',
+    '        });',
+    '        if (root) obs.observe(root, { childList: true });',
+    '        setTimeout(finish, 9000);',
+    '      }',
+    '    } catch (e) {',
+    "      var b = document.getElementById('aiserie-boot'); if (b && b.parentNode) b.parentNode.removeChild(b);",
+    '    }',
+    '  })();',
+    '</script>',
+  ].join('\n');
+  html = html.replace('</head>', `${bootCss}\n</head>`);
+  html = html.replace(/<body[^>]*>/, (m0) => `${m0}\n  ${bootMarkup}`);
+  html = html.replace('</body>', `${bootScript}\n</body>`);
+
   const swScript = [
     '<script>',
     "  if ('serviceWorker' in navigator) {",
@@ -167,5 +231,5 @@ if (html.includes(MARKER)) {
   html = html.replace('</body>', `${swScript}\n</body>`);
 
   fs.writeFileSync(indexHtmlPath, html);
-  console.log('patch-pwa-html: index.html patched (manifest link, iOS meta, startup images, viewport-fit, service worker).');
+  console.log('patch-pwa-html: index.html patched (manifest link, iOS meta, startup images, boot splash, viewport-fit, service worker).');
 }

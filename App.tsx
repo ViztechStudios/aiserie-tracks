@@ -37,9 +37,9 @@ import { checkForUpdate } from './src/services/updateCheck';
 // keep the native splash visible until the animated curtain is ready
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
-const BOOT_MIN_MS = 1500; // curtain minimum — trimmed in v4.2.0: the Orbit &
-// Frost moment still plays (intro enforces its own 1.5s), but the enforced
-// boot no longer doubles it; data-ready launches now land ~1.2s sooner
+const BOOT_MIN_MS = 1250; // curtain minimum — v4.5.0: the quiet Ledger A boot
+// needs less stage time than the old orbit sequence; data-ready launches
+// still honor the intro, but the enforced boot no longer dawdles
 
 /**
  * On the web (iOS standalone PWA), react-native-safe-area-context reports

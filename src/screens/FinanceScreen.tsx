@@ -536,8 +536,11 @@ export function FinanceScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: 'transparent' },
   planCard: { borderRadius: radius.lg, padding: spacing.lg },
-  planHead: { flexDirection: 'row', alignItems: 'flex-start' },
-  planTitleWrap: { flex: 1, marginRight: spacing.md },
+  // v4.5.0: on narrow phones the envelopes badge used to squeeze the amount
+  // into a mid-number wrap ("₱25,675.0 / 0") — let the badge drop to its own
+  // row instead so the money line always keeps its full width.
+  planHead: { flexDirection: 'row', alignItems: 'flex-start', flexWrap: 'wrap' },
+  planTitleWrap: { flex: 1, flexBasis: 200, marginRight: spacing.md },
   planLabel: { fontFamily: font.bold, fontSize: 11, letterSpacing: 1.2 },
   planCash: { fontFamily: font.heavy, fontSize: 30, marginTop: 6, maxWidth: '100%' },
   planSub: { fontFamily: font.medium, fontSize: 12, marginTop: 4 },

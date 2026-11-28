@@ -140,7 +140,19 @@ function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const railFill = isDark ? '#0A1F15' : '#F6FBF7';
 
   return (
-    <View style={styles.railWrap} pointerEvents="box-none">
+    // v4.5.0: this wrapper carries an EXPLICIT z. On Android with the new
+    // architecture, the screens layer carries explicit zIndex values of its
+    // own (focused 0 / blurred -1) while this rail had none — Fabric could
+    // then stack the opaque screen canvas OVER the rail, leaving the tabs
+    // invisible while taps still fell through to them ("the buttons below
+    // was missing tho i can click the positions"). zIndex + elevation are
+    // both scoped to this parent, so modals and toasts higher in the tree
+    // are untouched.
+    <View
+      style={[styles.railWrap, { zIndex: 100, elevation: 12 }]}
+      pointerEvents="box-none"
+      collapsable={false}
+    >
       <View
         style={[
           styles.rail,

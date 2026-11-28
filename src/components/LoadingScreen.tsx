@@ -15,7 +15,7 @@ interface Props {
   onDone: () => void;
 }
 
-const INTRO_MIN_MS = 1500;
+const INTRO_MIN_MS = 1250;
 /** If hydration somehow stalls, the curtain still offers a way in. */
 const WATCHDOG_MS = 8500;
 const APP_VERSION = Constants.expoConfig?.version ?? '';
@@ -38,12 +38,12 @@ const KNOWN_KEYS = [
 ];
 
 /**
- * Official boot experience (v4.1.0 "Orbit & Frost"):
- * the monogram rises on a frosted glass tile while a quiet satellite traces
- * its orbit; the wordmark settles, three refined ticks land, and the
- * progress line moves in honest stages (fonts, then your data) before the
- * curtain dissolves into the app. If opening takes unusually long, a quiet
- * escape row appears so the app is never a dead end.
+ * Official boot experience (v4.5.0 "Ledger A"): the monogram settles onto a
+ * frosted tile, the wordmark follows, and one honest progress line moves in
+ * stages (fonts, then your data) before the curtain dissolves into the app.
+ * No loops, no satellites, no sheen — the v4.4.0 verdict was that the boot
+ * tried too hard. If opening takes unusually long, a quiet escape row
+ * appears so the app is never a dead end.
  *
  * Animation rule (the v4.0.0 lesson): every animated props graph carries
  * ONE driver only — transforms/opacity run native; the progress width,
@@ -57,81 +57,53 @@ export function LoadingScreen({ ready, onDone }: Props) {
   const [confirmReset, setConfirmReset] = useState(false);
 
   const tile = useRef(new Animated.Value(0)).current;
-  const orbit = useRef(new Animated.Value(0)).current;
-  const float = useRef(new Animated.Value(0)).current;
   const word = useRef(new Animated.Value(0)).current;
   const tag = useRef(new Animated.Value(0)).current;
-  const ticks = useRef(new Animated.Value(0)).current;
   const bar = useRef(new Animated.Value(0)).current;
-  const sheen = useRef(new Animated.Value(0)).current;
   const out = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    const seq = Animated.sequence([
-      Animated.timing(tile, { toValue: 1, duration: 640, easing: Easing.out(Easing.back(1.4)), useNativeDriver: true }),
-      Animated.timing(word, { toValue: 1, duration: 480, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
-      Animated.timing(tag, { toValue: 1, duration: 420, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
-      Animated.timing(ticks, { toValue: 1, duration: 560, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+    const seq = Animated.stagger(90, [
+      Animated.timing(tile, { toValue: 1, duration: 520, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+      Animated.timing(word, { toValue: 1, duration: 440, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+      Animated.timing(tag, { toValue: 1, duration: 400, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
     ]);
-    // the satellite: one lap every 2.6 s, forever
-    const orbitLoop = Animated.loop(
-      Animated.timing(orbit, { toValue: 1, duration: 2600, easing: Easing.linear, useNativeDriver: true })
-    );
-    // the tile breathes on a slow sine
-    const floatLoop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(float, { toValue: 1, duration: 1700, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
-        Animated.timing(float, { toValue: 0, duration: 1700, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
-      ])
-    );
     // honest staged progress: fonts & shell, then data
     const barSeq = Animated.sequence([
-      Animated.timing(bar, { toValue: 0.3, duration: 900, easing: Easing.out(Easing.cubic), useNativeDriver: false }),
-      Animated.timing(bar, { toValue: 0.34, duration: 160, useNativeDriver: false }),
-      Animated.timing(bar, { toValue: 0.66, duration: 1300, easing: Easing.out(Easing.cubic), useNativeDriver: false }),
+      Animated.timing(bar, { toValue: 0.3, duration: 850, easing: Easing.out(Easing.cubic), useNativeDriver: false }),
+      Animated.timing(bar, { toValue: 0.34, duration: 150, useNativeDriver: false }),
+      Animated.timing(bar, { toValue: 0.66, duration: 1200, easing: Easing.out(Easing.cubic), useNativeDriver: false }),
     ]);
-    const sheenLoop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(sheen, { toValue: 1, duration: 1400, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
-        Animated.timing(sheen, { toValue: 0, duration: 0, useNativeDriver: true }),
-        Animated.timing(sheen, { toValue: 0, duration: 900, useNativeDriver: true }),
-      ])
-    );
     try {
       seq.start();
-      orbitLoop.start();
-      floatLoop.start();
       barSeq.start();
-      sheenLoop.start();
     } catch {
       /* a stalled boot animation must never crash the boot itself */
     }
     const timer = setTimeout(() => setIntroDone(true), INTRO_MIN_MS);
     const watchdog = setTimeout(() => setStalled(true), WATCHDOG_MS);
     return () => {
-      // v4.2.0: loops are stopped explicitly so nothing keeps ticking after
-      // the curtain dissolves (was: only unmount-detach stopped them)
       clearTimeout(timer);
       clearTimeout(watchdog);
-      for (const a of [seq, orbitLoop, floatLoop, barSeq, sheenLoop]) {
+      for (const a of [seq, barSeq]) {
         try {
           a.stop();
         } catch {}
       }
     };
-  }, [tile, orbit, word, tag, ticks, float, bar, sheen]);
+  }, [tile, word, tag, bar]);
 
   // last beat: finish the bar when the app is actually ready
   const shouldDissolve = (ready || forced) && introDone;
 
   useEffect(() => {
     if (!ready) return;
-    Animated.timing(bar, { toValue: 1, duration: 420, easing: Easing.out(Easing.cubic), useNativeDriver: false }).start();
+    Animated.timing(bar, { toValue: 1, duration: 380, easing: Easing.out(Easing.cubic), useNativeDriver: false }).start();
   }, [ready, bar]);
 
   useEffect(() => {
     if (!shouldDissolve || mount === false) return;
-    Animated.timing(out, { toValue: 0, duration: 460, easing: Easing.inOut(Easing.quad), useNativeDriver: true }).start(() => {
+    Animated.timing(out, { toValue: 0, duration: 440, easing: Easing.inOut(Easing.quad), useNativeDriver: true }).start(() => {
       setMount(false);
       SplashScreen.hideAsync().catch(() => {});
       onDone();
@@ -166,7 +138,7 @@ export function LoadingScreen({ ready, onDone }: Props) {
   if (!mount) return null;
 
   return (
-    <Animated.View style={[StyleSheet.absoluteFill, { opacity: out, zIndex: 99, elevation: 99 }]}>
+    <Animated.View style={[StyleSheet.absoluteFill, { opacity: out, zIndex: 99, elevation: 99 }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
       <LinearGradient colors={BOOT_BG} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1.15 }} style={StyleSheet.absoluteFill} />
       {/* the weave, barely there */}
       <Image
@@ -181,62 +153,23 @@ export function LoadingScreen({ ready, onDone }: Props) {
         <LinearGradient colors={['rgba(233,196,106,0.10)', 'rgba(233,196,106,0)']} style={styles.orbB} />
       </View>
       <View style={styles.center}>
-        {/* frosted tile + orbiting satellite */}
+        {/* the monogram on its frost pane */}
         <Animated.View
           style={{
             opacity: tile,
-            transform: [
-              { scale: tile.interpolate({ inputRange: [0, 1], outputRange: [0.6, 1] }) },
-              { translateY: float.interpolate({ inputRange: [0, 1], outputRange: [0, -7] }) },
-            ],
+            transform: [{ translateY: tile.interpolate({ inputRange: [0, 1], outputRange: [16, 0] }) }],
           }}
         >
-          <View style={styles.orbitFrame}>
-            {/* the orbit ring */}
-            <View pointerEvents="none" style={styles.orbitRing} />
-            {/* the satellite: one glowing dot on the ring, carried by rotation */}
-            <Animated.View
-              pointerEvents="none"
-              style={[styles.orbitSpin, { transform: [{ rotate: orbit.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] }) }] }]}
-            >
-              <View style={styles.satelliteArm}>
-                <View style={styles.satellite} />
-              </View>
-            </Animated.View>
-            {/* the monogram on its frost pane */}
-            <Animated.View
-              style={[styles.pane, { opacity: tile.interpolate({ inputRange: [0, 1], outputRange: [0, 1] }) }]}
-            >
-              <Image source={require('../../assets/splash-icon.png')} style={styles.logo} resizeMode="cover" />
-            </Animated.View>
+          <View style={styles.pane}>
+            <Image source={require('../../assets/brand-glyph.png')} style={styles.logo} resizeMode="contain" />
           </View>
         </Animated.View>
 
-        <Animated.View style={{ opacity: word, transform: [{ translateY: word.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }] }}>
+        <Animated.View style={{ opacity: word, transform: [{ translateY: word.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }] }}>
           <Text style={styles.title}>Aiserie Tracks</Text>
         </Animated.View>
-        <Animated.View style={{ opacity: tag, transform: [{ translateY: tag.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }] }}>
+        <Animated.View style={{ opacity: tag }}>
           <Text style={styles.tagline}>Your money, beautifully tracked</Text>
-        </Animated.View>
-
-        {/* three refined ticks — quieter than any mascot */}
-        <Animated.View style={[styles.tickRow, { opacity: ticks }]}>
-          {[0, 1, 2].map((i) => (
-            <Animated.View
-              key={i}
-              style={{
-                opacity: ticks.interpolate({ inputRange: [i * 0.28, Math.min(1, i * 0.28 + 0.42)], outputRange: [0, 1], extrapolate: 'clamp' }),
-                transform: [
-                  {
-                    translateY: ticks.interpolate({ inputRange: [i * 0.28, Math.min(1, i * 0.28 + 0.42)], outputRange: [8, 0], extrapolate: 'clamp' }),
-                  },
-                  { rotate: '45deg' },
-                ],
-              }}
-            >
-              <View style={[styles.tick, i === 2 && styles.tickLast]} />
-            </Animated.View>
-          ))}
         </Animated.View>
 
         <View style={styles.track}>
@@ -244,23 +177,6 @@ export function LoadingScreen({ ready, onDone }: Props) {
             style={[
               styles.fill,
               { width: bar.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }) },
-            ]}
-          />
-          <Animated.View
-            pointerEvents="none"
-            style={[
-              styles.sheen,
-              {
-                opacity: sheen.interpolate({ inputRange: [0, 0.4, 1], outputRange: [0, 0.9, 0] }),
-                transform: [
-                  {
-                    translateX: sheen.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [-46, 168],
-                    }),
-                  },
-                ],
-              },
             ]}
           />
         </View>
@@ -301,76 +217,36 @@ const styles = StyleSheet.create({
   orbA: { position: 'absolute', top: '6%', right: '-12%', width: 440, height: 440, borderRadius: 220 },
   orbB: { position: 'absolute', bottom: '4%', left: '-14%', width: 400, height: 400, borderRadius: 200 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 48 },
-  orbitFrame: { width: 236, height: 236, alignItems: 'center', justifyContent: 'center' },
-  orbitRing: {
-    ...ABS_FILL,
-    borderRadius: 118,
-    borderWidth: 1,
-    borderColor: 'rgba(233,196,106,0.22)',
-  },
-  orbitSpin: { ...ABS_FILL },
-  satelliteArm: {
-    position: 'absolute',
-    top: 0,
-    left: '50%',
-    marginLeft: -4,
-    width: 8,
-    height: 8,
-  },
-  satellite: {
-    width: 7,
-    height: 7,
-    borderRadius: 3.5,
-    backgroundColor: '#E9C46A',
-    shadowColor: '#E9C46A',
-    shadowOpacity: 0.9,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 0 },
-    elevation: 0,
-  },
   pane: {
-    width: 156,
-    height: 156,
-    borderRadius: 40,
+    width: 172,
+    height: 172,
+    borderRadius: 44,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.10)',
+    backgroundColor: 'rgba(255,255,255,0.08)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.22)',
-    shadowColor: '#E9C46A',
-    shadowOpacity: 0.14,
-    shadowRadius: 24,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 8,
+    borderColor: 'rgba(255,255,255,0.20)',
     overflow: 'hidden',
   },
-  logo: { width: 132, height: 132, borderRadius: 34 },
-  title: { color: '#FFFFFF', fontFamily: font.displayBold, fontSize: 26, letterSpacing: 0.3, marginTop: 26, textAlign: 'center' },
+  logo: { width: 118, height: 118 },
+  title: { color: '#FFFFFF', fontFamily: font.displayBold, fontSize: 26, letterSpacing: 0.3, marginTop: 28, textAlign: 'center' },
   tagline: {
-    color: 'rgba(233,196,106,0.85)',
+    color: 'rgba(233,196,106,0.75)',
     fontFamily: font.medium,
     fontSize: 13,
     letterSpacing: 0.4,
     marginTop: 7,
     textAlign: 'center',
   },
-  tickRow: { flexDirection: 'row', gap: 16, marginTop: 18, alignItems: 'center' },
-  tick: { width: 8, height: 8, borderRadius: 2.5, backgroundColor: 'rgba(233,196,106,0.45)' },
-  tickLast: { backgroundColor: 'rgba(233,196,106,0.95)' },
   track: {
-    marginTop: 26,
+    marginTop: 30,
     width: 168,
     height: 3,
     borderRadius: 1.5,
-    backgroundColor: 'rgba(255,255,255,0.14)',
+    backgroundColor: 'rgba(255,255,255,0.12)',
     overflow: 'hidden',
   },
   fill: { height: '100%', borderRadius: 1.5, backgroundColor: '#E9C46A' },
-  sheen: {
-    ...ABS_FILL,
-    width: 46,
-    backgroundColor: 'rgba(255,244,214,0.55)',
-  },
   escape: { marginTop: 26, alignItems: 'center' },
   escapeHint: { color: 'rgba(240,248,243,0.7)', fontFamily: font.medium, fontSize: 12, textAlign: 'center' },
   escapeRow: { flexDirection: 'row', alignItems: 'center', gap: 18, marginTop: 12 },
